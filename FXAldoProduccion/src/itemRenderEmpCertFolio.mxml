@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+						  xmlns:s="library://ns.adobe.com/flex/spark" 
+						  xmlns:mx="library://ns.adobe.com/flex/mx" 
+						  focusEnabled="true">
+	<s:HGroup>
+		<mx:Spacer width="50"/>
+		<mx:Image width="20" height="20" toolTip="Folio Predeterminado" source="{data[8]}"/>
+	</s:HGroup>
+	
+</s:MXDataGridItemRenderer>

@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" pageTitle="Cancela Factura Masivo"
+	applicationComplete="validateUser('cancelFactMasivo.swf');">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+		import mx.controls.dataGridClasses.DataGridItemRenderer;
+		import mx.controls.dataGridClasses.DataGridColumn;
+		import mx.managers.PopUpManager;
+		import mx.events.*;
+		import mx.collections.ArrayCollection;
+		import mx.effects.*;
+		 private var arrColl:ArrayCollection = new ArrayCollection();
+		 private var defaultListEffect:DefaultListEffect = new DefaultListEffect();  
+		 import mx.core.IFlexDisplayObject;
+
+		/*
+		[Embed(source="assets/delete-icon_24.png")]
+		[Bindable]
+		public var iconDel:Class;
+		*/
+		
+		private function cargaCancelar():void
+		{
+			try
+			{
+				if(gridCCFE.selectedItem!=null)
+				{
+					idGridCCFE.text=gridCCFE.selectedItem["0"].toString();
+					Send(330);
+				}
+							
+			}
+			catch(Err:Error)
+			{
+				
+			}	
+		
+		}
+		
+		
+		private function cancelarFactura():void{	
+					
+					Alert.yesLabel="Si";Alert.noLabel="No";Alert.show("¿Realmente quiere cancelar la(s) factura(s) seleccionada(s)?","Confirmar",Alert.YES|Alert.NO, null, doCandelar, iconDel);			
+			
+		}
+		
+		private function doCandelar(eventObj:CloseEvent):void{
+			if (eventObj.detail==Alert.YES) 
+			{
+					//Send(287);//CANCELAR LA FACTURA
+					Send(532);//CANCELAR LA FACTURA
+					//Send(189);//LLENAR EL GRIDVIEW AL FILTRAR
+					Send(533);//LLENAR EL GRIDVIEW AL FILTRAR
+					twPwdCertif.visible =false;
+					PopUpManager.removePopUp(twPwdCertif);
+					pwdCertif.text = "";
+					ObsCancelacion.text = "";
+					//******************************LIMPIAR CONTROLES
+					/*for(var j:int=0;j<rows;j++){
+            				arrColl.addItemAt(dpGridCCFE[j][0].toString(), j);
+            				dpGridCCFE[j].checked = false;
+            				
+            		}
+            		
+            			gridCCFE.dataProvider = dpGridCCFE;
+            			*/ 	
+					arrColl.removeAll();
+					idToCancel.text="";
+					idArrayToCancel.text="";
+					idGridCCFE.text="";
+					
+					
+					
+							
+			}
+		}
+		
+		
+		private function addItemToDataProvider(id:String):void {
+                var obj:Object = {label:new Date().toTimeString()};
+                var idx:int = Math.max(list.selectedIndex, 0);
+                //list.scrollToIndex(idx);
+                arrColl.addItemAt(id, idx);
+            }
+
+            private function removeItemFromDataProvider(id:String):void {
+                if (arrColl.length == 0) {
+                    return;
+                }
+                //var idx:int = Math.max(list.selectedIndex, 0);
+                var idx:int = arrColl.getItemIndex(id); 
+                //list.scrollToIndex(idx);
+                arrColl.removeItemAt(idx);
+                idToCancel.text = "";
+                
+            }
+            
+            public function doIfSelected(idAndSelected:String):void{
+            	
+            	var val:Array = idAndSelected.split(",");
+            	
+            	if(val[1]=="true"){
+            		addItemToDataProvider(val[0]);
+            	}else if(val[1]=="false"){
+            		removeItemFromDataProvider(val[0]);
+            	}
+            	
+            	
+                     
+            }
+            
+            public function makeArrayToCancel():void{
+            	var nItems:int = arrColl.length;
+            	var strArrayID:String = "";
+            	
+            	for(var i:int=0;i<nItems;i++){
+            	
+            		strArrayID+=arrColl.getItemAt(i).toString()+",";
+            	
+            	}
+            	
+            	var strArrayIDLen:int = strArrayID.length;
+            	//idArrayToCancel.text =strArrayID.substr(0,(strArrayID.length-1));
+            	idArrayToCancel.text =strArrayID.substring(0,strArrayIDLen-1);
+            	
+            	//ANTES HABLILITADO *************** cancelarFactura();
+            	mostrarPwdTW();
+            }
+            
+            public function mostrarPwdTW():void{
+            	
+            	if(ObsCancelacion.text !=""){
+            		
+            		if(arrColl.length != 0){
+					
+						twPwdCertif.visible=true;
+            			convertToMDI(twPwdCertif);
+					}
+					else{
+						Alert.show("Debe de habilitar por lo menos una factura para ser cancelada. Verifique por favor","Alerta",Alert.OK);
+					}	
+            		
+            		
+            	
+            	}else {
+					Alert.show("Debe ingresar un motivo por el cual desea cancelar la(s) factura(s) seleccionada(s).","Alerta",Alert.OK);
+				}
+            	
+            }
+            
+            private function convertToMDI(titleW:IFlexDisplayObject):void
+			{
+				PopUpManager.addPopUp(titleW, principalConf, true);
+				
+				titleW.visible=true;
+			}
+            
+            public function fxSelectAll():void{
+            	var dpGridCCFE:ArrayCollection = new ArrayCollection();
+            			dpGridCCFE = ArrayCollection(gridCCFE.dataProvider);
+            			var rows:int = dpGridCCFE.length;
+            	
+            	if(selectAll.selected){
+            		if(gridCCFE.dataProvider!=null){//HAY REGISTROS EN EL GRIDVIEW
+            		
+            			
+            			
+            			for(var j:int=0;j<rows;j++){
+            				arrColl.addItemAt(dpGridCCFE[j][0].toString(), j);
+            				dpGridCCFE[j].checked = true;
+            				
+            			}
+            			
+            			gridCCFE.dataProvider = dpGridCCFE;
+            			           			
+            			//makeArrayToCancel();
+            			//cancelarFactura();
+            		
+            		}else{
+            			Alert.show("No hubo resultados con el criterio de búsqueda elegido","Alerta",Alert.OK);
+            		}
+            		
+            	}else{
+            	
+            		
+            		for(var j:int=0;j<rows;j++){
+            				arrColl.addItemAt(dpGridCCFE[j][0].toString(), j);
+            				dpGridCCFE[j].checked = false;
+            				
+            		}
+            		
+            			gridCCFE.dataProvider = dpGridCCFE;
+            			 arrColl.removeAll();			
+            			//makeArrayToCancel();
+            	}
+            
+            
+            }
+            
+            private function visibleChk():void{
+            	var dpGridCCFE:ArrayCollection = new ArrayCollection();
+            	dpGridCCFE = ArrayCollection(gridCCFE.dataProvider);
+            	var rows:int = dpGridCCFE.length;
+            	
+            	for(var j:int=0;j<rows;j++){
+            				if(dpGridCCFE[j][0].toString()!="Activo"){
+            					dpGridCCFE[j].visible = true;
+            				}else{
+            					dpGridCCFE[j].visible = false;
+            				}
+            				
+            				
+            				
+            	}
+            	gridCCFE.dataProvider = dpGridCCFE;
+            
+            }
+            
+            private function filtrar():void{
+            	
+            	//Send(189);//LLENAR EL GRIDVIEW AL FILTRAR
+            	Send(533);//LLENAR EL GRIDVIEW AL FILTRAR
+            	//visibleChk();
+            	
+            	
+            }
+            
+            private function salir():void{
+            
+            	twPwdCertif.visible = false;
+            	PopUpManager.removePopUp(twPwdCertif);
+				
+            }
+
+		
+	]]>
+	</fx:Script>
+	<s:Panel  right="10" left="10" top="10" bottom="10" visible="true"  title="Cancelar Documento Electrónico">
+		<s:Group  id= "principalConf" width="100%" height="100%"  >
+				
+		<s:VGroup x="0" y="0" width="100%" height="100%" paddingBottom="5" paddingLeft="10" paddingRight="10" paddingTop="10">
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10" verticalAlign="middle"  paddingTop="20">
+				<s:VGroup height="100%" >
+					<s:Label text="RFC" fontWeight="bold"/>
+					<s:TextInput width="135" id="rfcFilter" />
+				</s:VGroup>
+				<s:VGroup height="100%" >
+					<s:Label text="Nombre" fontWeight="bold"/>
+					<s:TextInput width="179" id="nombreFilter"/>
+				</s:VGroup>
+				<s:VGroup height="100%" >
+					<s:Label text="Fecha Inicial" fontWeight="bold"/>
+					<mx:DateField id="fechaIniFiler" width="120" formatString="DD/MM/YYYY"/>
+				</s:VGroup>
+				<s:VGroup height="100%" >
+					<s:Label text="Fecha Final" fontWeight="bold"/>
+					<mx:DateField id="fechaFinFiler" width="120" formatString="DD/MM/YYYY"/>	
+				</s:VGroup>
+				<s:VGroup height="100%" >
+					<s:Label text="Serie" fontWeight="bold"/>
+					<s:TextInput width="70" id="serieFilter"/>	
+				</s:VGroup>
+				<s:VGroup height="100%" >
+					<s:Label text="Folio" fontWeight="bold"/>
+					<s:NumericStepper id="folioFilter" width="85" maximum="50000000"/>	
+				</s:VGroup>
+				<s:VGroup height="100%" >
+					<s:Label text="Moneda" fontWeight="bold"/>
+					<s:ComboBox id="monedaFilter" width="160" creationComplete="Send(188);"></s:ComboBox>	
+				</s:VGroup>
+				<s:VGroup height="100%" horizontalAlign="right" width="90">
+					<s:Label text="Filtrar por: " fontWeight="bold"/>
+					<mx:Button label="Filtrar" icon="@Embed(source='assets/add.png')" click="filtrar()"/>	
+				</s:VGroup>
+			</s:HGroup>			
+    		<s:HGroup width="100%" height="100%" horizontalAlign="right" paddingRight="10" verticalAlign="bottom" paddingBottom="10">
+    			<s:VGroup width="100%" height="100%" horizontalAlign="right" paddingTop="10">
+					
+					<s:HGroup width="100%" height="55" horizontalAlign="right" paddingTop="10">
+						<mx:Button label="Actualizar" icon="@Embed(source='assets/3518-32.png')" click="filtrar()"/>
+						<s:CheckBox id="selectAll" label="Seleccionar todos los registros" change="fxSelectAll()" />
+						<s:TextInput width="70" id="pwdCertifHandler" text="{pwdCertif.text}" visible="false"/>	
+					</s:HGroup >
+					<mx:DataGrid width="100%" id="gridCCFE" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+						<!-- <mx:click>cargaCancelar();</mx:click> -->
+						<mx:columns>
+							<mx:DataGridColumn headerText="#" dataField="0" width="50" visible="false"/>
+							<mx:DataGridColumn headerText="RFC" dataField="1" width="40"/>
+							<mx:DataGridColumn headerText="Nombre" dataField="2" width="50"/>
+							<mx:DataGridColumn headerText="Fecha" dataField="3" width="50"/>
+							<mx:DataGridColumn headerText="Serie" dataField="4" width="50"/>
+							<mx:DataGridColumn headerText="Folio" dataField="5" width="50"/>
+							<mx:DataGridColumn headerText="Total Impuestos" dataField="6" width="50"/>
+							<mx:DataGridColumn headerText="Total Factura" dataField="7" width="50"/>
+							<mx:DataGridColumn headerText="Estado" dataField="8" width="75"/>
+							<mx:DataGridColumn headerText="Cancelar" dataField="checked" width="75" > 
+							                <mx:itemRenderer>                
+									                <fx:Component>                   
+									                	 <!--<mx:CheckBox change="onChange(event)">-->                       
+									                	 <mx:CheckBox  change="onChange(event)" >
+										                	  <fx:Script>                            
+										                	  <![CDATA[                                
+												                	  private var _myData:Object;                                                                
+												                	  public override function set data(o:Object):void
+												                	  {
+												                	  	_myData = o;                                    
+												                	  	//selected = o.checked;		
+																	  }       
+																  
+												                	  public function onChange(evt:Event):void
+												                	  { 
+												                	  	 //_myData.checked = selected; 
+												                	  	 var myDGTI:String;
+												                	  	 myDGTI=_myData[0].toString();
+												                	  //original
+																		 //this.document.idToCancel.text = myDGTI+","+selected;
+																		 evt.currentTarget.outerDocument.idToCancel.text =myDGTI+","+selected;
+												                	  }
+											                	 ]]>
+										                	  </fx:Script>
+									                	  </mx:CheckBox>
+									                </fx:Component>
+							                	</mx:itemRenderer>
+							                </mx:DataGridColumn>
+						</mx:columns>
+					</mx:DataGrid>
+				</s:VGroup>
+			</s:HGroup>
+			<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" verticalAlign="bottom" paddingBottom="10">
+				<s:VGroup height="100%" width="100%" paddingLeft="10" >
+					<s:Label text="Observacionse de Cancelación" fontWeight="bold"/>
+					<s:TextArea id="ObsCancelacion" width="70%" height="50"/>
+				</s:VGroup>
+				<s:List id="list" dataProvider="{arrColl}"  height="50" visible="false"/>
+				<s:TextInput id="idToCancel" visible="false" valueCommit="doIfSelected(idToCancel.text);" width="70"  />
+				<s:TextInput id="idArrayToCancel" visible="false"  width="70" />
+				<s:TextInput id="idGridCCFE" visible="false" width="70"  />
+				<mx:Button label="Cancelar" icon="@Embed(source='assets/2515-32.png')" height="40" click="makeArrayToCancel();" width="130"/>
+			</s:HGroup>
+		</s:VGroup>
+		</s:Group>
+	</s:Panel>
+	<s:TitleWindow width="398" height="214" title="Contraseña de Certificado" 
+		id="twPwdCertif" borderAlpha=".95" visible="false" close="twPwdCertif.visible=false;" 
+		 horizontalCenter="0" verticalCenter="0">
+		<s:Label x="58.5" y="28" text="* Ingrese la Contraseña del Certificado" fontWeight="bold" enabled="true" fontSize="11"/>
+		<s:TextInput width="258" id="pwdCertif"  x="61.5" y="55"  displayAsPassword="true"/>
+		<mx:Button x="39" y="99" label="Cancelar Factura"  width="150" height="30" click="cancelarFactura();" icon="@Embed(source='assets/accept-icon_24.png')"/>
+		<mx:Button x="199" y="100" label="Cerrar Ventana" height="30" click="salir();"  width="150" icon="@Embed(source='assets/delete-icon_24.png')"/>
+		
+	</s:TitleWindow>
+
+</s:Application>

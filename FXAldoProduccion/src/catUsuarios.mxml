@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+    backgroundAlpha=".1"
+	applicationComplete="validateUser('catUsuarios.swf');" 
+	pageTitle="Catálogo de Usuarios">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;
+			
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+			private var checkPWD:RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)[a-zA-Z0-9\S]{8,}$/;
+			
+			private function checkMail(myCtrl:TextInput):void
+			{
+				if(expMail.test(myCtrl.text))			
+					myCtrl.errorString = "";
+
+				else 
+				{				
+					myCtrl.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+				}			
+			}
+								
+			private function checkPass(chkCtrl:TextInput):void
+			{            
+				if(checkPWD.test(chkCtrl.text))
+				{
+					chkCtrl.errorString = "";
+				}
+				else
+				{    
+					chkCtrl.errorString  =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Mayúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un Caracter Especial”";
+					return;     
+				}
+				
+				if(txtConfirmPass.text.length > 0 && txtPass.text.length > 0)
+				{
+					if(txtPass.text == txtConfirmPass.text)
+					{
+						txtPass.errorString = "";
+						txtConfirmPass.errorString = "";
+					}
+					else
+					{				
+						txtPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+						txtConfirmPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+					}	
+				}	
+				
+			}
+			
+			private function guardarUsuario():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(txtCuenta.text.search(patternBlank) != -1 )
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta no debe llevar espacios en blanco.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La cuenta no debe llevar espacios en blanco.";
+					return;
+				}
+				
+				if(txtCuenta.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta es un campo requerido, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La Cuenta es requerida.";
+					return;
+				}
+				
+				if(txtNombre.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Nombre es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtNombre.errorString = "El Nombre es requerido.";
+					return;
+				}
+				if(txtApPatern.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Apellido Paterno es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtApPatern.errorString = "El Apellido Paterno es requerido.";
+					return;
+				}	
+				
+				if(txtPass.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La contraseña es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtPass.errorString = "La contraseña es un campo requerido.";
+					return;
+				}
+				
+				if(txtConfirmPass.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La confirmación de contraseña es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtConfirmPass.errorString = "La confirmación de contraseña es un campo requerido.";
+					return;
+				}
+				
+				if(txtPass.text != txtConfirmPass.text)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Las dos contraseñas deben de ser iguales, favor de corregirlas.","Aviso",Alert.OK,null,null, iconAlert);
+					txtConfirmPass.errorString = "Las dos contraseñas deben de ser iguales.";
+					return;
+				}
+				
+				if (txtPass.text.length > 0)
+				{
+					if(!checkPWD.test(txtPass.text))
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La contraseña no contiene con los requisitos mínimos de seguridad.","Aviso",Alert.OK,null,null, iconAlert);
+						
+						txtPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Mayúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un Caracter Especial”";
+						return;
+					}
+				}
+				
+				if (txtConfirmPass.text.length > 0)
+				{
+					if(!checkPWD.test(txtConfirmPass.text))
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La contraseña no contiene con los requisitos mínimos de seguridad.","Aviso",Alert.OK,null,null, iconAlert);
+
+						txtConfirmPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Mayúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un Caracter Especial”";
+						return;
+					}
+				}	
+				
+				if(txtMail.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El E-mail es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMail.errorString = "El E-mail es requerido.";
+					return;					
+				}
+				
+				if(!expMail.test(txtMail.text))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato de Correo Electrónico es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMail.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+					return;
+				}
+				
+				if(existeUser.text == "0")
+				{
+					Send(572); //Guarda Usuario
+					
+					ttwUser.visible = false;
+					cleanCtrls();
+					cleanCtrlsAudit();
+					gvwSucursales.dataProvider = null;
+					
+					Send(571); //Carga Grid Usuarios 
+				}
+				
+				else if(existeUser.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta es inválida, ingresela de nuevo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "Ingrese de nuevo la cuenta.";
+					return;
+				}
+				
+				else if(existeUser.text == "1")
+				{
+					existUser();
+				}
+			}
+			
+			private function isUserValid():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				existeUser.text == "";
+				if(txtCuenta.text.search(patternBlank) != -1 )
+				{
+					txtCuenta.errorString = "La Cuenta no debe llevar espacios en blanco";	
+					return;
+				}
+				
+				else if(txtCuenta.text.length == 0)
+				{
+					txtCuenta.errorString = "La Cuenta es requerida";	
+					return;
+				}
+				
+				else
+					txtCuenta.errorString = "";	
+				
+				Send(578); //Verifica que no exista el Usuario
+			}
+			
+			private function cleanCtrls():void
+			{
+				txtMail.text = "";
+				txtNombre.text = "";
+				txtConfirmPass.text = "";
+				txtPass.text = "";
+				txtApMAtern.text = "";
+				txtApPatern.text = "";
+				txtCuenta.text = "";
+				existeUser.text = "";
+			}
+			
+			private function cleanCtrlsAudit():void
+			{
+				//Ctrls Ocultos
+				txtIdUser.text= "";
+				txtUserxSuc.text = "";
+			}
+			
+			private function cleanDGVW():void
+			{
+				//GW
+				cmbSelectSucursal.selectedIndex = 0;
+				txtAccount.text = "";
+				gvwUser.dataProvider = null;
+				gvwSucursales.dataProvider = null;
+			}
+			
+			private function validaUser(ttwOption:int):void
+			{
+				if (txtIdUser.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un Usuario.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if (ttwOption == 1) //Muestra TTW para editar Usuario
+				{
+					txtEditCorreo.text = "";
+					txtEditNombre.text = ""; 
+					txtEditApPatern.text = ""; 
+					txtEditApMatern.text = "";
+					
+					Send(583); //Trae datos de User a Editar
+					
+					ttwEditMail.visible = true;
+					return;
+				}
+				
+				else if (ttwOption == 2) //Muestra TTW para agregar Sucursal
+				{
+					cmbSucAdd.selectedIndex = 0;
+					ttwSucxUser.visible = true;
+					return;
+				}
+				
+				else if (ttwOption == 3) //Elimina Usuario
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Está seguro que desea eliminar el registro?","Aviso",Alert.YES|Alert.NO, null, eliminarUser, iconDel);
+				}
+			}
+			
+			private function eliminarUser(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(576); //Elimina Usuario
+					gvwSucursales.dataProvider = null;
+					Send(571); //Carga Grid Usuarios
+				}
+			}
+			
+			private function validaRFC():void
+			{
+				txtIdUser.text= "";
+				txtUserxSuc.text = "";
+				
+				if(cmbSelectSucursal.selectedIndex > 0)
+				{
+					cleanCtrls();
+					gvwSucursales.dataProvider = null;
+					
+					Send(571); //Actualiza GridView Usuarios
+				}
+				
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una Sucursal.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+			}
+			
+			private function validaCorreo():void
+			{
+				if(txtEditNombre.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Nombre es una campo obligatorio, favor de insertarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditNombre.errorString = "Inserte el Nombre.";
+					return;
+				}
+				
+				if(txtEditApPatern.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Apellido Paterno es una campo obligatorio, favor de insertarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditApPatern.errorString = "Inserte el Apellido Paterno.";
+					return;
+				}
+				
+				if(txtEditCorreo.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Inserte un Correo Electrónico.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditCorreo.errorString = "Inserte un Correo Electrónico.";
+					return;
+				}
+				
+				if(!expMail.test(txtEditCorreo.text))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato de Correo Electrónico es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditCorreo.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+					return;
+				}
+				
+				Send(564); //Actualiza Usuario
+				Send(571);//Actualiza Data Grid Usuarios
+				
+				gvwSucursales.dataProvider = null;
+				ttwEditMail.visible = false;
+			}
+			
+			private function validaSucursalxUser():void
+			{
+				if(cmbSucAdd.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una Sucursal.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbSucAdd.errorString = "Seleccione una Sucursal.";
+					return;
+				}
+				Send(574); //Agrega a Sucursales x Usuario
+				Send(581); //Actualiza Grid Sucursales x Usuario
+				
+				txtUserxSuc.text = "";
+				ttwSucxUser.visible = false;
+				cmbSucAdd.selectedIndex = 0;
+			}
+			
+			private function validaSucxUser():void
+			{
+				if (txtUserxSuc.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione la Sucursal a Eliminar.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				else
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Está seguro que desea eliminar el registro?","Aviso",Alert.YES|Alert.NO, null, eliminarUserxSuc, iconDel);
+				}
+			}
+			
+			private function eliminarUserxSuc(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES)
+				{
+					Send(577); //Elimina SucursalesxUsuario
+					Send(581); //Actualiza Data Grid Sucursales x Usuario
+					
+					txtUserxSuc.text = "";
+				}
+			}
+			
+			private function selectIdSucursales():void
+			{
+				if (gvwSucursales.dataProvider != null)
+					txtUserxSuc.text = gvwSucursales.selectedItem["0"].toString();
+			}
+			
+			private function selectIdUser():void
+			{
+				if (gvwUser.dataProvider != null)
+				{
+					txtIdUser.text = gvwUser.selectedItem["0"].toString();
+					Send(581); //Actualiza Grid Sucursales x Usuario
+				}
+			}
+			
+			private function existUser():void
+			{
+				if(parseInt(existeUser.text) >= 1)
+				{
+					ttwUser.visible = false; 
+					
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					//Alert.show("Ya existe registro de éste Usuario en el sistema. ¿Desea agregarlo al listado de Sucursales de su empresa?.","Aviso",Alert.YES|Alert.NO, null, agregarUserxSuc, iconAlert);
+					Alert.show("Ya existe registro de éste Usuario en el sistema. Si desea agregar más sucursales a un usuario, de clic sobre él y vaya a la tabla Sucursales Asignadas, y asocie las sucursales que desee.","Aviso",Alert.OK, null, null, iconAlert);
+				}
+			}
+			
+			private function agregarUserxSuc(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail == Alert.YES) 
+				{
+					Send(617); // Inserta Usuario x Sucursal
+					
+					cleanCtrlsAudit();
+					gvwSucursales.dataProvider = null;
+					Send(571); //Actualiza GridView Usuarios	
+				}
+				else if (eventObj.detail == Alert.NO) 
+				{
+					cleanCtrls();
+					cleanCtrlsAudit();
+				}
+			}
+			
+			private function validaMostarTTWAgregar():void
+			{
+				if(cmbSelectSucursal.selectedIndex > 0)
+				{
+					cleanCtrls();
+					ttwUser.visible = true;
+				}	
+				
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una Sucursal.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+			}
+				
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Usuarios" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="15" paddingBottom="5">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="5" paddingTop="5" paddingBottom="5" verticalAlign="bottom">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingTop="5" paddingBottom="5">
+							<s:Label text="USUARIOS" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+							<s:TextInput id="txtIdUser" width="38" maxChars="50" visible="false"/>
+							<s:Label text="*Sucursal:  "  height="24" verticalAlign="middle" fontWeight="bold"/>
+							<s:ComboBox creationComplete="Send(582);" id="cmbSelectSucursal" width="290" x="457" height="24" />
+							<s:Label text="Filtrar por Cuenta:  "  height="24" verticalAlign="middle"/>
+							<s:TextInput x="369" y="43" id="txtAccount" width="125" maxChars="50" tabIndex="1" height="24"/>
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="validaRFC();" height="24" tabIndex="2" width="100"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrls();cleanCtrlsAudit();cleanDGVW();Send(582);Send(573);" height="24" tabIndex="3" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<mx:DataGrid id="gvwUser" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectIdUser();">
+							<mx:columns>
+								<mx:DataGridColumn headerText="idUser" 					dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Cuenta de Usuario" 					dataField="1" width="40"/>
+								<mx:DataGridColumn headerText="Nombre" 					dataField="2" width="50"/>
+								<mx:DataGridColumn headerText="Apellido Paterno" 		dataField="3" width="50"/>
+								<mx:DataGridColumn headerText="Apellido Materno" 		dataField="4" width="50"/>
+								<mx:DataGridColumn headerText="E-Mail" 					dataField="5" width="50"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="bottom">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingTop="5" paddingBottom="5">
+							<s:Label text="SUCURSALES ASIGNADAS" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+							<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="validaUser(3);" height="24" tabIndex="6" width="115" toolTip="Eliminar Usuario"/>
+							<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="validaMostarTTWAgregar();" height="24" tabIndex="4" width="115" toolTip="Agregar Usuario"/>
+							<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="validaUser(1);" height="24" tabIndex="5" width="115" x="772"  toolTip="Editar E-Mail"/>
+						</s:HGroup>
+					</s:HGroup>
+				</s:VGroup>
+		
+				<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+					<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="1" paddingLeft="1" paddingTop="5" paddingBottom="5">
+							<mx:DataGrid id="gvwSucursales" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectIdSucursales();">
+								<mx:columns>
+									<mx:DataGridColumn headerText="idUserXSuc" 		dataField="0" width="50" visible="false"/>
+									<mx:DataGridColumn headerText="idUser" 			dataField="1" width="50" visible="false"/>
+									<mx:DataGridColumn headerText="idSucursal" 		dataField="2" width="50" visible="false"/>
+									<mx:DataGridColumn headerText="Sucursal" 		dataField="3" width="40"/>
+								</mx:columns>
+							</mx:DataGrid>
+						</s:VGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+							<s:TextInput id="txtUserxSuc" width="0" maxChars="50" visible="false"/>
+							<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="validaSucxUser();" height="24" tabIndex="8" width="115" toolTip="Eliminar Sucursal a Usuario"/>
+							
+							<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="validaUser(2);" height="24" tabIndex="7" width="115" x="765" toolTip="Agregar Sucursal a Usuario"/>
+						</s:HGroup>	
+					</s:VGroup>
+				</s:HGroup>	
+				
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>
+	
+	<s:TitleWindow width="658" height="222" title="Agregar Usuario" id="ttwUser" visible="false" close="ttwUser.visible=false;cleanCtrls();" horizontalCenter="0" verticalCenter="-14">
+			<s:Label text="*Cuenta" x="34" y="31" fontWeight="bold"/>
+			<s:Label text="*E-mail" x="342" y="81" fontWeight="bold"/>
+			<s:Label text="*Contraseña" x="34" y="81" fontWeight="bold"/>
+			<s:Label text="*Nombre" x="179" y="30" fontWeight="bold"/>
+			<s:Label text="*Confirmación Contraseña" x="179" y="81" fontWeight="bold"/>
+			<s:Label text="*Apellido Paterno" x="342" y="30" fontWeight="bold"/>
+			<s:Label text="Apellido Materno" x="487" y="30"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="34" y="160" fontWeight="bold"/>
+		
+			<s:TextInput x="342" y="94" id="txtMail" change="if(txtMail.text.length != 0) checkMail(txtMail);" width="135" tabIndex="26"/>
+			<s:TextInput x="179" y="43" id="txtNombre" width="153" tabIndex="21" focusOut="if(txtNombre.text.length > 0) txtNombre.errorString='';"/>
+			<s:TextInput x="179" y="94" id="txtConfirmPass" change="if(txtPass.text.length != 0) checkPass(txtPass)" width="153" displayAsPassword="true" tabIndex="25"/>
+			<s:TextInput x="34" y="94" id="txtPass" change="if(txtPass.text.length != 0) checkPass(txtPass)" width="135" displayAsPassword="true" tabIndex="24"/>
+			<s:TextInput x="487" y="43" id="txtApMAtern" width="135" tabIndex="23"/>
+			<s:TextInput x="342" y="43" id="txtApPatern" width="135" tabIndex="22" focusOut="if(txtApPatern.text.length > 0) txtApPatern.errorString='';"/>
+			<s:TextInput x="34" y="44" id="txtCuenta" focusOut="isUserValid();" width="135" tabIndex="20" maxChars="100"/>
+		
+			<mx:Button x="507" y="148" icon="@Embed(source='newIcons/accept_24.png')" label="Guardar" click="guardarUsuario();" height="24" tabIndex="28" width="115" toolTip="Guardar Usuario"/>
+			<mx:Button x="381" y="148" icon="@Embed(source='newIcons/delete_24.png')" label="Cancelar" click="ttwUser.visible=false;cleanCtrls();" height="24" tabIndex="29" width="115" toolTip="Cancelar"/>
+			<s:TextInput id="existeUser" width="38" maxChars="50" visible="false" valueCommit="existUser();"/>
+	</s:TitleWindow>
+	
+	<s:TitleWindow width="520" height="195" title="Editar Usuario" id="ttwEditMail" visible="false" close="ttwEditMail.visible=false;" horizontalCenter="0" verticalCenter="-28">
+		<s:Label text="*Correo Electrónico" x="15" fontWeight="bold" y="74"/>
+		<s:Label text="Todos los campos marcados con *, son obligatorios." x="15" y="132" fontWeight="bold"/>
+		<s:Label text="*Nombre(s)" x="15" y="28" fontWeight="bold"/>
+		<s:Label text="*Apellido Paterno" x="164" y="28" fontWeight="bold"/>
+		<s:Label text="Apellido Materno" x="314" y="28" fontWeight="normal"/>
+		
+		<s:TextInput x="15" y="40" id="txtEditNombre" width="140" height="22" focusOut="if(txtEditNombre.text.length > 0) txtEditNombre.errorString='';"/>
+		<s:TextInput x="164" y="40" id="txtEditApPatern" width="141" focusOut="if(txtEditApPatern.text.length > 0) txtEditApPatern.errorString='';"/>
+		<s:TextInput x="314" y="40" id="txtEditApMatern" width="141"/>
+		<s:TextInput x="15" id="txtEditCorreo" width="140" change="if(txtEditCorreo.text.length != 0) checkMail(txtEditCorreo);" y="86"/>
+		
+		<mx:Button x="353" y="99" icon="@Embed(source='newIcons/accept_24.png')" label="Guardar" click="validaCorreo();" height="24" tabIndex="10" width="115"/>
+	</s:TitleWindow>
+	
+	<s:TitleWindow width="458" height="158" title="Agregar Sucursal a Usuario" id="ttwSucxUser" visible="false" close="ttwSucxUser.visible=false;" horizontalCenter="0" verticalCenter="-64">
+		<s:Label text="*Sucursal" x="15" y="19" fontWeight="bold"/>
+		<s:Label text="Todos los campos marcados con *, son obligatorios." x="15" y="95" fontWeight="bold"/>
+		<s:ComboBox x="80" y="13" creationComplete="Send(573);" id="cmbSucAdd" width="339"/>
+		<mx:Button x="269" y="57" icon="@Embed(source='newIcons/add_24.png')" label="Agregar Sucursal" click="validaSucursalxUser()" height="24" tabIndex="10" width="150"/>
+	</s:TitleWindow>
+		
+
+	
+</s:Application>

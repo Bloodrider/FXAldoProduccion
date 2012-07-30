@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1" pageTitle="Detalle de Proveedores"
+	applicationComplete="validateUser('detalleProveedores.swf');">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+		import com.Captcha;	
+		import com.ExcelExports;
+		import mx.controls.Alert;
+		import mx.events.*;
+		
+		private function exportOprClnXLS():void
+		{
+			if(resumenClientesProveedor.dataProvider != null)
+				com.ExcelExports.fromGrid(this.resumenClientesProveedor,"Operaciones de Clientes.xls", new Object());
+			
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No existen registros para exportar.","Aviso",Alert.OK,null,null, iconAlert);	
+				return;
+			}
+		}
+		
+		private function exportDtlOprClnXLS():void
+		{
+			if(detalleClientePA.dataProvider != null )
+				com.ExcelExports.fromGrid(this.detalleClientePA,"Detalle de Operaciones de Clientes.xls", new Object());
+				
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No existen registros para exportar.","Aviso",Alert.OK,null,null, iconAlert);	
+				return;
+			}
+		}
+		
+		private function cargaDetalle():void
+		{
+			if (resumenClientesProveedor.selectedIndex!=-1)
+			{
+				try
+				{
+					detalleCliente.isPopUp = true;	
+					detalleCliente.visible = true;
+					idGridCCFE.text=resumenClientesProveedor.selectedItem["0"].toString();			
+					Send(796);
+				}
+				catch(Err:Error)
+				{
+				
+				}	
+			}
+		}
+		
+		private function limpiar():void
+		{
+			resumenClientesProveedor.dataProvider = null;
+			detalleCliente.visible=false;
+			detalleClientePA.dataProvider=null;
+			fechaFinFilter.text = "";
+			fechaIniFilter.text = "";
+
+		}
+		
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{
+			if (date != null)
+			{
+				cntlH.selectedDate = null;
+				cntlH.selectableRange = {
+					rangeStart:new Date(
+						date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()+1))
+				};
+			}
+		}
+		
+		private function validFilter():void
+		{
+			if(fechaIniFilter.text=="")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No se ha capturado una fecha inicial.","Aviso",Alert.OK,null,null, iconAlert);	
+				//fechaIniFilter.setFocus();
+			}
+			else if(fechaFinFilter.text=="")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No se ha capturado una fecha final.","Aviso",Alert.OK,null,null, iconAlert);	
+				//fechaIniFilter.setFocus();
+			}
+			else
+			{
+				Send(793);
+			}
+		}
+
+	]]>
+	</fx:Script>
+	
+	
+	<s:Panel visible="true" title="Transacciones de Clientes de Proveedor Autorizado" width="100%" height="100%" >
+		<s:VGroup x="0" y="0" width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+			<s:Group width="1376" height="20">
+				<s:Label text="Fecha Inicial" width="123" fontWeight="bold" x="840" y="10"/>
+				<s:Label text="Fecha Final" width="123" fontWeight="bold" x="972" y="8"/>
+			</s:Group>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+				<s:TextInput width="50" id="idGridCCFE" visible="false" valueCommit="detalleCliente.visible = true;"/>
+				<s:ComboBox creationComplete="Send(584);" id="cmbSelectEmpresa" width="325" tabIndex="1" height="24" x="185" visible="false"/>
+				<mx:Spacer width="50"/>
+				<mx:DateField id="fechaIniFilter" width="125" height="24" 
+							formatString="DD/MM/YYYY" 
+							dayNames="['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']" 
+							monthNames="['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']" 
+ 							creationComplete="DCInit('fechaIniFilter');" change="dateControl(fechaIniFilter,fechaFinFilter, DateField(event.target).selectedDate)" />
+				<mx:DateField id="fechaFinFilter" width="125" height="24"
+							formatString="DD/MM/YYYY" 
+							dayNames="['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']" 
+							monthNames="['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']" 
+							creationComplete="DCInit('fechaFinFilter');"/>
+				<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" click="validFilter();" width="100"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="100"/>
+				<mx:Button label="Exportar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="exportOprClnXLS();" width="100"/>
+			</s:HGroup>
+			
+			
+				<mx:DataGrid id="resumenClientesProveedor" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="detalleClientePA.dataProvider=null;cargaDetalle();" >
+					<mx:columns>
+						<mx:DataGridColumn headerText="RFC Emisor" 						dataField="0" width="120" visible="true"/>
+						<mx:DataGridColumn headerText="Nombre Emisor" 					dataField="1" width="320" visible="true"/>
+						<mx:DataGridColumn headerText="CFDI Generados" 					dataField="2" width="110" visible="true"/>
+						<mx:DataGridColumn headerText="CFDI Cancelados" 				dataField="3" width="110" visible="true"/>
+						<mx:DataGridColumn headerText="Acuses de Recepción (SAT)" 		dataField="4" width="165" visible="true"/>
+						<mx:DataGridColumn headerText="Acuses de Cancelación (SAT)" 	dataField="5" width="165" visible="true"/>
+					</mx:columns>
+				</mx:DataGrid>
+
+			
+		</s:VGroup>
+		<s:TitleWindow id="detalleCliente" width="832" height="499" verticalCenter="0" horizontalCenter="0" title="Detalle transacciones del Cliente" visible="false" close="detalleCliente.visible=false;">
+			<mx:DataGrid width="807" id="detalleClientePA" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="382" y="42" x="9">			
+				<mx:columns>				
+					<mx:DataGridColumn headerText="Tipo de Operación" dataField="0" width="50"/>
+					<mx:DataGridColumn headerText="UUID de CFDI" dataField="1" width="200"/>
+					<mx:DataGridColumn headerText="Fecha-Hora de CFDI" dataField="4" width="50"/>
+					<mx:DataGridColumn headerText="Fecha de Proceso" dataField="5" width="50"/>
+					<mx:DataGridColumn headerText="Serie" dataField="2" width="50"/>
+					<mx:DataGridColumn headerText="Folio" dataField="3" width="50"/>
+					<mx:DataGridColumn headerText="Tipo de CFDI" dataField="6" width="50"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Button label="Exportar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="exportDtlOprClnXLS();" width="100" x="716" y="10"/>
+		</s:TitleWindow>
+	</s:Panel>
+
+			
+
+
+	
+	
+</s:Application>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:SkinnableDataContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+						  xmlns:s="library://ns.adobe.com/flex/spark" 
+						  xmlns:mx="library://ns.adobe.com/flex/mx"
+						  autoDrawBackground="true" width="140" height="26">
+	<fx:Script>
+		<![CDATA[
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			
+			private function incrementaHora():void
+			{
+				if(hora.text == "24")
+				{
+					hora.text = "1"
+				}
+				else
+				{
+					hora.text = (int(hora.text) + 1).toString();
+				}
+				
+			}
+		]]>
+	</fx:Script>
+	
+	<s:HGroup width="100%" height="100%" paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5"  horizontalAlign="center" verticalAlign="middle">
+		<s:TextInput width="30" text="00" borderVisible="false" click="incrementaHora();" id="hora"/><s:Label text=":"/><s:TextInput width="30" text="00" borderVisible="false" id="minuto"/><s:Label text=":"/><s:TextInput width="30" text="00" borderVisible="false" id="segundo"/>
+	</s:HGroup>
+</s:SkinnableDataContainer>

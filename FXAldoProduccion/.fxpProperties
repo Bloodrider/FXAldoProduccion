@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fxpProperties abbreviated="false" authoringTool="Flex Builder" compiles="true" parentProject="98bd503d-0211-4dca-86d6-4dc2673b20c9" projectUUID="98bd503d-0211-4dca-86d6-4dc2673b20c9" sdkVersion="4.0.0" uuid="f6a0b6a5-fc16-4f34-a683-702141761dcb" version="4">
+  <projects/>
+  <src/>
+  <swc>
+    <linked location="sdkPlaceHolder" path="sdkPlaceHolder" position="0" uuid="f6a0b6a5-fc16-4f34-a683-702141761dcb"/>
+    <linked location="C:/Users/Hp User/Adobe Flash Builder 4/facturaxion/libs" path="/libs" position="1" uuid="7c87e19b-9467-4d67-9bc1-9b2b60a6d4c9"/>
+    <linked location="C:/Users/Hp User/Adobe Flash Builder 4/facturaxion/libs/flexiframe.swc" path="/libs/flexiframe.swc" position="2" uuid="7c87e19b-9467-4d67-9bc1-9b2b60a6d4c9"/>
+  </swc>
+  <misc/>
+  <theme/>
+</fxpProperties>

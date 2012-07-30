@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<actionScriptProperties mainApplicationPath="fx.mxml" projectUUID="98bd503d-0211-4dca-86d6-4dc2673b20c9" version="6">
+  <compiler additionalCompilerArguments="-locale en_US  -services sconf.xml -optimize=true" autoRSLOrdering="true" copyDependentFiles="true" fteInMXComponents="false" generateAccessible="true" htmlExpressInstall="true" htmlGenerate="true" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" sourceFolderPath="src" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="false" useDebugRSLSwfs="true" verifyDigests="true" warn="true">
+    <compilerSourcePath/>
+    <libraryPath defaultLinkType="0">
+      <libraryPathEntry kind="4" path="">
+        <excludedEntries>
+          <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/flex.swc" useDefaultLinkType="false"/>
+        </excludedEntries>
+      </libraryPathEntry>
+      <libraryPathEntry kind="1" linkType="1" path="libs"/>
+      <libraryPathEntry kind="3" linkType="1" path="libs/flexiframe.swc" useDefaultLinkType="false"/>
+    </libraryPath>
+    <sourceAttachmentPath/>
+  </compiler>
+  <theme themeIsDefault="false" themeIsSDK="true" themeLocation="${SDK_THEMES_DIR}/samples/themes/spark_sky"/>
+  <applications>
+    <application path="catClientes.mxml"/>
+    <application path="cfdiZip.mxml"/>
+    <application path="sucursalesFacturaTSoporte.mxml"/>
+    <application path="facturizate.mxml"/>
+    <application path="cfdiRecibidosVC.mxml"/>
+    <application path="configFacturaT01102011.mxml"/>
+    <application path="principal.mxml"/>
+    <application path="fe120720112.mxml"/>
+    <application path="configFacturaT.mxml"/>
+    <application path="conceptosRenderer.mxml"/>
+    <application path="REC_AreaXEmpresa.mxml"/>
+    <application path="catCreditosxEmpresa.mxml"/>
+    <application path="cancelTransaction.mxml"/>
+    <application path="addendaPemexExplProd.mxml"/>
+    <application path="descargaAndromeda.mxml"/>
+    <application path="CopyofcatUsuariosFX.mxml"/>
+    <application path="facturizate27012012.mxml"/>
+    <application path="ComplementoDonatarias10.mxml"/>
+    <application path="detalleProveedores.mxml"/>
+    <application path="licenciaAndromeda.mxml"/>
+    <application path="invitaRecepcion.mxml"/>
+    <application path="busquedaEstatusLiberacion.mxml"/>
+    <application path="transactionsRest.mxml"/>
+    <application path="administracion.mxml"/>
+    <application path="catUsuariosFX.mxml"/>
+    <application path="activarUsuarioAndromeda.mxml"/>
+    <application path="addendaMabe.mxml"/>
+    <application path="catUsuariosFX09032012.mxml"/>
+    <application path="wizardConfig.mxml"/>
+    <application path="facturizateAntes.mxml"/>
+    <application path="catUsuariosVC.mxml"/>
+    <application path="facturizateOriginal.mxml"/>
+    <application path="FXInformativa.mxml"/>
+    <application path="catUsuariosFX26032012.mxml"/>
+    <application path="fxMIT.mxml"/>
+    <application path="ticketMIT.mxml"/>
+    <application path="facturizateMIT.mxml"/>
+    <application path="transacNoFacturadas.mxml"/>
+    <application path="cfdisRecibidos.mxml"/>
+    <application path="catRegimenesXEmpresa.mxml"/>
+    <application path="sucursalesFacturaT.mxml"/>
+    <application path="cfdiCancelacion05032010.mxml"/>
+    <application path="init.mxml"/>
+    <application path="catConceptosPartidaXEmpresa.mxml"/>
+    <application path="corresponsales.mxml"/>
+    <application path="catProductosFacturaxArea10042012.mxml"/>
+    <application path="catProductosFacturaxArea.mxml"/>
+    <application path="addendaNetoSer.mxml"/>
+    <application path="cfdiEmitidos.mxml"/>
+    <application path="FXCFDIGenerados.mxml"/>
+    <application path="facturizate13022012.mxml"/>
+    <application path="wizardConfigUPD.mxml"/>
+    <application path="cfdiCancelacion.mxml"/>
+    <application path="facturizateMIT27032012.mxml"/>
+    <application path="catProductosFacturaxSucursal.mxml"/>
+    <application path="fx.mxml"/>
+  </applications>
+  <modules/>
+  <buildCSSFiles/>
+</actionScriptProperties>
+
+

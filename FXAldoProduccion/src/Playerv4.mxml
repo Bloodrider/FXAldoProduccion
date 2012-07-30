@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				xmlns:s="library://ns.adobe.com/flex/spark" width="131" height="170" >
+	<s:transitions>
+		<s:Transition fromState="normal" toState="open">
+			<s:Fade id="cce" target="bc"  alphaFrom="0" alphaTo="1"  />
+		</s:Transition>
+	</s:transitions>
+	<!--<mx:Canvas width="100%" height="100"   
+			   color="#56433" creationCompleteEffect="{cce}" >
+		
+		
+		
+	</mx:Canvas>-->
+	<s:HGroup width="131" height="170">
+		<s:BorderContainer id="bc" width="131" height="170"   
+						   color="#490A0A" backgroundImage="@Embed(source='assets/imgXML-170.png')"  
+						   creationCompleteEffect="{cce}" x="0" y="0"  >
+			
+		
+			<s:Label color="#000000" width="100%"  text="&lt;Emisor: {data[3]}&gt;"    y="91" fontSize="10" fontWeight="bold" fontFamily="Verdana" textAlign="center" x="0"/>
+			<s:Label color="#000000" width="100%" text="&lt;Receptor: {data[4]}&gt;"   y="104" fontSize="10" fontStyle="italic" fontFamily="Verdana" textAlign="center" x="0"/>
+			<s:Label color="#000000" width="100%" text="&lt;Serie: {data[7]}&gt;"   y="62" fontSize="8" fontWeight="bold"  fontFamily="Verdana" textAlign="right" x="0"/>
+			<s:Label color="#000000" width="100%" text="&lt;Folio: {data[8]}&gt;"  y="74" fontSize="8" fontWeight="bold"  fontFamily="Verdana" textAlign="right" x="0"/>
+			<s:Label color="#000000" width="100%" text="&lt;Total Doc.: {data[9]}&gt;"   y="130" fontSize="9"  fontFamily="Verdana" textAlign="center" x="0"/>
+			<s:Label color="#000000" width="100%" text="&lt;Total IVA: {data[10]}&gt;"  y="146" height="11" fontSize="9"  fontFamily="Verdana" textAlign="center"/>
+			
+			
+			
+		</s:BorderContainer>
+	</s:HGroup>
+	
+	
+	
+</s:ItemRenderer>
+
+

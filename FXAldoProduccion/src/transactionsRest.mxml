@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	width="100%" height="100%"
+	backgroundColor="#153259" 
+	backgroundAlpha="0"
+	applicationComplete="validateUser('transactionsRest.swf');">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			
+			private function guardarTransaccion():void
+			{
+				if(cmbSucursal.selectedIndex < 1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione la Sucursal en la que se efectúa la operación.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbSucursal.errorString = "La Sucursal es un campo obligatorio.";
+					return;
+				}
+				
+				if(cmbConceptos.selectedIndex < 1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione el Concepto por lo que se efectúa la operación.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbConceptos.errorString = "El Concepto es un campo obligatorio.";
+					return;
+				}
+				
+				if(txtTicket.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Número de Ticket es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtTicket.errorString = "El Número de Ticket es un campo obligatorio.";
+					return;
+				}
+				
+				if(txtMonto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Monto es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMonto.errorString = "El Monto es un campo obligatorio.";
+					return;
+				}
+				
+				if(parseFloat(txtMonto.text) == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Monto debe ser un valor mayor a Cero, favor de verificar.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMonto.errorString = "El Monto debe ser un valor mayor a cero.";
+					return;
+				}
+				
+				if(txtMetodoPago.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Método de Pago es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMetodoPago.errorString = "El Método de Pago es un campo obligatorio.";
+					return;
+				}
+				
+				if((txtDigitosTarjeta.text.length > 0) && (txtDigitosTarjeta.text.length < 4))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe insertar por lo menos 4 dígitos para continuar.","Aviso",Alert.OK,null,null, iconAlert);
+					txtDigitosTarjeta.errorString = "Debe insertar por lo menos 4 dígitos.";
+					return;
+				}
+				
+				if((parseInt(txtExisteOP.text) > 0) || (txtExisteOP.text.length == 0))
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("Este Número de Operación ya existe en el sistema para esta Sucursal. Favor de Verificar.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				Alert.yesLabel = "Si";
+				Alert.noLabel = "No";
+				Alert.show("¿Está seguro que desea enviar la transacción para esta Sucursal?","Aviso",Alert.YES|Alert.NO, null, enviaTrans, iconAlert);
+			}
+			
+			private function enviaTrans(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(1379); //Inserta Transaccion
+					cleanCtrlsAudit();
+				}
+			}
+			
+			private function cleanCtrlsAudit():void
+			{
+				txtMonto.text = "";
+				txtTicket.text = "";
+				txtMetodoPago.text = "Efectivo"; 
+				txtDigitosTarjeta.text = "";
+				cmbSucursal.selectedIndex = 0;
+				cmbConceptos.selectedIndex = 0;
+				
+				txtExisteOP.text = "";
+				txtConcepto.text = "";
+			}
+			
+			private function cleanCtrls():void
+			{
+				txtMonto.text = "";
+				txtTicket.text = "";
+				txtMetodoPago.text = "Efectivo"; 
+				txtDigitosTarjeta.text = "";
+				cmbConceptos.selectedIndex = 0;
+				cmbConceptos.selectedIndex = 0;
+				
+				txtExisteOP.text = "";
+				txtConcepto.text = "";
+			}
+			
+			private function validaOp():void
+			{
+				if(txtTicket.text.length > 0)
+				{
+					Send(686); //Existe Transaccion	
+				}
+			}
+			
+			private function conceptoInsert():void
+			{
+				if(cmbConceptos.selectedIndex > 0)
+				{
+					txtConcepto.text = cmbConceptos.selectedItem[1].toString();
+				}
+			}
+			
+			private function onButton(btn:BorderContainer):void
+			{
+				btn.setStyle("backgroundAlpha",1.0);
+				btn.setStyle("borderVisible",true);
+				btn.setStyle("borderColor",0xcedbef);
+				btn.setStyle("backgroundColor",0xcedbef);										
+			}
+			
+			private function offButton(btn:BorderContainer):void
+			{
+				btn.setStyle("backgroundAlpha",0.0);
+				btn.setStyle("borderVisible",false);
+				btn.setStyle("borderColor",0x0);
+				btn.setStyle("backgroundColor",0x0);
+			}
+		
+		]]>
+	</fx:Script>
+	
+	<s:Panel visible="true" title="Captura de Transacciones" width="585" verticalCenter="0" horizontalCenter="0" height="394">
+		<s:Group left="5" right="5" top="5" bottom="5">		
+			<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="100%" width="100%" cornerRadius="3" id="imgBackGround" x="-5" y="-5">
+				<mx:Image source="assets/bgIMGTrans.png"/>
+			</s:BorderContainer>	
+				<!--<s:Group width="100%" height="100%">
+					<mx:Image source="assets/" x="175" y="5"  width="83" height="45"/>
+				</s:Group>-->
+			
+				<s:Group width="100%" height="100%">
+					
+					<s:BorderContainer width="100%" dropShadowVisible="true" borderVisible="false" backgroundAlpha="0.0" height="82" >
+						<s:HGroup width="100%" horizontalAlign="right" verticalAlign="middle" paddingLeft="5" paddingRight="10" x="0" y="0" paddingTop="0" >
+							<s:HGroup width="100%" verticalAlign="middle" paddingLeft="10" >
+								<mx:Image source="assets/transfer-icon-Reset_100.png" x="10" y="10" height="75"/>
+								<mx:Label text="Transacciones"  fontWeight="bold" fontSize="15" color="#FFFFFF" x="0" y="0"/>
+								<s:TextInput id="txtExisteOP" x="87" y="279" visible="false" editable="false" enabled="false" width="0"/>
+								<s:TextInput id="txtConcepto" x="130" y="279" visible="false" editable="false" enabled="false" width="0"/>								
+							</s:HGroup>
+							
+							<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top">				
+								<s:HGroup>
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+													   id="btnAddTransaction" click="guardarTransaccion();" rollOver="onButton(btnAddTransaction);" rollOut="offButton(btnAddTransaction);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+											<mx:Image source="assets/database_48.png"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+								<s:Label text="Enviar Transacción" color="#FFFFFF" fontWeight="bold" fontSize="13"/>
+							</s:VGroup>
+							<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top">				
+								<s:HGroup>
+									<s:BorderContainer backgroundAlpha="0" 
+													   dropShadowVisible="false" borderVisible="false" height="55" cornerRadius="3" width="80" 
+													   id="btnCleanCtrls" 
+													   click="cleanCtrlsAudit();" x="490" y="120" rollOver="onButton(btnCleanCtrls);" rollOut="offButton(btnCleanCtrls);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+											<mx:Image source="assets/transResert_icon_100.png" x="31" y="15" height="48" width="48"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+								<s:Label text="Reiniciar Valores" color="#FFFFFF" fontWeight="bold" fontSize="13"/>
+							</s:VGroup>
+							
+						</s:HGroup>
+					</s:BorderContainer>
+					
+					<s:Label x="92" y="145" text="Sucursal Emisora" color="#FCF8F8"/>
+					<s:Label x="263" y="196" text="Ticket" color="#FFFFFF"/>
+					<s:Label x="96" y="248" text="Método de Pago" color="#FFFFFF"/>
+					<s:Label x="218" y="248" text="Dígitos Tarjeta" color="#FFFFFF"/>
+					<s:TextInput id="txtMetodoPago" x="96" y="262" focusOut="if(txtMetodoPago.text.length > 0) txtMetodoPago.errorString=''" tabIndex="5" width="100" text="Efectivo" toolTip="En caso de tener más de un Método de Pago, separar con comas(,)"/>
+					<s:TextInput id="txtDigitosTarjeta" x="217" y="262" tabIndex="6" width="100" restrict="0-9," focusOut="if(txtDigitosTarjeta.text.length >= 4) txtDigitosTarjeta.errorString ='';" toolTip="En caso de tener más de un Método de Pago del tipo Tarjeta, separar los digitos de cada tarjet con comas(,)"/>
+					<s:Label x="381" y="196" text="Monto" color="#FFFFFF"/>
+					<s:Label x="95" y="197" text="Concepto" color="#FFFFFF"/>
+					
+					<s:TextInput id="txtMonto" x="381" y="210" focusOut="if(txtMonto.text.length > 0) txtMonto.errorString='';" restrict="0-9." tabIndex="4" width="100"/>
+					<s:TextInput id="txtTicket" x="263" y="210" focusOut="if(txtTicket.text.length > 0) txtTicket.errorString='';validaOp();" tabIndex="3" change="txtExisteOP.text=''; txtMonto.text=''" width="100"/>
+					<s:ComboBox id="cmbSucursal" x="93" y="159" width="388" creationComplete="Send(1380);" itemRenderer="renderTransactionRest" focusOut="if(cmbSucursal.selectedIndex != 0) cmbSucursal.errorString='';" change="cleanCtrls()" tabIndex="1"/>
+					<s:ComboBox id="cmbConceptos" x="95" y="209" width="150" creationComplete="Send(687);" focusOut="if(cmbConceptos.selectedIndex != 0) cmbConceptos.errorString=''; conceptoInsert();" change="conceptoInsert();" tabIndex="2"/>
+					
+				</s:Group>
+		</s:Group>			
+	</s:Panel>
+</s:Application>

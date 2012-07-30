@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF"
+	pageTitle="Cancela Factura"
+	applicationComplete="validateUser('cancelFact.swf');">
+	
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+
+		import mx.events.*;
+
+		/* [Embed(source="assets/del.png")]
+		[Bindable]
+		public var iconDel:Class;
+		 */
+		
+		private function cargaCancelar():void
+		{
+			try
+			{
+				if(gridCCFE.selectedItem!=null)
+				{
+					idGridCCFE.text=gridCCFE.selectedItem["0"].toString();
+					Send(330);
+				}
+			}
+			catch(Err:Error)
+			{
+				
+			}	
+		
+		}
+		private function cancelarFactura():void{
+			
+			//navigateToURL(new URLRequest(rutaPDF.text), "_blank");
+			if(observaciones.text !="")
+			{
+				Alert.yesLabel="Si";Alert.noLabel="No";Alert.show("¿Realmente quiere cancelar esta factura?","Confirmar",Alert.YES|Alert.NO, null, doCandelar, iconDel);
+			}
+			else 
+			{
+				Alert.show("Debe ingresar un motivo por el cual desea cancelar la factura.","Alerta",Alert.OK);
+			}
+			
+		}
+		
+		private function salir():void{
+			
+			pnCancelar.visible = false;
+			idGridCCFE.text = "";
+			
+		}
+		
+		
+		private function doCandelar(eventObj:CloseEvent):void{
+			if (eventObj.detail==Alert.YES) 
+			{
+					Send(287);//CANCELAR LA FACTURA
+					pnCancelar.visible =false;
+							
+			}
+		}
+		/*
+		private function openPDF():void{
+			
+			navigateToURL(new URLRequest(rutaPDF.text), "_blank");
+		}
+		
+		private function openXML():void{
+			
+			navigateToURL(new URLRequest(rutaXML.text), "_blank");
+		}
+		*/
+		
+	]]>
+	</fx:Script>
+	<s:Panel right="10" left="10" top="10" bottom="10" visible="true" title="Cancelar Documento Electrónico" >
+		
+		<s:VGroup x="0" y="0" width="100%" height="100%" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingTop="15">
+				<s:Label text="RFC" width="124" fontWeight="bold"/>
+				<s:Label text="Nombre" width="178" fontWeight="bold"/>
+				<s:Label text="Fecha Inicial" width="99" fontWeight="bold"/>
+				<s:Label text="Fecha Final" width="100" fontWeight="bold"/>
+				<s:Label text="Serie" width="72" fontWeight="bold"/>
+				<s:Label text="Folio" width="86" fontWeight="bold"/>
+				<s:Label text="Moneda" width="247" fontWeight="bold"/>
+			</s:HGroup>
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10" verticalAlign="middle">
+				<s:TextInput width="122" id="rfcFilter" />
+				<s:TextInput width="179" id="nombreFilter"/>
+				<mx:DateField id="fechaIniFiler" width="100"/>
+				<mx:DateField id="fechaFinFiler" width="100"/>
+				<s:TextInput width="70" id="serieFilter"/>
+				<s:NumericStepper id="folioFilter" width="85" maximum="50000000"/>
+				<s:ComboBox id="monedaFilter" width="160" creationComplete="Send(188);"></s:ComboBox>
+				<mx:Button label="Filtrar" icon="@Embed(source='assets/add.png')" height="32" click="Send(189);"/>
+			</s:HGroup>
+			
+			<s:TextInput width="179" id="idGridCCFE" visible="false" valueCommit="pnCancelar.visible = true;"/>
+			
+			<mx:DataGrid width="100%" id="gridCCFE" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+				<mx:click>cargaCancelar();</mx:click>
+				<mx:columns>
+					<mx:DataGridColumn headerText="#" dataField="0" width="50" visible="false"/>
+					<mx:DataGridColumn headerText="RFC" dataField="1" width="40"/>
+					<mx:DataGridColumn headerText="Nombre" dataField="2" width="50"/>
+					<mx:DataGridColumn headerText="Fecha" dataField="3" width="50"/>
+					<mx:DataGridColumn headerText="Serie" dataField="4" width="50"/>
+					<mx:DataGridColumn headerText="Folio" dataField="5" width="50"/>
+					<mx:DataGridColumn headerText="Total Impuestos" dataField="6" width="50"/>
+					<mx:DataGridColumn headerText="Total Factura" dataField="7" width="50"/>
+					<mx:DataGridColumn headerText="Estado" dataField="8" width="75"/>
+				</mx:columns>
+			</mx:DataGrid>
+			
+			
+		</s:VGroup>
+	</s:Panel>
+	
+	<s:TitleWindow width="546" height="214" title="Cancelación de facturas" id="pnCancelar" borderAlpha=".95" visible="false" close="pnCancelar.visible=false;"  horizontalCenter="0" verticalCenter="0">
+		<mx:Label x="10" y="12" text="*Motivo por el cual se desea cancelar la factura" width="361" fontWeight="bold" enabled="true" fontSize="11"/>
+		<mx:Button x="68" y="105" label="Cancelar Factura"  width="154" height="31" click="cancelarFactura();"/>
+		<mx:Button x="304" y="106" label="Salir" height="30" click="salir();"  width="154"/>
+		<s:TextArea id="observaciones" x="10" y="39" width="489.2"/>
+	
+	</s:TitleWindow>
+	
+</s:Application>

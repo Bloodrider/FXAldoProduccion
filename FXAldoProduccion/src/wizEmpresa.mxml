@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:s="library://ns.adobe.com/flex/spark"
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="gob.mx.utils.*" xmlns:local="*"
+	xmlns:ns2="com.flashdev.file.*" 
+	height="100%" width="100%">
+	
+<fx:Style source="fx.css"/>
+<fx:Script source="validateIsEmpty.as"/>
+<fx:Style>
+	@namespace s "library://ns.adobe.com/flex/spark";
+	
+	.headerStyle{
+		font-weight:bold;
+		text-align:center;
+		vertical-align:middle;
+	}
+</fx:Style>
+<fx:Script source="r3Take.as"/>
+<fx:Script>
+<![CDATA[
+	import mx.core.IFlexDisplayObject;
+	import mx.events.CloseEvent;
+	import mx.managers.PopUpManager;
+	
+	import spark.components.TitleWindow;
+	
+	protected var tlWindow:wizardConfig;
+	protected var tlWindowUPD:wizardConfigUPD;
+	
+	private function Estatus(event:Event):void
+	{
+		if(event.currentTarget.id == "window")
+		{	
+			this.window.text = event.currentTarget.text;
+			return;
+		}
+	}
+	
+	private function charger(op:int):void
+	{
+		if(op==1)
+		{
+			if(Number(window.text) > 0 && Number(window.text) < 7)
+			{
+				tlWindow = PopUpManager.createPopUp(this, wizardConfig, true) as wizardConfig;
+				PopUpManager.centerPopUp(tlWindow);		
+			
+				wizardConfig(tlWindow).window.text = window.text;
+				
+				wizardConfig(tlWindow).window.addEventListener("valueCommit", Estatus);
+			}
+		}
+		else if(op==2)
+		{
+			if(Number(windowUPD.text) > 0 && Number(windowUPD.text) < 7)
+			{
+				tlWindowUPD = PopUpManager.createPopUp(this, wizardConfigUPD, true) as wizardConfigUPD;
+				PopUpManager.centerPopUp(tlWindowUPD);		
+				
+				wizardConfigUPD(tlWindowUPD).idRegistro.text = idRegistro.text;
+				wizardConfigUPD(tlWindowUPD).windowUPD.text = windowUPD.text;
+				
+				wizardConfigUPD(tlWindowUPD).paso.addEventListener("valueCommit", Estatus);
+				wizardConfigUPD(tlWindowUPD).windowUPD.addEventListener("valueCommit", Estatus);
+				wizardConfigUPD(tlWindowUPD).idRegistro.addEventListener("valueCommit", Estatus);
+			}
+		}
+		
+		if (window.text == "finalizar")
+		{
+			PopUpManager.removePopUp(tlWindow);
+			window.text="";
+		}
+		else if (window.text == "recargar")
+		{
+			PopUpManager.removePopUp(tlWindow);
+			Send(739);//Preguntar si hay más sucursales sin configurar
+		}
+	}
+]]>
+</fx:Script>
+	<s:VGroup x="0" y="0" width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10" gap="10">
+		<mx:TabNavigator x="102" y="49" width="100%" height="100%">
+			<s:NavigatorContent id="tabTrabPetroleros" label="Autorización de Trabajos Petroleros" width="100%" height="100%">
+				<s:VGroup width="100%" height="100%">
+					<s:HGroup width="100%" height="100%" paddingBottom="5" paddingLeft="5" paddingRight="5">
+						<mx:Canvas width="100%" height="100%">
+							<s:TextInput x="39" y="50"  id="window" valueCommit="charger(1);" width="40" visible="true"/>
+							<s:TextInput x="39" y="70"  id="idRegistro" text="34373" width="40" visible="true"/>
+							<s:TextInput x="39" y="150"  id="windowUPD" valueCommit="charger(2);" width="40" visible="true"/>
+						</mx:Canvas>
+					</s:HGroup>
+				</s:VGroup>
+			</s:NavigatorContent>
+		</mx:TabNavigator>
+	</s:VGroup>
+	
+</s:Application>

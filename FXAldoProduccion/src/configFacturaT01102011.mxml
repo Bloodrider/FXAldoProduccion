@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	xmlns:components="com.hillelcoren.components.*"
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha="0">
+
+<fx:Script source="r3Take.as"/>
+<fx:Script>
+<![CDATA[
+	
+	import mx.controls.Alert;
+	import mx.core.IFlexDisplayObject;
+	import mx.events.CloseEvent;
+	import mx.managers.PopUpManager;
+	
+	import spark.components.*;
+	
+	private var validFormatRFC:String = "^[A-Za-zñÑ&]{3,4}[ |\-]{0,1}[0-9]{6}[ |\-]{0,1}[0-9A-Za-z]{3}$";			
+	private var expRfc:RegExp = new RegExp(validFormatRFC,"g");
+	
+	private function checkRFC(myCtrl:TextInput):void
+	{
+		if(expRfc.test(myCtrl.text) || (myCtrl.text.length == 0))
+		{
+			myCtrl.errorString = "";
+			validNextRFC.text = "1";
+		}
+		else
+		{				
+			myCtrl.errorString = "RFC Incorrecto\n\n" +
+				"Formato “AAA(A)aammddHHD”, en donde: \n" +
+				"AAA(A) = Siglas del contribuyente, alfanumérico. \n" +
+				"              Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+				"aammdd = Fecha de nacimiento, numérico (año,mes,día). \n" +
+				"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+				"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+				"Los caracteres alfabéticos deben ser mayúsculas.";
+			validNextRFC.text = "0";
+		}	
+	}
+	
+	private function validaConf(op:int):void
+	{
+		//op = 1 > Agregar
+		//op = 2 > Modificar
+		if(op == 1)
+		{
+			lblTitulo.text = "Agregar Configuración Factura T";
+			ttwConfigFact.title = "Agregar Configuración Factura T";
+			
+			txtRFC.enabled = true;
+			btnActualizarFacturaT.visible = false; 
+			btnGuardarFacturaT.visible = true;
+		}
+		
+		else
+		{
+			if(txtIdTransaccionLogin.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Seleccione la configuración de Factura-T que desea editar.","Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			
+			//Send(831); //Trae datos a editar
+			traeDatosEdit();
+			
+			lblTitulo.text = "Modificar Configuración Factura T";
+			ttwConfigFact.title = "Modificar Configuración Factura T";
+			
+			txtRFC.enabled = false;
+			btnActualizarFacturaT.visible = true; 
+			btnGuardarFacturaT.visible = false;
+		}
+		
+		ttwConfigFact.visible = true;
+	}
+	
+	private function pasaValorConf():void
+	{
+		if(gwvConfFacturaT.selectedIndex >= 0)
+		{
+			txtIdTransaccionLogin.text = gwvConfFacturaT.selectedItem[0].toString();
+			txtRFCTransaccionLogin.text = gwvConfFacturaT.selectedItem[1].toString();
+			txtRutaPortal.text = "https://fx.facturaxion.com/facturaxion/facturizate.swf?rfc=" +  txtRFCTransaccionLogin.text
+			txtImagen.text = gwvConfFacturaT.selectedItem[5].toString();
+			
+			imgFacturaT.source = txtImagen.text;
+			
+			btnCargaImg.enabled = true; 
+			btnCargaPortal.enabled = true;
+		}
+	}
+	
+	private function upComplete(op:int):void
+	{
+		if(op == 1)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("La imagen del Emisor ha sido actualizada correctamente.","Aviso",Alert.OK,null,null,iconOk);
+			
+			Send(830); //Actualiza DG
+			ttwUploader.visible = false;
+			cleanCtrlsConfig();	
+		}
+	}
+	
+	private function validaOpConfigFacturaT(op:int):void
+	{
+		//op = 1 > Guardar
+		//op = 2 > Actualizar
+		
+		if(op == 1)
+		{
+			if(txtRFC.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El RFC de la empresa es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+				txtRFC.errorString = "El RFC es un campo obligatorio.";
+				return;
+			}
+			
+			if(validNextRFC.text == "0")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El formato del RFC es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+				txtRFC.errorString = "El formato del RFC es incorrecto.";
+				return;
+			}
+			
+			if(txtExisteRFC.text != "0")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El RFC de la empresa emisora ya esta configurado para la solución Factura-T. favor de verificar","Aviso",Alert.OK,null,null, iconAlert);
+				txtRFC.errorString = "El formato del RFC ya se encuentra configurado.";
+				return;
+			}
+		}
+		
+		if(txtAccountWS.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El Account WS es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+			txtAccountWS.errorString = "El Account WS es un campo obligatorio.";
+			return;
+		}
+		
+		if(txtPassWS.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El password WS es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+			txtPassWS.errorString = "El password WS es un campo obligatorio.";
+			return;
+		}
+		
+		if(txtPortal.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El Portal del Cliente es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+			txtPortal.errorString = "El Portal del Cliente es un campo obligatorio.";
+			return;
+		}
+		
+		if(op == 1)
+		{
+			//Insertar una imagen GENERICA
+			Send(832); //Guardar Configuración
+		}
+		
+		else if(op == 2)
+		{	
+			Send(833); //Actualizar Configuración
+		}
+		
+		Send(830); //Actualiza DG
+		ttwConfigFact.visible = false;
+		cleanCtrlsConfig();	
+	}
+	
+	private function traeDatosEdit():void
+	{
+		txtRFC.text = gwvConfFacturaT.selectedItem[1].toString();
+		txtAccountWS.text = gwvConfFacturaT.selectedItem[2].toString(); 
+		txtPassWS.text = gwvConfFacturaT.selectedItem[3].toString(); 
+		txtPortal.text = gwvConfFacturaT.selectedItem[4].toString();
+	}
+	
+	private function cleanCtrls():void
+	{
+		cleanCtrlsConfig();
+		txtRFCEmp.text = "";
+		gwvConfFacturaT.dataProvider = null;
+	}
+	
+	private function cleanCtrlsConfig():void
+	{
+		txtRFC.text = "";
+		txtAccountWS.text = ""; 
+		txtPassWS.text =""; 
+		txtPortal.text = "http://www.facturaxion.com/";
+		lblTitulo.text = "";
+		txtIdTransaccionLogin.text = "";
+		txtRutaPortal.text = "";
+		txtImagen.text = ""; //Ruta de Imagen generica
+		txtExisteRFC.text = "";
+		
+		ttwConfigFact.title = "";
+		btnActualizarFacturaT.visible = false; 
+		btnGuardarFacturaT.visible = false;
+		
+		btnCargaImg.enabled = false; 
+		btnCargaPortal.enabled = false;
+	}
+		
+	private function validaCarga(op:int):void
+	{
+		//op = 1 > Carga de Imagen de Fondo
+		//op = 2 > Vincula al portal de FacturaT
+		if(op == 1)
+		{
+			if(txtIdTransaccionLogin.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Seleccione la configuración de Factura-T al que desea editar la Imagen.","Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			ttwUploader.visible = true;
+		}
+		
+		else if(op == 2)
+		{
+			if(txtIdTransaccionLogin.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Seleccione una configuración de Factura-T para vincular al portal.","Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			navigateToURL(new URLRequest(txtRutaPortal.text), '_blank');
+		}
+	}
+	
+	private function validaExisteRFC():void
+	{
+		if(txtRFC.text.length > 0)
+		{
+			Send(838); //Verifica si existe un RFC en transaccionLogin y regresa el conteo en el ctrl  txtExisteRFC
+		}
+	}
+
+	private function existeRFCTrans():void
+	{
+		if(txtExisteRFC.text.length > 0)
+		{
+			if(parseInt(txtExisteRFC.text) > 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El RFC de la empresa emisora ya esta configurado para la solución Factura-T. favor de verificar","Aviso",Alert.OK,null,null, iconAlert);
+				txtRFC.errorString = "El formato del RFC ya se encuentra configurado.";
+				txtRFC.text = "";
+			}
+		}
+	}
+	
+	private function realizaFiltro():void
+	{
+		Send(830); //Realiza filtro de busqueda
+	}
+]]>
+</fx:Script>
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel title="Configuración Factura-T" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" >
+				<s:HGroup width="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10" verticalAlign="middle">
+					<s:HGroup verticalAlign="middle">
+						<mx:Label text="Configuración Factura T"  fontWeight="bold"/>
+					</s:HGroup>	
+					<s:HGroup width="100%" verticalAlign="middle" horizontalAlign="right">
+						<mx:Label text="RFC Empresa:"  fontWeight="bold"/>
+						<s:TextInput id="txtRFCEmp" x="658" y="0" width="130" height="25" restrict="A-Za-z0-9" typographicCase="uppercase" maxChars="13"/>
+						<mx:Spacer width="10"/>
+
+						<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" click="realizaFiltro();" width="100"/>
+						<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="cleanCtrls();" width="100"/>
+					</s:HGroup>
+				</s:HGroup>
+				
+				<s:HGroup height="100%" width="100%" verticalAlign="middle" horizontalAlign="right">
+					<s:VGroup width="100%" height="100%" paddingTop="15" paddingLeft="10" paddingRight="10">
+						<mx:DataGrid id="gwvConfFacturaT" click="pasaValorConf();" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" y="50">
+							<mx:columns>
+								<mx:DataGridColumn headerText="idTransaccionLogin"			dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="RFC"				 			dataField="1" width="100"/>
+								<mx:DataGridColumn headerText="Account WS"					dataField="2" width="100"/>
+								<mx:DataGridColumn headerText="Password WS"					dataField="3" width="100"/>
+								<mx:DataGridColumn headerText="Portal"						dataField="4" width="100"/>
+								<mx:DataGridColumn headerText="Email"						dataField="6" width="100"/>
+								<mx:DataGridColumn headerText="Imagen"						dataField="5" visible="false" />
+							</mx:columns>
+						</mx:DataGrid>
+					</s:VGroup>
+					<s:VGroup width="50%" height="100%" paddingTop="15" paddingLeft="10" paddingRight="10">
+						<s:Label x="25" y="104" text="Imagen:" fontWeight="bold"/>
+						<s:VGroup width="100%" height="100%" paddingTop="15" paddingLeft="10" paddingRight="10" verticalAlign="middle" horizontalAlign="center">
+							<mx:Image id="imgFacturaT" source="assets/facturizate/VAAM130719H60/wallpaper.png" height="50%" width="100%"/>
+						</s:VGroup>
+					</s:VGroup>
+				</s:HGroup>
+				
+				
+				<s:HGroup width="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10" verticalAlign="middle" horizontalAlign="right">
+					<s:TextInput id="txtIdTransaccionLogin" width="10" height="25" visible="false"/>
+					<s:TextInput id="txtRutaPortal" width="10" height="25" visible="false"/>
+					<s:TextInput id="txtRFCTransaccionLogin" width="10" height="25" visible="false"/>
+					<s:TextInput id="txtImagen" width="10" height="25" visible="false"/>
+					<s:TextInput id="validNextRFC" visible="false" width="20" enabled="false"/>
+					<s:TextInput id="txtExisteRFC" width="10" height="25" visible="false" valueCommit="existeRFCTrans();"/>
+					
+					<mx:Button id="btnCargaImg" icon="@Embed(source='newIcons/3377-24.png')" label="Carga de Imagen" click="validaCarga(1);" height="24" width="151" toolTip="Carga de Imagen Factura-T" enabled="false"/>
+					<mx:Button id="btnCargaPortal" icon="@Embed(source='newIcons/2717-32.png')" label="Ir al Portal Factura-T" click="validaCarga(2);" height="24" width="151" toolTip="Ir al Portal Factura-T" enabled="false"/>
+					<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="validaConf(1);" height="24" width="115" toolTip="Agregar Configuración Factura-T"/>
+					<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="validaConf(2);" height="24" width="115" toolTip="Editar Configuración Factura-T"/>
+				</s:HGroup>
+			</s:VGroup>
+			
+			<s:TitleWindow width="572" height="270" title="" id="ttwConfigFact" visible="false" close="ttwConfigFact.visible = false;cleanCtrlsConfig();" verticalCenter="-40" horizontalCenter="-10">
+				<s:Group width="100%" height="100%">
+					<s:Label x="25" y="125" text="*Account WS" fontWeight="bold"/>
+					<s:Label x="25" y="89" text="*RFC:" fontWeight="bold"/>
+					<s:Label id="lblTitulo" x="100" y="34" text="" fontWeight="bold"/>
+					<s:Label x="184" y="125" text="*Password WS" fontWeight="bold"/>
+					<s:Label x="343" y="125" text="*Portal" fontWeight="bold"/>
+					<s:Label x="20" y="197" text="*Todos los campos marcados con (*) son obligatorios." fontWeight="bold"/>
+					
+					<s:TextInput id="txtRFC" x="57" y="81" width="120" height="25" typographicCase="uppercase" change="if(txtRFC.text!=&quot;&quot;)checkRFC(txtRFC);txtExisteRFC.text=''" restrict="A-Za-z0-9Ñ&amp;" maxChars="13" focusOut="validaExisteRFC();"/>
+					<s:TextInput id="txtAccountWS" x="24" y="138" width="150" height="25" focusOut="if(txtAccountWS.text.length > 0) txtAccountWS.errorString=''"/>
+					<s:TextInput id="txtPassWS" x="183" y="138" width="150" height="25" focusOut="if(txtPassWS.text.length > 0) txtPassWS.errorString=''"/>
+					<s:TextInput id="txtPortal" x="342" y="138" width="170" height="25" focusOut="if(txtPortal.text.length > 0) txtPortal.errorString=''" text="http://www.facturaxion.com/"/>
+					<mx:Image source="assets/1211806079.png" x="18" y="6" width="89" height="67"/>
+					
+					<mx:Button id="btnActualizarFacturaT" x="401" y="189" visible="false" icon="@Embed(source='newIcons/accept_24.png')" label="Actualizar" click="validaOpConfigFacturaT(2);" height="24" tabIndex="10" width="159" toolTip="Actualizar Configuración Factura T"/>
+					<mx:Button id="btnGuardarFacturaT" x="401" y="189" visible="false" icon="@Embed(source='newIcons/accept_24.png')" label="Guardar" click="validaOpConfigFacturaT(1);" height="24" tabIndex="10" width="115" toolTip="Guardar Configuración Factura T"/>
+				</s:Group>
+			</s:TitleWindow>
+			
+			<s:TitleWindow width="572" height="270" title="Carga de Imagen" id="ttwUploader" visible="false" close="ttwUploader.visible = false;cleanCtrlsConfig();Send(830);" verticalCenter="-40" horizontalCenter="-10">
+				<s:Group width="100%" height="100%">
+					<s:Label x="23" y="25" text="Carga de Imagen" fontWeight="bold"/>
+					<ns1:uploaderGen x="141" y="20" id="UploaderconfigFacturaT" height="177" width="291" 
+									 r3DS="DS_FE" 
+									 r3FilePath="C:\Inetpub\facturaxion\assets\facturizate\" 
+									 r3Param1="{txtRFCTransaccionLogin.text}" 
+									 r3Param2="assets\facturizate\"
+									 r3Param5="1"
+									 r3SQL="UPDATE transaccionLogin SET backgroundImage = @1 WHERE idTransaccionLogin = @0 AND ST = 1" 
+									 r3SQLArgs="F:I:{txtIdTransaccionLogin.text}"
+									 r3AshxPath="https://fx.facturaxion.com/facturaxion/uploadImgFacturaT.ashx" 
+									 uploadComplete="upComplete(1);"/>
+					<!--r3AshxPath="http://localhost:12846/facturaxionFX/uploadImgFacturaT.ashx"-->
+					
+					<mx:Button id="btnCerrarUploader" x="441" y="199" icon="@Embed(source='newIcons/accept_24.png')" label="Cerrar" click="ttwUploader.visible=false;cleanCtrlsConfig();Send(830);" height="24" width="115" toolTip="Cerrar Carga de Imagen Factura T"/>
+				</s:Group>
+			</s:TitleWindow>
+			
+		</s:Panel>
+	</s:VGroup>
+</s:Application>

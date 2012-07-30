@@ -1,0 +1,65 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+@namespace mx2 "library://ns.adobe.com/flex/halo";
+@namespace local "*";
+@namespace ns2 "com.google.code.flexiframe.*";
+
+
+
+.headerStyle
+{
+	font-weight:bold;
+	vertical-align:middle;
+}
+
+.StyledRectangle 
+{
+	fillColors: #FF00FF, #00FFFF;
+}
+
+.bgCanvas
+{
+/*	backgroundImage: Embed('assets/bg_login.jpg');*/
+	backgroundImageFillMode: repeat;
+}
+
+global
+{
+	fontFamily: "Myriad Web",Verdana,"Times New Roman",Arial;	
+	fontSize: 10;	
+	fontStyle: normal;
+	focusColor: #98CBFA;
+/*	src: local("Myriad Web");*/
+}
+
+Application
+{
+	fontFamily: "Myriad Web",Verdana,"Times New Roman",Arial;	
+	fontSize: 10;	
+	fontStyle: normal;
+	focusColor: #98CBFA;
+}
+
+TextInput
+{	
+	paddingLeft: 2;
+	paddingTop: 0;
+	paddingBottom: 0;
+	paddingRight: 2;	
+}
+
+.alertTitle{
+	color:#ffffff;
+	fontWeight:bold;	
+}
+
+Alert{
+	backgroundColor:#333333;	
+	color: #ffffff;
+	borderColor: #000000;
+	borderAlpha: 1;
+	headerHeight:20;
+	themeColor: #333333;
+	titleStyleName:alertTitle;
+}

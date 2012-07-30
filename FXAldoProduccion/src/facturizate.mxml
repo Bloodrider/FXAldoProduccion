@@ -1,0 +1,774 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%"  backgroundColor="#FFFFFF" mouseWheelOutside="init();" 
+			   xmlns:yahoo="http://www.yahoo.com/astra/2006/mxml"
+			   xmlns:local="*" pageTitle="Facturizate"
+			   creationComplete="receiveRFC(); setFormat();init();">
+	<fx:Script source="r3Take.as" />
+	<fx:Script>
+						
+	<![CDATA[
+		import com.Captcha;
+		
+		import flash.sampler.Sample;
+		import flash.utils.setTimeout;
+		
+		import flashx.textLayout.formats.Float;
+		
+		import mx.controls.*;
+		import mx.controls.Alert;
+		import mx.managers.PopUpManager;	
+		
+	private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;	
+	private var rfcPM:RegExp = /([a-zA-Z|ñÑ|&]{3,4})(([0-9]{2})([0][13456789]|[1][012])([0][1-9]|[12][\d]|[3][0])|([0-9]{2})([0][13578]|[1][02])([0][1-9]|[12][\d]|[3][01])|([02468][048]|[13579][26])([0][2])([0][1-9]|[12][\d])|([0-9]{2})([0][2])([0][1-9]|[12][0-9]))([a-zA-Z|0-9|ñÑ]{2}[a-zA-Z|0-9|ñÑ]{1})/;
+	
+	private function cutomizar():void
+	{
+		logotipo.source = rutaLogotipo.text;
+		razonSocialLbl.text = nombreEmpresa.text;			
+		imagenFondo.source = rutaImagenFondo.text;
+				
+		Send(689); // Carga Combo de Sucursales
+	}
+		
+		
+	private function receiveRFC():void
+	{ 
+		//rfcEmisor.text = "GTI941208NR2";
+		//rfcEmisor.text = "VAAM130719H60";
+		
+		//Send(677);
+		
+		//parametroLiga.text = "VAAM130719H60";
+		//Send(1095);
+		
+		if(mx.core.Application!=null)
+		{
+			if(mx.core.Application.application!=null)
+			{
+				if(mx.core.Application.application.parameters!=null)
+				{
+					if(mx.core.Application.application.parameters.rfc!=null)
+					{
+						parametroLiga.text = mx.core.Application.application.parameters.rfc;
+												
+						if(parametroLiga.text.length > 0)
+						{
+							Send(1095);//Buscamos parametro en Transaccion Login y traemos y el RFC del Emisor
+						}
+						else
+						{
+							Alert.show("No se ha enviado el rfc del emisor","Aviso",Alert.OK,null,null, iconAlert);
+						}
+					}		
+				}	
+			}
+		}
+	}	
+    
+		
+		
+	private function checkRFC(myCtrl:spark.components.TextInput):void{
+		myCtrl.text.toUpperCase();
+		if(rfcPM.test(myCtrl.text))
+		{
+			myCtrl.errorString = "";
+		}
+		else
+		{				
+			myCtrl.errorString = "RFC Persona Moral \n\n" +
+				"Formato “AAAaammddHHD”, en donde: \n" +
+				"AAA = Siglas del contribuyente, alfanumérico. \n" +
+				"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+				"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+				"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+				"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+				"Los caracteres alfabéticos deben ser mayúsculas.\n\n\n" +
+				"RFC Persona Física \n\n" +
+				"Formato “AAAAaammddHHD”, en donde: \n" +
+				"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+				"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+				"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+				"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+				"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+				"Los caracteres alfabéticos deben ser mayúsculas.";
+		}			
+	}
+	
+	private function validateTransaction():void
+	{			
+		if(rfcReceptor.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El RFC Receptor es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+			rfcReceptor.errorString = "El RFC es obligatorio, favor de ingresarlo.";
+			return;
+		}				
+		if(!rfcPM.test(rfcReceptor.text))
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El RFC Receptor no tiene el formato correcto, favor de corregirlo.","Aviso",Alert.OK,null,null, iconAlert);
+			rfcReceptor.errorString = "El RFC del Receptor no tiene el formato correcto, favor de corregirlo.";
+			return;
+		}
+		if(noTicket.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("La operación es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+			noTicket.errorString = "La operación es obligatoria, favor de ingresarlo.";
+			return;
+		}
+		if(total.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El Total es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+			total.errorString = "El total es obligatorio, favor de ingresarlo.";
+			return;
+		}			
+		if(cmbSucursal.selectedIndex < 1)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("Seleccione la sucursal en la que realizo su compra.","Aviso",Alert.OK,null,null, iconAlert);
+			cmbSucursal.errorString = "La sucursal es obligatorio, favor de ingresarla.";
+			return;
+		}
+		Send(684); // Llama clase Process
+	}
+	
+	private function isValid():void
+	{			
+		var mensaje:String;	
+		
+		if(validTransaction.text == "5")
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("La factura ya fue generada, si desea reimprimirla o renviarsela por correo de clic en los siguientes botones.","Aviso",Alert.OK,null,null, iconAlert);
+			factura.visible = true;
+		}
+		
+		else if(validTransaction.text == "1")
+		{
+			mensaje = "El importe y/o número y/o sucursal no son válidos, favor de corregirlos. ";
+			
+			if(txtLeyendaSoporte.text.length > 0)
+				mensaje += txtLeyendaSoporte.text;
+			
+			else
+				mensaje += "Para mayor información contacte a mesa de servicio de FacturaXion."
+			
+			Alert.okLabel = "Aceptar";
+			Alert.show(mensaje ,"Aviso",Alert.OK,null,null, iconAlert);
+		}
+		
+		else if(validTransaction.text == "3")
+		{			
+			mensaje = "La vigencia del ticket ha expirado y no puede ser facturable. ";
+			
+			if(txtLeyendaSoporte.text.length > 0)
+				mensaje += txtLeyendaSoporte.text;
+			
+			else
+				mensaje += "Para mayor información contacte a la empresa emisora de su ticket."
+					
+			Alert.okLabel = "Aceptar";
+			Alert.show(mensaje ,"Aviso",Alert.OK,null,null, iconAlert);
+		}
+		
+		else if(validTransaction.text == "4")
+		{			
+			mensaje = "La vigencia del ticket ha expirado y no es facturable.";
+			
+			Alert.okLabel = "Aceptar";
+			Alert.show(mensaje ,"Aviso",Alert.OK,null,null, iconAlert);
+		}
+		
+		if(validTransaction.text == "2")
+		{
+			//Caso en que la información del ticket sea correcta, mostramos TW para cargar datos fiscales del Receptor
+			RFC.text = rfcReceptor.text.toLocaleUpperCase();
+			checkRFCReceptor(RFC);
+			mainPanel.visible = true;
+			Send(1215); //trae datos de receptor en caso de que existan
+		}				
+		validTransaction.text = "";
+	}	
+	
+ 	import mx.formatters.NumberFormatter;	
+	private var numFtrXML:NumberFormatter = new NumberFormatter;
+	 
+	private function setFormat():void
+	{
+		numFtrXML.precision = 2;
+		numFtrXML.rounding = "up";
+		numFtrXML.useNegativeSign = false;
+	}
+	
+	private function generaCFDI():void
+	{		
+		Send(683); //Llama metodo guardar de la clase cfd
+	}	 
+	
+	private function calculateImp():void
+	{			
+		var tasaVar:Number = (Number(tasa.text) / 100) + 1;	
+		var subtotal1:Number = Number(parseFloat(totales.text) / tasaVar);
+		var impuesto1:Number = Number(parseFloat(totales.text)) - (Number(parseFloat(totales.text)) / tasaVar); 
+		
+		subtotal.text = truncaRedondeaDecimales(0,subtotal1,2).toString();
+		impuesto.text = truncaRedondeaDecimales(0,impuesto1,2).toString();
+	} 
+		
+	private function truncaRedondeaDecimales(trnRdn:int/*0 trunca, 1 redondea*/,nmr:Number,cDec:int/*Cantidad de decimales*/):Number
+	{
+		var tmpArr:Array= new Array();
+		
+		tmpArr=nmr.toString().split(".",2);
+		if(tmpArr.length==1)// Si es un entero
+		{
+			return nmr;
+		}
+		else if(trnRdn==0)// Si hay que truncar
+		{
+			tmpArr[1]=tmpArr[1].toString().substr(0,cDec);
+			return Number(tmpArr[0].toString()+"."+tmpArr[1].toString());
+		}
+		else if(trnRdn==1)// Si hay que redondear
+		{
+			var residuo:int =int(tmpArr[1].toString().substr(cDec,1));
+			if (residuo<5)
+			{
+				tmpArr[1]=tmpArr[1].toString().substr(0,cDec);
+				return Number(tmpArr[0].toString()+"."+tmpArr[1].toString());
+			}
+			else
+			{
+				var rdn:Number=Math.round(nmr*Math.pow(10,cDec))/Math.pow(10,cDec);
+				return rdn;
+			}
+		}
+		return nmr;
+	}
+	
+	private var expRfcPM:RegExp = /([a-zA-Z|ñÑ|&]{3})(([0-9]{2})([0][13456789]|[1][012])([0][1-9]|[12][\d]|[3][0])|([0-9]{2})([0][13578]|[1][02])([0][1-9]|[12][\d]|[3][01])|([02468][048]|[13579][26])([0][2])([0][1-9]|[12][\d])|([0-9]{2})([0][2])([0][1-9]|[12][0-9]))([A-Z|0-9|Ñ]{2}[a-zA-Z|0-9|ñÑ]{1})/;
+	private var expRfcPF:RegExp = /([a-zA-Z|ñÑ|&]{4})(([0-9]{2})([0][13456789]|[1][012])([0][1-9]|[12][\d]|[3][0])|([0-9]{2})([0][13578]|[1][02])([0][1-9]|[12][\d]|[3][01])|([02468][048]|[13579][26])([0][2])([0][1-9]|[12][\d])|([0-9]{2})([0][2])([0][1-9]|[12][0-9]))([A-Z|0-9|Ñ]{2}[a-zA-Z|0-9|ñÑ]{1})/;
+	
+	private var expTelefono:RegExp = /^\({0,1}([0-9])([0-9])\){0,1}(\ |-){0,1}[0-9]{4}(\ |-){0,1}[0-9]{4}$/;
+
+	private function checkRFCPF(myCtrl:spark.components.TextInput):void
+	{
+		if(expRfcPF.test(myCtrl.text))
+		{
+			myCtrl.errorString = "";
+		} 
+		else
+		{				
+			myCtrl.errorString = "RFC Persona Física Incorrecto\n\n" +
+					"Formato “AAAAaammddHHD”, en donde: \n" +
+					"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+					"              Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+					"aammdd = Fecha de nacimiento, numérico (año,mes,día). \n" +
+					"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+					"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+					"Los caracteres alfabéticos deben ser mayúsculas.";
+		}			
+	}
+	
+	private function checkRFCPM(myCtrl:spark.components.TextInput):void
+	{
+		if(expRfcPM.test(myCtrl.text))
+		{
+			myCtrl.errorString = "";
+		} 
+		else
+		{				
+			myCtrl.errorString = "RFC Persona Moral Incorrecto\n\n" +
+					"Formato “AAAaammddHHD”, en donde: \n" +
+					"AAA = Siglas del contribuyente, alfanumérico. \n" +
+					"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+					"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+					"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+					"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+					"Los caracteres alfabéticos deben ser mayúsculas.";
+		}			
+	}
+	
+	private function guardarSolicitud():void
+	{
+		if(RFC.text.length == 0)
+		{	
+			Alert.okLabel = "Aceptar";
+			Alert.show("El RFC es un campo obligatorio, favor de ingresarlo.", "Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+					
+		if(RFC.text.length <= 12)
+		{
+			if(!expRfcPM.test(RFC.text))
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El formato de RFC de persona Moral es incorrecto, favor de corregirlo", "Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			
+			if(razonSocial.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("La razón social es un campo obligatorio, favor de ingresarlo.", "Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			
+			razonSocialReceptor.text = razonSocial.text;
+		}
+		
+		if(RFC.text.length == 13)
+		{
+			if(!expRfcPF.test(RFC.text))
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El formato de RFC de persona Física es incorrecto, favor de corregirlo", "Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			
+			if(nombreRep.text.length == 0)
+			{
+				Alert.show("El Nombre de la persona Física es un campo obligatorio, favor de ingresarlo.", "Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			
+			if(apePatRep.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Apellido Paterno de la persona Física es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+			//Concatena el nombre de la persona Fisica
+			razonSocialReceptor.text = nombreRep.text + " " + apePatRep.text + " " + apeMatRep.text;
+		}
+		
+		if(calle.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("La Calle es un campo obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+		
+		if(numext.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El Número Exterior es un campo obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+				
+		if(cp.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El Código Postal es un campo obligatorio, favor de ingresarlo ","Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+		
+		if(txtEstado.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El campo Estado es obligatorio, favor de ingresarlo ","Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+		
+		if(txtCiudad.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El campo Ciudad es obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+		
+		if(txtMunicipio.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El campo Delegación / Municipio es obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+		
+		if(txtColonia.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El campo Colonia es obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+		
+		if(txtMail.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El campo Correo Electrónico, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+			
+		//Si esta seleccionada, entonces se recordarán los datos
+		if(recuerdame.selected)
+		{
+			Send(1213); //Guarda datos para futuras facturas	
+			correo.text = txtMail.text;
+		}
+				
+		//En caso de que todos los datos hayan sido requeridos correctamente procesamos la factura
+		generaCFDI();
+	}
+	
+	private function navegarPDF():void
+	{
+		var rutaPDFExtern
+		if(rutaPDF.text.indexOf("fx.facturaxion.com") == -1)
+		{
+			rutaPDFExtern = rutaPDF.text.substr(11, rutaPDF.text.length);
+		}
+		else
+		{
+			var rutaPDFTemp:String = rutaPDF.text.replace("http://fx.facturaxion.com/", "");
+			rutaPDFExtern = rutaPDFTemp.replace("https://fx.facturaxion.com/", "");
+		}
+		
+		var request:URLRequest = new URLRequest("https://fx.facturaxion.com/"+ rutaPDFExtern);
+		request.contentType = "application/pdf";
+		var fileRef:FileReference = new FileReference();
+		navigateToURL(request, '_blank');	
+	}
+	
+	private function enviarFactEmail():void
+	{
+		//To - Do: Validar la Expresion regular del Email
+		if(correo.text.length == 0)
+		{
+			Alert.show("Para enviar la factura es necesario ingresar un correo electrónico, favor de ingresarlo","Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		}
+		
+		if(!expMail.test(correo.text))
+		{
+			Alert.show("El formato de correo electrónico no es correcto.","Aviso",Alert.OK,null,null, iconAlert);
+			return;
+		} 	
+		
+		Send(1023); //Envia Email
+		Alert.show("Se ha enviado su factura por correo electrónico.","Aviso",Alert.OK,null,null, iconOk);
+	}
+
+	private function showErrorFactura():void
+	{
+		Alert.show(errorCFD.text, "Alert Message");
+		factura.visible = false;
+	}
+	
+	private function checkRFCReceptor(myCtrl:spark.components.TextInput):void
+	{
+		if (myCtrl.text.length <= 12)
+		{
+			checkRFCPM(RFC);
+			mostrarPerMoral();
+		}
+		else
+		{
+			checkRFCPF(RFC);
+			mostrarPerFisica();
+		}
+	}
+	
+	private function mostrarPerMoral():void
+	{
+		razonSocial.visible = true;
+		nombreRep.visible = false; 
+		apePatRep.visible = false;  
+		apeMatRep.visible = false; 
+		
+		lblRazonSoc.visible = true; 
+		lblNombre.visible = false;  
+		lblApPatern.visible = false;  
+		lblApMatern.visible = false; 
+		
+		razonSocial.enabled = true;
+		
+		nombreRep.enabled = false; 
+		apePatRep.enabled = false;  
+		apeMatRep.enabled = false; 
+		
+		razonSocial.text = "";
+		nombreRep.text = "";
+		apePatRep.text = "";
+		apeMatRep.text = "";
+	}
+	
+	private function mostrarPerFisica():void
+	{
+		razonSocial.visible = false;
+		nombreRep.visible = true; 
+		apePatRep.visible = true;  
+		apeMatRep.visible = true; 
+		
+		lblRazonSoc.visible = false; 
+		lblNombre.visible = true;  
+		lblApPatern.visible = true;  
+		lblApMatern.visible = true;
+		
+		razonSocial.enabled = false;
+		
+		nombreRep.enabled = true; 
+		apePatRep.enabled = true;  
+		apeMatRep.enabled = true; 
+		
+		razonSocial.text = "";
+		nombreRep.text = "";
+		apePatRep.text = "";
+		apeMatRep.text = "";
+	}
+		
+	private function navigateToR3Take():void
+	{
+		var urlRequest:URLRequest = new URLRequest("http://www.r3Take.com");
+		navigateToURL(urlRequest,"_blank");
+	}
+		
+	private function navigateToFacturaxion():void
+	{
+		var urlRequest:URLRequest = new URLRequest("http://www.facturaxion.com/is/indexn.html");
+		navigateToURL(urlRequest,"_blank");
+	}
+		
+	private function navigateToPoliticas():void
+	{
+		var urlRequest:URLRequest = new URLRequest("http://www.facturaxion.com/evo/declaracion-de-privacidad.html");
+		navigateToURL(urlRequest,"_blank");
+	}
+		
+	private function onButton(btn:BorderContainer):void
+	{
+		btn.setStyle("borderVisible",true);
+		btn.setStyle("borderColor",0xcfcfcf);
+		btn.setStyle("backgroundColor",0xcfcfcf);		
+	}
+	
+	private function offButton(btn:BorderContainer):void
+	{
+		btn.setStyle("borderVisible",false);
+		btn.setStyle("borderColor",0xFFFFFF);
+		btn.setStyle("backgroundColor",0x000000);
+	}
+		
+	private function pasaEmisor():void
+	{
+		if(cmbSucursal.selectedIndex > 0)
+		{
+			idDireccionEmisor.text = cmbSucursal.selectedItem["0"].toString();
+			rfcEmisor.text = cmbSucursal.selectedItem["6"].toString();
+			emisor.text = cmbSucursal.selectedItem["7"].toString();
+		}
+	}
+		
+	private function cargaCustomizacion():void
+	{
+		if(rfcEmisor.text.length > 0)
+			Send(1223);//CARGAMOS CUZTOMIZACIÓN DE NUESTRO CLIENTE EMISOR
+		
+		else
+			Alert.show("No se ha enviado el rfc del emisor","Aviso",Alert.OK,null,null, iconAlert);
+	}
+		
+	private function closeFacturaT():void
+	{
+		//factura.visible = false; validTransaction.text = ''; rutaPDF.text = ''; rutaXML.text = '';
+		var urlRequest:URLRequest = new URLRequest("https://fx.facturaxion.com/facturaxion/facturizate.swf?rfc=" + rfcEmisor.text);
+		navigateToURL(urlRequest,"_self");
+	}	
+		
+]]>
+</fx:Script>
+	
+	<fx:Declarations>
+		<mx:Sequence id="glowIcon" repeatCount="100">
+			<mx:Glow duration="3000" alphaFrom="0.1" alphaTo="0.7" blurXFrom="0.0" blurXTo="10.0" blurYFrom="0.0" blurYTo="10.0" color="#ffffff" /> 	
+			<mx:Glow duration="3000" alphaFrom="0.7" alphaTo="0.1" blurXFrom="10.0" blurXTo="0.0" blurYFrom="10.0" blurYTo="0.0" color="#ffffff" /> 	
+		</mx:Sequence>	
+		
+		<mx:Sequence id="glowButton" repeatCount="100">
+			<mx:Glow duration="4000" alphaFrom="0.1" alphaTo="0.5" blurXFrom="0.0" blurXTo="11.0" blurYFrom="0.0" blurYTo="11.0" color="#ffffff" /> 	
+			<mx:Glow duration="4000" alphaFrom="0.5" alphaTo="0.1" blurXFrom="11.0" blurXTo="0.0" blurYFrom="11.0" blurYTo="0.0" color="#ffffff" /> 	
+		</mx:Sequence>	
+	</fx:Declarations>
+	
+	<s:TextInput id="idLlaveTransaccion" visible="false" editable="false" width="0" valueCommit="Send(1222);"/>
+	<s:TextInput id="txtLeyendaSoporte" visible="false" editable="false" width="0"/>
+	
+	<mx:Image id="imagenFondo" top="0" bottom="0" right="0" left="0" width="100%" height="100%"/>
+	<mx:SWFLoader height="150%" width="150%" id="medusa" source="assets/medusa.swf"/>
+	<!--<s:TextInput id="impuestosTrasladadosCO" visible="false"/>	
+	<s:TextInput id="subTotalCO" visible="false"/>	
+	<s:TextInput id="totalCO" visible="false"/>	-->
+	
+	<s:TextInput id="rfcEmisor" visible="false"/>
+	<s:TextInput id="idTransaccionLogin" visible="false"/>
+	<s:TextInput id="emisorCorrecto" visible="false" valueCommit="cargaCustomizacion();"/>
+	<s:TextInput id="parametroLiga" visible="false"/>
+	<s:TextInput id="rutaImagenFondo" visible="false" text="assets/wallPaper.png"/>
+	<s:TextInput id="rutaLogotipo" visible="false"/>	
+	<s:TextInput id="nombreEmpresa" visible="false" valueCommit="cutomizar();"/>	
+	<s:TextInput id="validTransaction" visible="false" valueCommit="isValid();"/>	
+	<s:TextInput id="errorCFD" visible="false" valueCommit="showErrorFactura();"/>
+	<s:ComboBox x="146" y="85" id="time" itemRenderer="timeStepper" width="100" height="20" visible="false"/>
+	<mx:Image source="assets/ribbon_fx.png" right="10" bottom="10" click="navigateToR3Take();"/>
+	<mx:Image source="assets/logoFX-180.png" left="10" bottom="10" click="navigateToFacturaxion();"/>
+	
+	<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:VGroup width="100%" height="400" paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5"  horizontalAlign="center" verticalAlign="middle" >
+			
+			<s:VGroup width="630" height="100%" gap="5" horizontalAlign="center" verticalAlign="middle">
+				<s:BorderContainer width="100%" height="100%" borderColor="#cfcfcf" backgroundColor="#FFFFFF" backgroundAlpha=".3" borderWeight="2" cornerRadius="5" 
+								   dropShadowVisible="true" borderVisible="false">
+					
+					<s:HGroup width="100%" height="100%" gap="5" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+						
+						<s:BorderContainer width="110" height="100%" borderColor="#363636" backgroundColor="#FFFFFF"  backgroundAlpha=".7" borderWeight="1"  
+										   dropShadowVisible="true" borderVisible="false">
+							<mx:Image x="0" y="230" width="230" height="110" id="logotipo" rotationZ="270" alpha=".7"/>	
+						</s:BorderContainer>
+						
+						<s:BorderContainer width="100%" height="100%" borderColor="#363636" backgroundColor="#000000" backgroundAlpha=".6" borderWeight="1" cornerRadius="5" 
+										   dropShadowVisible="true" borderVisible="false" >
+							<s:Group width="100%" height="100%" horizontalCenter="0" top="0">
+								<s:TextInput x="27" y="132" width="105" color="#000000" id="rfcReceptor" change="if(rfcReceptor.text!=&quot;&quot;)checkRFC(rfcReceptor);" toolTip="El RFC solo acepta letras mayúsculas"  restrict="a-zA-Z0-9ñÑ&amp;" typographicCase="uppercase" maxChars="13" tabIndex="50" fontSize="12"/>
+								<s:TextInput x="253.5" y="132" width="105" color="#000000" maxChars="10" id="total" restrict="0-9." tabIndex="52" fontSize="12" change="if(total.text.length > 0) total.errorString = ''"/>
+								<s:Label x="27" y="115" text="R.F.C. Cliente" fontWeight="bold" fontSize="12" color="#FFFFFF"/>
+								<s:Label x="27" y="90" text="Por favor ingrese los siguientes datos:" fontWeight="bold" fontSize="12" color="#FFFFFF"/>
+								<s:Label fontWeight="bold" fontSize="18" textAlign="center" id="razonSocialLbl" color="#FFFFFF" verticalAlign="top" horizontalCenter="0" top="20" fontFamily="Verdana"/>
+								<s:Label x="140.5" y="115" text="Ticket" fontWeight="bold" fontSize="12"  color="#FFFFFF"/>
+								<s:TextInput x="140.5" y="132" width="105" color="#000000" maxChars="16" id="noTicket" change="if(noTicket.text.length > 0) noTicket.errorString = ''" restrict="A-Za-z0-9" tabIndex="51" fontSize="12"/>
+								
+								
+								<s:Label x="253.5" y="115" text="Monto" fontWeight="bold" fontSize="12" color="#FFFFFF"/>
+								<s:Label x="27" y="172" text="Sucursal Emisora" color="#FFFFFF" fontWeight="bold"/>
+								<s:ComboBox id="cmbSucursal" x="27" y="189" width="332" itemRenderer="renderTransactionRest" focusOut="if(cmbSucursal.selectedIndex != 0) cmbSucursal.errorString='';" tabIndex="53" change="pasaEmisor();"/>
+								
+								<!--<mx:Image x="324" y="184" source="assets/search_32.png" 
+										  creationCompleteEffect="{glowButton}" visible="false" 
+										  click="twBuscar.visible=true;twBuscar.isPopUp=true;"/>-->
+								
+								<!--<mx:Button x="253" label="Buscar" icon="@Embed(source='assets/search_32.png')" y="187" height="26" color="#E9981A" fontWeight="normal" fontFamily="Verdana" visible="false"/>-->
+							</s:Group>
+						</s:BorderContainer>
+						
+						<s:BorderContainer width="110" height="100%" toolTip="Generar Factura" click="validateTransaction();" 
+										   borderColor="#363636" backgroundColor="#000000"  backgroundAlpha=".6" borderWeight="1"
+										   dropShadowVisible="true" borderVisible="false" id="btn009" >
+							<s:HGroup width="100%"  height="100%" gap="5" verticalAlign="middle" horizontalAlign="center" paddingLeft="5" paddingRight="5">
+								<mx:Image id="generaFac" toolTip="Generar Factura"  
+										  source="assets/generarFactura.png" 
+										  creationCompleteEffect="{glowButton}" 										  
+										  mouseOver="generaFac.source='assets/generarFactura-up.png'" 
+										  mouseOut="generaFac.source='assets/generarFactura.png'"/>
+							</s:HGroup>
+						</s:BorderContainer>
+					</s:HGroup>
+				</s:BorderContainer>				
+			</s:VGroup>
+			
+			<s:VGroup height="100" horizontalAlign="center" verticalAlign="top">
+				<s:HGroup horizontalAlign="center" verticalAlign="top">
+					<mx:Image source="assets/logoPacCfdi-70.png"/>
+					<mx:Text text="Freight Ideas S.A. de C.V.&#xa;PROVEEDOR AUTORIZADO DE&#xa;COMPROBANTES FISCALES DIGITALES POR INTERNET&#xa;Número de Autorización 54818" 
+							 fontSize="10" textAlign="center" fontWeight="bold" color="#333333"/>
+					<mx:Image source="assets/appsFX.png" click="navigateToFacturaxion();" creationCompleteEffect="{glowIcon}" />
+				</s:HGroup>
+				
+				<s:HGroup horizontalAlign="center" verticalAlign="top">
+					<mx:LinkButton label="Politicas de Privacidad" click="navigateToPoliticas();" fontWeight="bold" color="#333333" fontSize="10"/>
+				</s:HGroup>
+			</s:VGroup>
+			
+		</s:VGroup>
+	</s:VGroup>
+
+	<mx:TitleWindow id="factura" width="762" height="422" backgroundColor="#ffffff" visible="false" layout="absolute" title="Comprobante Fiscal Digital por Internet Generado Exitósamente" showCloseButton="true" close="closeFacturaT();" horizontalCenter="0" verticalCenter="-8">
+		<s:TextInput x="146" y="85" id="idDireccionEmisor" width="100" visible="false"/>	
+		<s:TextInput x="139" y="38" id="emisor" width="265" height="23" visible="false"/>
+		<s:TextInput x="476" y="86" id="subtotal" width="100" visible="false"/>
+		<s:TextInput x="366" y="86" id="totales" width="100"  visible="false"/>
+		<s:TextInput x="36" y="165" id="tipoMonedaR" width="100" visible="false"/>
+		<s:TextInput x="366" y="165" id="concepto" width="100" visible="false"/>
+		<s:TextInput x="476" y="125" id="tasa" width="100" visible="false" valueCommit="calculateImp();"/>
+		<s:TextInput x="586" y="86" id="impuesto" width="100" visible="false"/>
+		<s:TextInput x="146" y="165" id="tasaCambioR" width="100" visible="false" text="1"/>
+		
+		<!--<s:TextInput x="586" y="86" id="calculaImpuesto" valueCommit="calculateImp();" width="100" visible="false"/>-->
+		<!--<s:TextInput x="379" y="281" width="159" visible="false" id="disparaFactura" valueCommit="generaXML();"/>-->
+		
+		<mx:Image x="16" y="-1" id="imageMSGFact" source="assets/AFPClient2.png" width="94" height="91"/>
+	
+		<mx:Button x="77" y="125" visible="true" label="      Visualizar Factura en PDF" height="36" fontWeight="bold" width="265" icon="@Embed(source='assets/12117697591.png')" click="navegarPDF();" toolTip="Para visualizar correctamente su factura necesita una version superior a ADOBE READER 7."/>
+		<mx:Button x="405" y="125" visible="true" label="  Enviar Factura por Correo" height="36" fontWeight="bold" width="265" icon="@Embed(source='assets/12117731862.png')" click="enviarFactEmail();"/>
+		
+		<s:TextInput x="409" y="209" width="159" visible="true" id="correo" textAlign="center"/>
+		<s:TextInput x="34" y="272" width="318" visible="false" id="rutaPDF" valueCommit="factura.visible = true; mainPanel.visible = false;"/>
+		<s:TextInput x="34" y="313" width="318" visible="false" id="rutaXML"/>
+		
+		<s:Label x="118" y="36" visible="true" text="Desea imprimir o enviarse esta factura por correo electrónico?" fontSize="19" fontWeight="bold"/>
+		<s:Label x="409" y="190" visible="true" text="* Correo electrónico"/>
+		<s:Label id="lblMensNoDes0" x="409" y="260" visible="true" text="* Verifique en todas sus bandejas la recepción del" fontWeight="bold"/>
+		<s:Label id="lblMensNoDes1" x="409" y="276" visible="true" text="correo electrónico, inclusive en los no deseados." fontWeight="bold"/>
+		<s:Label x="519" y="331" visible="true" text="Para dudas o aclaraciones contactar a:"/>
+		<s:Label x="519" y="344" visible="true" text="soporte@facturaxion.com" fontWeight="bold"/>
+		
+		<s:Group x="64" y="204" width="288" height="102" >
+			<s:Label x="10" y="-4" visible="true" text="Para visualizar correctamente su factura" fontSize="12"/>
+			<s:Label x="10" y="16" visible="true" text="necesita una versión superior a ADOBE READER 7." fontSize="12"/>
+			<mx:LinkButton x="28" y="58" label="Actualizar ADOBE READER" click="navigateToURL(new URLRequest('http://www.adobe.com/'), '_blank');" fontSize="14" fontWeight="bold"/>
+		</s:Group>
+	</mx:TitleWindow>
+	
+	<s:TitleWindow width="822" height="496" title="Datos Fiscales Receptor" id="mainPanel" visible="false" close="closeFacturaT();" verticalCenter="-13" horizontalCenter="0">
+		<s:Group width="100%">
+			<mx:Image x="36" y="9" id="imgTitulo" source="assets/userOK2.png" width="70" height="69"/>
+			
+			<s:Label text="Datos Fiscales" x="48.6" y="122.1" fontWeight="bold" fontSize="14" color="#666666"/>
+			<s:Label id="lblRazonSoc" text="* Razón Social" x="48.6" y="194.1" color="#000000" fontWeight="bold" visible="true"/>
+			<s:Label id="lblNombre" text="* Nombre" x="48.6" y="193.1" color="#000000" fontWeight="bold" visible="false"/>
+			<s:Label id="lblApPatern" text="* Apellido Paterno" x="233.2" y="193.1" color="#000000" fontWeight="bold" visible="false"/>
+			<s:Label id="lblApMatern" text="Apellido Materno" x="417.2" y="193.1" color="#000000" visible="false"/>
+			
+			<s:Label text="Dirección Fiscal" x="48.6" y="264.1" fontWeight="bold" fontSize="14" color="#666666"/>
+			<s:Label x="48.6" y="291" text="* Calle" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="260.2" y="289" text="* Número Ext" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="361.2" y="289" text="Número Int" textAlign="right" color="#000000"/>	
+			<s:Label x="464.2" y="289" text="* Código Postal" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="587.6" y="289.1" text="* Estado" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="49.15" y="337" text="* Ciudad" textAlign="right" fontWeight="bold" color="#000000"/>
+		
+			<s:Label x="185.2" y="337" text="* Delegación/Municipio" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="330" y="337" text="* Colonia" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label text="* RFC" x="48.6" y="149.1" fontWeight="bold"/>
+			<s:Label x="464.15" y="337" text="* Correo Electrónico" textAlign="right" fontWeight="bold" color="#000000"/>
+			
+			<s:TextInput y="161.1" id="RFC" x="48.6" visible="true" width="125" maxChars="13" restrict="a-zA-Z0-9ñÑ&amp;" change="if(RFC.text!=&quot;&quot;)checkRFCReceptor(RFC);" tabIndex="1"/>
+						
+			<s:TextInput y="208.1" id="razonSocial"  width="301.59998" x="48.6" maxChars="150" color="#000000" tabIndex="2" visible="true"/>
+			<s:TextInput y="207.1" id="nombreRep"  width="175" x="48.6" maxChars="100" color="#000000" visible="false" tabIndex="3"/>	
+			<s:TextInput y="207.1" id="apePatRep"  width="175" x="233.2" maxChars="100" color="#000000" visible="false" tabIndex="4"/>
+			<s:TextInput y="207.1" id="apeMatRep"  width="170" x="417.2" maxChars="100" color="#000000" visible="false" tabIndex="5"/>
+			<s:TextInput y="175.1" id="razonSocialReceptor"  width="189.05" x="216.65" maxChars="150" color="#000000" visible="false"/>
+			
+			<s:TextInput x="456.2" y="303" id="cp" width="123" restrict="0-9" maxChars="5" color="#000000" tabIndex="9"/>
+			<s:TextInput x="48.6" y="303"  id="calle"  width="200.4" color="#000000" tabIndex="6" maxChars="100"/>
+			<s:TextInput x="258.2" y="303" id="numext" width="90" color="#000000" tabIndex="7" maxChars="20"/>
+			<s:TextInput x="357.2" y="303" id="numint" width="90" color="#000000" tabIndex="8" maxChars="20"/>	
+			
+			<s:TextInput x="587.6" y="302.55" width="125" id="txtEstado" visible="true" tabIndex="10" color="#000000" maxChars="50"/>
+			<s:TextInput x="49.15" y="350.55" width="125" id="txtCiudad" visible="true" tabIndex="11" color="#000000" maxChars="100"/>
+			<s:TextInput x="185.2" y="350.55" width="132" id="txtMunicipio" visible="true" tabIndex="12" color="#000000" maxChars="100"/>
+			<s:TextInput x="330" y="351.05" width="125" id="txtColonia" visible="true"  tabIndex="13"  color="#000000" maxChars="100"/>
+			<s:TextInput x="464.15" y="350.55" width="172" id="txtMail" visible="true" tabIndex="11" color="#000000" maxChars="100" valueCommit="correo.text = txtMail.text;"/>
+			<mx:Text x="44.7" y="87" text="Favor de llenar el siguiente formulario con los datos de a quien deberá ser expedida la factura." fontSize="13" color="#000000" fontWeight="bold"/>
+			<mx:Text x="128.7" y="35" text="Datos Fiscales del Receptor" fontSize="14" color="#000000" fontWeight="bold"/>
+			<s:CheckBox x="195" y="163" label="Recordar para siguientes facturas" id="recuerdame"/>
+		</s:Group>
+		
+		<mx:Text x="25.7" y="428.9" text="*Todos los campos marcados con (*) son obligatorios." fontWeight="bold" fontSize="11" color="#000000" />
+		<mx:Button x="594.5" y="395.6" id="btnRegistro" icon="@Embed(source='assets/fx_icon.png')" creationCompleteEffect="{glowButton}" label=" Generar Factura" click="guardarSolicitud();" height="33" fontSize="16" tabIndex="14" color="#000000" width="169.7"/>
+</s:TitleWindow>
+
+</s:Application>

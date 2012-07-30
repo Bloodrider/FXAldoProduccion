@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600" width="821" height="660">
+
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			protected function descargar_clickHandler(event:MouseEvent):void
+			{
+				var urlRequest:URLRequest = new URLRequest("http://fx.facturaxion.com/Andromeda/setup.exe");
+				navigateToURL(urlRequest, "_blank");
+			}
+			
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<mx:Image width="808" height="602" source="newIcons/andromeda.jpg" scaleContent="false" x="7" y="10"/>
+	<mx:Button id="descargar" width="123" height="24" label="Descargar"  click="descargar_clickHandler(event)" icon="@Embed(source='newIcons/edit-icon_24.png')" x="349" y="626"/>
+</s:Application>

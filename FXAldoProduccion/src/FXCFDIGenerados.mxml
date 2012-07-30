@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" pageTitle="CFDI Generados"
+	applicationComplete="validateUser('FXCFDIGenerados.swf');">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+		import mx.events.*;
+		
+		private function openPDF():void
+		{
+			navigateToURL(new URLRequest(rutaPDF.text), "_blank");
+		}
+		
+		private function openXML():void
+		{
+			navigateToURL(new URLRequest(rutaXML.text), "_blank");
+		}
+		
+		private function limpiar():void
+		{
+			DGCFDIEmitidos.dataProvider = null;
+			
+			serieFilter.text = "";
+			txtRFCFilter.text = "";
+			txtUUIDFilter.text = "";
+			
+			fechaIniFacFilter.text = "";
+			fechaFinFacFilter.text = "";
+			
+			folioFilter.value = 0;
+			topFilter.value = 200;
+			
+			rutaPDF.text = "";
+			rutaXML.text = "";
+			
+			btnDoctos.enabled = false;
+		}
+		
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{
+			if (date != null)
+			{
+				cntlH.selectedDate = null;
+				cntlH.selectableRange = {
+					rangeStart:new Date(
+						date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()))
+				};
+			}
+		}
+		
+		private function muestraTTWDoc():void
+		{
+			btnXML.enabled = true;
+			btnPDF.enabled = true;
+			
+			if(rutaPDF.text.length == 0)
+				btnPDF.enabled = false;
+			
+			if(rutaXML.text.length == 0)
+				btnXML.enabled = false;
+			
+			pnVisorDetalle.visible = true;
+		}
+		
+		private function pasaRutas():void
+		{
+			if (DGCFDIEmitidos.selectedIndex >= 0)
+			{
+			 	rutaPDF.text = DGCFDIEmitidos.selectedItem[9].toString();
+				rutaXML.text = DGCFDIEmitidos.selectedItem[10].toString();
+				lblSerieFolio.text = "Serie y Folio:   " + DGCFDIEmitidos.selectedItem[5].toString() + " - " + DGCFDIEmitidos.selectedItem[6].toString();
+				
+				btnDoctos.enabled = true;
+			}
+			else
+			{
+				rutaPDF.text = "";
+				rutaXML.text = "";
+				
+				btnDoctos.enabled = false;
+			}
+		}
+		
+		private function validaBuscar():void
+		{
+			if(txtRFCFilter.text.length == 0 &&
+			   txtUUIDFilter.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Deberá de indicar el UUID y/o el RFC para realizar la búsqueda, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);	
+				return;
+			}
+			Send(736);	//Realiza Filtro
+			btnDoctos.enabled = false;
+			rutaPDF.text = ""; 
+			rutaXML.text = "";
+		}
+		
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="HISTORIAL CFDI GENERADOS POR EMPRESA" width="100%" height="100%" >
+		<s:VGroup x="0" y="0" width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingTop="10">
+				<s:Label text="UUID" width="227" fontWeight="bold" x="336"/>
+				<s:Label text="RFC Emisor" width="104" fontWeight="bold"/>
+				<s:Label text="Serie" width="72" fontWeight="bold" x="619"/>
+				<s:Label text="Folio" width="64" fontWeight="bold" x="697"/>
+				<s:Label text="F.Inicio Factura" width="126" fontWeight="bold" x="911"/>
+				<s:Label text="F.Final Factura" width="134" fontWeight="bold" x="1083"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="left">
+				<s:HGroup height="100%" horizontalAlign="left" verticalAlign="bottom">
+					<s:Label text="CFDI EMITIDOS POR EMPRESA" fontWeight="bold"/>
+				</s:HGroup>
+				
+				<s:HGroup width="100%" horizontalAlign="right" paddingRight="10">
+					<s:TextInput width="228" id="txtUUIDFilter" height="24" maxChars="36" x="159"/>
+					<s:TextInput width="103" id="txtRFCFilter" height="24" maxChars="25"/>
+					<s:TextInput width="72" id="serieFilter" height="24" maxChars="25" x="618"/>
+					<s:NumericStepper id="folioFilter" width="65" maximum="50000000" height="24"/>
+					<mx:DateField id="fechaIniFacFilter" width="125" height="24" creationComplete="DCInit('fechaIniFacFilter');" change="dateControl(fechaIniFacFilter,fechaFinFacFilter, DateField(event.target).selectedDate)" />
+					<mx:DateField id="fechaFinFacFilter" width="125" height="24" creationComplete="DCInit('fechaFinFacFilter');"/>
+				</s:HGroup>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" >
+				<s:Label text="Mostrar Registros" width="496" fontWeight="bold" x="767"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+				<s:TextInput width="50" id="idGridCCFE" visible="false" valueCommit="pnVisorDetalle.visible = true;"/>
+				<s:NumericStepper id="topFilter" width="96" maximum="50000000" height="24" value="200" x="615"/>
+				
+				<mx:Spacer width="50"/>
+								
+				<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" width="100" click="validaBuscar();"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="100"/>
+				<mx:Button label="Documentos" icon="@Embed(source='newIcons/pdf02_32.png')" height="24" click="muestraTTWDoc();" width="116" x="1091" id="btnDoctos" enabled="false"/>
+			</s:HGroup>
+			
+			<mx:DataGrid width="100%" id="DGCFDIEmitidos" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="pasaRutas();">
+				<mx:columns>
+					<mx:DataGridColumn headerText="idCFDI"				dataField="0" width="10" visible="false"/>
+					<mx:DataGridColumn headerText="RFC Emisor"			dataField="1" width="100"/>
+					<mx:DataGridColumn headerText="Nombre Emisor" 		dataField="2" width="200"/>
+					<mx:DataGridColumn headerText="Fecha CFDI" 			dataField="3" width="140"/>
+					<mx:DataGridColumn headerText="Monto" 				dataField="4" width="100"/>
+					<mx:DataGridColumn headerText="Serie" 				dataField="5" width="80"/>
+					<mx:DataGridColumn headerText="Folio" 				dataField="6" width="80"/>
+					<mx:DataGridColumn headerText="Estatus" 			dataField="7" width="100"/>
+					<mx:DataGridColumn headerText="UG" 					dataField="8" width="100"/>
+					<mx:DataGridColumn headerText="rutaPDF" 			dataField="9" width="0" visible="false"/>	
+					<mx:DataGridColumn headerText="rutaXML" 			dataField="10" width="0" visible="false"/>
+				</mx:columns>
+			</mx:DataGrid>
+			
+		</s:VGroup>
+	</s:Panel>
+	
+	<s:TitleWindow width="402" height="156" title="Documentos" id="pnVisorDetalle" visible="false" close="pnVisorDetalle.visible=false;" verticalCenter="-16" horizontalCenter="0">
+		<s:Label x="14" y="15" text="Serie y Folio: " fontWeight="bold" enabled="true" fontSize="12" id="lblSerieFolio"/>
+		
+		<mx:Button id="btnXML" x="213" y="59" label="Descarga XML" icon="@Embed(source='newIcons/NetByte Design Studio - 0796 copia.png')" width="180" height="24" click="openXML();"/>
+		<mx:Button id="btnPDF" x="10" y="59" label="Descarga PDF" icon="@Embed(source='assets/pdf-64X64.png')" height="24" click="openPDF();"  width="180"/>
+		
+		<s:TextInput x="594" y="59" width="154" id="rutaPDF" editable="false" enabled="false" visible="false"/>
+		<s:TextInput x="778" y="59" width="154" id="rutaXML" editable="false" enabled="false" visible="false"/>
+		<s:TextInput x="778" y="59" width="154" id="facturado" editable="false" enabled="false" visible="false"/>	
+	</s:TitleWindow>
+	
+</s:Application>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	applicationComplete="validateUser('catCCFE.swf');">
+	
+
+<fx:Script source="r3Take.as"/>
+	<fx:Script source="validateIsEmptyTELMEX.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+
+		import mx.events.*;
+		
+		private function verTW(op:String):void{
+			if(op=="1"){//NUEVO
+				email.text="";
+				areaAdmva.selectedIndex = -1;
+				twAXE.visible=true;
+				idOperacion.text = op;
+				Send(803);//CARGAR LOS DATOS DEL COMBO DE AREAS
+				
+			}else if(op=="2"){//EDICIÓN
+				if(idGridAXE.text.length>0){
+					twAXE.visible=true;
+					idOperacion.text = op;
+					Send(803);//CARGAR LOS DATOS DEL COMBO DE AREAS
+					Send(804);//CARGAR LOS DATOS QUE ESTÁN EN LA BASE DE DATOS
+				}else{
+					Alert.okLabel ="Aceptar";
+					Alert.show("Debe seleccionar un registro de la Tabla de Datos para editar. Favor de Verificar", "Advertencia",  Alert.OK );
+				}
+				
+			}else if(op=="3"){//BORRAR
+				if(idGridAXE.text.length>0){
+					Alert.okLabel ="Borrar";
+					Alert.cancelLabel ="Cancelar";
+					Alert.show("Está apunto de borrar el registro seleccionado, ¿Está seguro que desea continuar?", "Advertencia",
+						Alert.OK | Alert.CANCEL, this,	function doBorrar(eventObj:CloseEvent):void{
+							if (eventObj.detail==Alert.OK) {Send(807);/*Borrar*/Send(802);/*ACTUALIZAR EL DATAGRID*/}}, iconAlert,  Alert.OK );
+					
+				}else{
+					Alert.okLabel ="Aceptar";
+					Alert.show("Debe seleccionar un registro de la Tabla de Datos para borrar. Favor de Verificar", "Advertencia",  Alert.OK );
+				}
+			}
+		}
+		private function setIdGV():void{
+			if(gridAXE.selectedItem!=null){
+				idGridAXE.text=gridAXE.selectedItem["0"].toString();
+			}
+		}
+		
+		private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+		
+		
+		public function validateData():void{
+			
+			
+			var isOKTW:String = validar([this.areaAdmva,this.email]);
+			
+			if(isOKTW =="1"){
+				if(areaAdmva.selectedItem[0]!="0"){
+					if(expMail.test(email.text))
+					{
+						if(idOperacion.text=="1"){
+							Send(805);//INSERTA DATOS DEL TITLE WINDOW
+						}if(idOperacion.text=="2"){
+							Send(806);//ACTUALIZA DATOS DEL TITLE WINDOW
+						}
+						
+						email.errorString = "";
+						twAXE.visible=false;
+						Send(802);//ACTUALIZAR EL GRIDVIEW
+						
+					} else 
+					{				
+						email.errorString = "Verifique la dirección de correo electrónico.\n" +
+							"Formato “cuenta1.cuenta2@dominio.com,cuenta1.cuenta2@dominio1.dominio2.com ” \n";;
+					}	
+					
+				}else{
+					areaAdmva.errorString="Debe seleccionar un elemento del Combo de Area Administrativa";
+				}
+				
+			}
+		
+		}
+
+		
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Area por Empresa" width="100%" height="100%">
+		<s:VGroup x="0" y="0" width="100%" height="100%">
+			
+			<s:HGroup width="100%" height="40" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+				<mx:Button label="Nuevo" icon="@Embed(source='assets/add-icon_24.png')" height="100%" click="verTW('1');" width="100"/>
+				<mx:Button label="Editar" icon="@Embed(source='assets/3518-24.png')" height="100%" click="verTW('2');" width="100"/>
+				<mx:Button label="Borrar" icon="@Embed(source='assets/delete-icon_24.png')" height="100%" click="verTW('3');" width="100"/>
+			</s:HGroup>
+			<s:TextInput width="0" height="0" id="idGridAXE" visible="false"/>
+			<s:TextInput width="0" height="0" id="idOperacion" visible="false"/>
+			<mx:DataGrid width="100%" id="gridAXE" wordWrap="true" variableRowHeight="true" liveScrolling="true" 
+						  click="setIdGV();" height="100%" x="0" y="0" creationComplete="Send(802);">
+				
+				<mx:columns>
+					<mx:DataGridColumn headerText="#" dataField="0" width="50" visible="false"/>
+					<mx:DataGridColumn headerText="Area Administrativa" dataField="1"/>
+					<mx:DataGridColumn headerText="Email" dataField="2" />
+					
+				</mx:columns>
+			</mx:DataGrid>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+			</s:HGroup>
+		</s:VGroup>
+	</s:Panel>
+	<s:TitleWindow width="252" height="236" title="Edición" id="twAXE" visible="false" close="twAXE.visible=false;"  horizontalCenter="0" verticalCenter="-82">
+		<s:Label x="10" y="29" text="Área Administrativa:" width="149" fontWeight="bold" enabled="true" fontSize="11"/>
+		<s:ComboBox id="areaAdmva" name="Area Administrativa" x="10" y="48" width="230" fontWeight="bold" enabled="true" creationComplete="Send(803);"  />
+		<s:Label x="10" y="81" text="Email:" width="36" fontWeight="bold" enabled="true" fontSize="11"/>
+		<s:TextInput  id="email" name="Correo Electrónico" x="10" y="100" width="230" fontWeight="bold" enabled="true"/>
+		<s:Button  click="validateData();"
+				   label="Guardar" x="83" y="155" width="84" height="38" fontWeight="bold" enabled="true"/>
+		
+		<!--<s:TextInput  id="isOKTW" x="10" y="100" width="230" fontWeight="bold" enabled="true" valueCommit=""/>-->
+		
+	
+			
+	</s:TitleWindow>
+	
+	
+</s:Application>

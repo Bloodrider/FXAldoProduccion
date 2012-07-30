@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	applicationComplete="validateUser('cancelTransaction.swf');">
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[			
+			import mx.events.*;
+
+			private function cleanCtrls():void
+			{
+				DGTransacciones.dataProvider = null;
+				
+				noTransFilter.text = "";
+				idLlaveTransaccion.text = "";
+				
+				fechaIniTransFilter.text = ""; 
+				fechaFinTransFilter.text = "";
+				
+				topFilter.value = 500;
+				
+				cmbSucursalesFilter.selectedIndex = 0;
+			}
+			
+			private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+			{
+				if (date != null)
+				{
+					cntlH.selectedDate = null;
+					cntlH.selectableRange = {
+						rangeStart:new Date(
+							date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()))
+					};
+				}
+			}
+			
+			private function pasaTransaccion():void
+			{
+				if (DGTransacciones.selectedIndex >= 0)
+				{
+					idLlaveTransaccion.text = DGTransacciones.selectedItem[0].toString(); 
+				}
+			}
+			
+			private function validaTransaccion():void
+			{
+				if(idLlaveTransaccion.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar la Transacción a Eliminar.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				Alert.yesLabel = "Si";
+				Alert.noLabel = "No";
+				Alert.show("¿Está seguro que desea Eliminar la Transacción?, no podrá revertir la operación","Aviso",Alert.YES|Alert.NO, null, eliminarTransaccion, iconDel);
+			}
+			
+			private function eliminarTransaccion(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(735); //Elimina transaccion
+					Send(734); //Actualiza GridView de Transacciones
+				}
+			}
+			
+			private function ejecutaFiltro():void
+			{
+				if(cmbSucursalesFilter.selectedIndex <= 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione la Sucursal a la que desea ejecutar la búsqueda.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+				
+				Send(734); //Ejecuta Filtro de Busqueda
+				idLlaveTransaccion.text = "";	
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Cancelar Transacciones Factura-T" width="100%" height="100%" >
+		<s:VGroup x="0" y="0" width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+			
+			<s:HGroup width="100%" horizontalAlign="left">
+				<s:HGroup width="35%" height="100%" horizontalAlign="center" verticalAlign="middle" paddingTop="10">
+					<mx:Image source="assets/3413-64.png" height="48" width="48"/>
+					<s:Label text="Cancelar Transacción" width="238" fontWeight="bold" x="357"/>
+				</s:HGroup>
+				
+				<s:VGroup width="100%" horizontalAlign="right">
+					<s:HGroup width="100%" horizontalAlign="right">
+						<s:Label text="Ticket" width="104" fontWeight="bold" x="357"/>
+						<s:Label text="Sucursal" width="240" fontWeight="bold" x="320"/>
+						<s:Label text="F.Inicio Trans" width="127" fontWeight="bold" x="896"/>
+						<s:Label text="F.Final trans" width="123" fontWeight="bold" x="1029"/>
+						<s:Label text="Mostrar Registros" width="105" fontWeight="bold" x="1158"/>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingBottom="7" paddingRight="10">
+						<s:TextInput width="103" id="noTransFilter" height="24"  restrict="A-Za-z0-9" maxChars="25" x="356"/>
+						<s:ComboBox id="cmbSucursalesFilter" creationComplete="Send(681);" width="240" x="678"/>
+						<mx:DateField id="fechaIniTransFilter" width="125" height="24" creationComplete="DCInit('fechaIniTransFilter');" change="dateControl(fechaIniTransFilter,fechaFinTransFilter, DateField(event.target).selectedDate)" />
+						<mx:DateField id="fechaFinTransFilter" width="125" height="24" creationComplete="DCInit('fechaFinTransFilter');"/>
+						<s:NumericStepper id="topFilter" width="96" maximum="50000000" height="24" value="500"/>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10">
+						<s:TextInput width="50" id="idLlaveTransaccion" visible="false"/>
+						
+						<mx:Spacer width="50"/>
+						
+						<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" width="100" click="ejecutaFiltro();"/>
+						<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="cleanCtrls();" width="100"/>
+					</s:HGroup>
+				</s:VGroup>
+			</s:HGroup>
+			
+			<mx:DataGrid width="100%" id="DGTransacciones" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="pasaTransaccion();">
+				<mx:columns>
+					<mx:DataGridColumn headerText="IdLaveTransaccion" 		dataField="0" width="100" visible="false"/>	
+					<mx:DataGridColumn headerText="No.Transacción"		dataField="1" width="100"/>
+					<mx:DataGridColumn headerText="Sucursal" 			dataField="2" width="110"/>
+					<mx:DataGridColumn headerText="Monto" 				dataField="3" width="100"/>
+					<mx:DataGridColumn headerText="Fecha Transacción" 	dataField="4" width="140"/>
+				</mx:columns>
+			</mx:DataGrid>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10">
+				<s:HGroup width="100%" horizontalAlign="left" paddingTop="10">
+					<s:Label text="*Solo Transacciones NO facturadas podrán ser eliminadas." fontWeight="bold"/>
+				</s:HGroup>
+				
+				<s:HGroup width="100%" horizontalAlign="right" paddingRight="10">
+					<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="validaTransaccion();" height="24" tabIndex="7" width="100" toolTip="Eliminar Transacción"/>
+				</s:HGroup>
+			</s:HGroup>
+			
+		</s:VGroup>
+	</s:Panel>	
+</s:Application>

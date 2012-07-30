@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	applicationComplete="validateUser('pagoPaypal.swf');" 
+	xmlns:states="com.degrafa.states.*" pageTitle="Pago por PAY PAL">
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+		[Embed(source="assets/0006.png")]
+		private var iconHelp:Class;
+		private var cursorID:int;
+		
+		import GUID;
+		
+		private function generaInvoiceGUID():void
+		{
+			invoiceGuid.text = GUID.create();
+		}
+		
+		private function ayuda():void
+		{
+			navigateToURL(new URLRequest("https://fx.facturaxion.net/ayuda/paypal/compraCreditos.htm"),"_blank");
+		}
+		
+		private function salir():void
+		{
+			SWFLoader(this.parent.parent.parent.parent.getChildByName("globalLoader")).load("init.swf");
+		}
+		
+		private function seteaCampos()
+		{
+			if (paquete.selectedIndex != -1)
+			{
+				paqueteID.text = paquete.selectedItem[0].toString();
+				paqueteDesc.text = paquete.selectedItem[1].toString();
+				costo.text = paquete.selectedItem[2].toString();
+				
+				var desde:int = Number(paquete.selectedItem[7]);
+				var hasta:int = Number(paquete.selectedItem[8]);
+			
+				numeroItems.minimum = desde;
+				numeroItems.maximum = hasta;
+				
+				if (paqueteID.text == "9")
+				{
+					lblDescCompra.text = "pesos"
+				}
+				else
+				{
+					lblDescCompra.text = "creditos"
+				}
+				
+				numeroItems.value = numeroItems.minimum;
+			}
+		}
+
+		private function calculaMonto()
+		{
+			costo.visible = false;
+			montoFormat.visible = true;
+			
+			var montoCompra:Number = 0;
+			
+			montoCompra = Number(costo.text) * Number(numeroItems.value);
+			monto.text = montoCompra.toString();
+		}
+		
+		private function sendData()
+		{
+			var url:String = "https://www.paypal.com/cgi-bin/webscr";
+			//var url:String = "https://www.sandbox.paypal.com/cgi-bin/webscr";
+			var request:URLRequest = new URLRequest(url);
+			var variables:URLVariables = new URLVariables();
+
+			var paypalVars:String;
+			
+			paypalVars = "cmd=_xclick";
+			paypalVars += "&";
+			paypalVars += "business=contabilidad@freightideas.com";
+			paypalVars += "&";
+			paypalVars += "item_name=" + paqueteDesc.text; 
+			paypalVars += "&";
+			paypalVars += "item_number=" + numeroItems.value.toString();
+			paypalVars += "&";
+			paypalVars += "amount=" + monto.text;
+			paypalVars += "&";
+			paypalVars += "currency_code=MXN";
+			paypalVars += "&";
+			paypalVars += "return=https://fx.facturaxion.net/paypal/thanks.aspx";
+			paypalVars += "&";
+			paypalVars += "cancel_return=https://fx.facturaxion.net/paypal/handler.aspx";
+			paypalVars += "&";
+			paypalVars += "notify_url=https://fx.facturaxion.net/paypal/handler.aspx";
+			paypalVars += "&";
+			paypalVars += "image_url=http://www.facturaxion.net/L_Facturaxion.png";
+			paypalVars += "&";
+			paypalVars += "email=" + emailPaypal.text;
+			paypalVars += "&";
+			paypalVars += "custom=" + idUsuario.text + "»" + descCompra.text;
+			paypalVars += "&";
+			paypalVars += "invoice=" + invoiceGuid.text;
+
+			request.data = paypalVars;
+			request.method = URLRequestMethod.POST;
+			navigateToURL(request,"_blank");
+		}
+
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+	<mx:CurrencyFormatter id="moneyFormatter" 
+						  precision="2"
+						  rounding="none"
+						  currencySymbol="$" decimalSeparatorFrom="."
+						  decimalSeparatorTo="." useNegativeSign="true" 
+						  useThousandsSeparator="true" 
+						  thousandsSeparatorTo=","
+					      alignSymbol="left"/>
+	
+	<mx:Sequence id="glowIcon" repeatCount="100">
+		<mx:Glow duration="1000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="6.0" blurYFrom="0.0" blurYTo="6.0" color="#FFFF00" /> 	
+		<mx:Glow duration="1000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="6.0" blurXTo="0.0" blurYFrom="6.0" blurYTo="0.0" color="#FFFF00" /> 	
+	</mx:Sequence>
+	</fx:Declarations>
+		
+	<mx:Panel layout="absolute"  right="10" left="10" top="10" bottom="10" title="Compra de Créditos Paypal" titleIcon="@Embed(source='assets/fx_icon.png')" creationComplete="Send(310); Send(311);">
+		<mx:VBox width="100%" height="100%" verticalGap="10" paddingLeft="20" paddingTop="20">
+			<mx:HBox width="100%" verticalAlign="middle" paddingLeft="30" horizontalGap="15">
+				<mx:Image  source="assets/paypal_logo.gif"/>
+				<s:Label fontSize="18" fontWeight="bold" id="textTitle" text="Compra de Créditos" color="#3D7BC9"/>
+				<mx:HBox width="100%" verticalAlign="middle" horizontalAlign="right" paddingRight="30">
+					<mx:Image source="assets/3475-32.png" right="10" top="10" click="ayuda();" creationCompleteEffect="{glowIcon}"/>
+				</mx:HBox>
+			</mx:HBox>
+			<mx:HBox width="100%" verticalAlign="middle">
+				<mx:Canvas width="100%" height="305">
+					<s:Label x="10" y="23" text="Seleccione el tipo de Paquete" fontWeight="bold"/>
+					<s:ComboBox x="190" y="20.45" width="295" id="paquete" itemRenderer="paqueteCreditosRender" valueCommit="seteaCampos();" change="seteaCampos();"></s:ComboBox>
+										
+					<s:Label x="127" y="63.5" text="Cantidad" fontWeight="bold"/>
+					<mx:NumericStepper x="190" y="61.5" value="1" minimum="1" maximum="10000" id="numeroItems" valueCommit="calculaMonto();" change="calculaMonto();" width="102"/>
+					<s:Label x="300" y="68" id="lblDescCompra" text="creditos" fontWeight="bold"/>
+					
+					<s:Label x="69" y="232" text="Monto Total a Pagar" fontWeight="bold"/>
+					<s:TextInput x="191" y="232" id="costo" editable="false" enabled="false" width="295"/>
+					<s:TextInput x="191" y="232" id="montoFormat" editable="false" text="{moneyFormatter.format(monto.text)}" width="295"/>
+					
+					<s:Label x="49" y="103.5" text="Descripción de Compra" fontWeight="bold"/>
+					<s:TextArea id="descCompra" x="191" y="103" height="113" width="294"/>
+					
+					<mx:Button x="362" y="270" label="Comprar" icon="@Embed(source='assets/accept-icon_24.png')" click="generaInvoiceGUID(); sendData();" height="24" width="125" tabIndex="99"/>
+					<mx:Button x="191" y="270" label="Salir" icon="@Embed(source='assets/delete-icon_24.png')" click=" salir(); " height="24" width="125" tabIndex="99"/>
+					
+					<s:TextInput x="489" y="20.9" id="monto" editable="false" enabled="false" visible="false" width="0"/>
+					<s:TextInput x="403" y="61.5" id="emailPaypal" editable="false" enabled="false" visible="false" width="0"/>
+					<s:TextInput x="403" y="61.5" id="idUsuario" editable="false" enabled="false" visible="false" width="0"/>
+					<s:TextInput x="489" y="61.5" id="paqueteID" editable="false" enabled="false" visible="false" width="0"/>
+					<s:TextInput x="513" y="61" id="paqueteDesc" editable="false" enabled="false" visible="false" width="0"/>
+					<s:TextInput x="10" y="21" id="invoiceGuid" editable="false" enabled="false" visible="false" width="0"/>
+				</mx:Canvas>
+			</mx:HBox>
+		</mx:VBox>
+	</mx:Panel>
+</s:Application>
+
+

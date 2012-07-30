@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:mx2="library://ns.adobe.com/flex/halo"
+			   backgroundAlpha="0" creationComplete="initValid();" width="100%" height="100%"
+			   pageTitle="Confirma Registro"
+			   applicationComplete="validateUser('confirmaRegistro.swf');">
+	
+<fx:Script source="r3Take.as"/>
+<fx:Style source="fx.css" />
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		
+		global
+		{
+			fontFamily: "Verdana";
+			fontWeight: normal;
+			fontStyle: normal;
+			
+		}
+		
+		Application
+		{
+			
+			fontSize: 11;	
+			fontFamily: "Verdana";
+		}
+		
+		mx|FormItem {
+			paddingLeft: 4;
+			paddingRight: 4;
+			paddingTop: 4;
+			paddingBottom: 4;
+		}
+		DataGrid {
+			headerStyleName: "mydataGridHeaderStyle";
+		}
+		
+		.mydataGridHeaderStyle {
+			color: #FFFFFF;
+			fontWeight: bold;
+			fontStyle: normal;
+			textDecoration: none;
+			fontFamily: Verdana;
+			textAlign: center;
+		}
+	</fx:Style>
+	
+	<fx:Declarations>
+		
+		<mx:EmailValidator
+			source="{emailAlterno}" property="text" requiredFieldError="El correo electrónico es un campo es obligatorio."  
+			invalidCharError="El formato de correo electrónico es incorrecto."
+			invalidDomainError="El formato del dominio del correo electrónico es incorrecto." 
+			invalidPeriodsInDomainError="El formato del dominio del correo electrónico es incorrecto." 
+			missingPeriodInDomainError="El dominio del correo electrónico no contiene un punto." 
+			missingUsernameError="El correo electrónico no contiene un nombre de usuario."
+			missingAtSignError="La cuenta de correo electrónico no contiene el carácter @" 
+			tooManyAtSignsError="La cuenta de correo electrónico contiene el carácter @ más de una vez"
+			trigger="{emailAlterno}" triggerEvent="valueCommit"/>
+		
+				
+	</fx:Declarations>
+	
+	
+<fx:Script>
+	<![CDATA[
+		import mx.controls.Alert;
+		import mx.core.Application;
+		
+		[Embed(source="assets/accept-icon_24.png")]	[Bindable]	public var iconAcp:Class;
+		//[Embed(source="assets/delete-icon_24.png")]	[Bindable]	public var iconDel:Class;
+		[Embed(source="assets/2519-32.png")]		[Bindable]	public var iconNot:Class;
+		[Embed(source="assets/userOK2.png")]		[Bindable]	public var imgOK:Class;
+		[Embed(source="assets/userFail2.png")]		[Bindable]	public var imgFail:Class;
+					
+		private function initValid():void
+		{
+			
+			//Alert.show("initValid");
+			if(mx.core.Application!=null)
+			{
+				//Alert.show("mx.core.Application");
+				if(mx.core.Application.application!=null)
+				{
+					//Alert.show("mx.core.Application.application");
+					if(mx.core.Application.application.parameters!=null)
+					{
+						//Alert.show("mx.core.Application.application.parameters");
+						if(mx.core.Application.application.parameters.userGuid!=null)
+						{
+							//Alert.show(mx.core.Application.application.parameters.userGuid);
+							userGuid.text = mx.core.Application.application.parameters.userGuid;
+							
+							
+						}		
+					}	
+				}
+			}
+		}
+		
+		
+		private function getEmail(){
+			Send(632);
+		
+		}
+		private function reenvioEmail(){
+		
+			Send(633)
+		}
+		private function enviarEmailAlt(){
+			Send(634);
+		}
+		
+		private function formatScreen():void
+		{
+			if(result.text == "0")
+			{
+				messageTextWrong.visible = true;
+				imageWrong.visible = true;
+				messageTextTrue.visible = false;
+				imageTrue.visible = false;
+			}	
+			else
+			{
+				messageTextTrue.visible = true;
+				imageTrue.visible = true;
+				messageTextWrong.visible = false;
+				imageWrong.visible = false;
+			}
+		}
+		
+		public function navegar():void{
+		
+			var urlRequest:URLRequest = new URLRequest("https://fx.facturaxion.net/fx.html");
+			navigateToURL(urlRequest,"_blank");
+		
+		}
+		
+	]]>
+</fx:Script>
+	<fx:Declarations>
+		<s:Animate id="anim" targets="{[ctrls]}" duration="1000">
+			<s:SimpleMotionPath property="alpha" valueFrom="0.0" valueTo="1.0" />
+			<s:SimpleMotionPath property="horizontalCenter" valueFrom="-100" valueTo="0" />
+			<s:SimpleMotionPath property="rotationY" valueFrom="-45" valueTo="0" />
+			<s:SimpleMotionPath property="scaleX" valueFrom="1.5" valueTo="1" />
+			<s:SimpleMotionPath property="scaleY" valueFrom="1.5" valueTo="1" />
+		</s:Animate>
+	</fx:Declarations>
+	<fx:Declarations>
+		<mx:Sequence id="glowIcon" repeatCount="100">
+			<mx:Glow duration="5000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="12.0" blurYFrom="0.0" blurYTo="12.0" color="#ffffff" /> 	
+			<mx:Glow duration="5000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="12.0" blurXTo="0.0" blurYFrom="12.0" blurYTo="0.0" color="#ffffff" /> 	
+		</mx:Sequence>	
+		<mx:Sequence id="glowButton" repeatCount="100">
+			<mx:Glow duration="4000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="10.0" blurYFrom="0.0" blurYTo="10.0" color="#054a95" /> 	
+			<mx:Glow duration="4000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="10.0" blurXTo="0.0" blurYFrom="10.0" blurYTo="0.0" color="#054a95" /> 	
+		</mx:Sequence>
+	</fx:Declarations>
+	<s:Panel skinClass="skinPN" id="wGFE"  color="#282323" height="550" width="943" horizontalCenter="0" verticalCenter="0" title="  Confirme su registro">
+	<s:Group id="ctrls" left="0" right="0" top="0" bottom="0" creationComplete="anim.play();">	
+	<s:TextInput id="userGuid"  width="338" x="69" y="52" visible="false" valueCommit="getEmail();"/>
+	<s:TextInput id="result"  width="338" x="257" y="467" valueCommit="formatScreen();" visible="false"/>
+	<s:TextInput id="resultMsg"  width="338" x="257" y="533" valueCommit="messageTextWrong.htmlText = resultMsg.text; messageTextTrue.htmlText = resultMsg.text;" visible="false"/>
+	<s:TextInput id="txtEmail" visible="false"/>
+	
+	<mx:Image x="181.25" y="10" source="assets/logo_new.png"/>
+	
+	
+	<s:Label x="20" y="162" text="Está por finalizar el registro de Factura Electrónica sólo falta realizar los siguientes pasos:" fontWeight="normal" fontSize="15"/>
+	<s:Label x="574" y="190" text="xxxxx" fontWeight="bold" fontSize="15" id="email" color="#000000"/>
+	<s:Label x="68" y="190" text="1. Ingrese al buzón de entrada de su cuenta de correo electrónico:" fontWeight="normal" fontSize="15"/>
+	<s:Label x="21" y="247" text="En caso de no recibir ningún correo de parte de Facturaxion favor de hacer" fontWeight="normal" fontSize="15"/>
+	<s:Label x="21" y="270" text="para volver a enviárselo una vez más. Tenga en cuenta que se generará una nueva contraseña" fontWeight="normal" fontSize="15"/>
+	<s:Label x="22" y="295" text="por cada nuevo intento que realice, por lo tanto utilice la contraseña contenida en el último" fontWeight="normal" fontSize="15"/>
+	<s:Label x="23" y="320" text="correo electrónico que le enviamos." fontWeight="normal" fontSize="15"/>
+	<s:Label x="22" y="353" text="O bien, usted puede enviar la notificación a un correo electrónico alterno:" fontWeight="normal" fontSize="15"/>
+	<s:Label x="22" y="380" text="Email alterno: " fontWeight="normal" fontSize="15"/>
+	<s:Label x="584" y="247" text="clic aquí" fontWeight="bold" fontSize="15" textDecoration="underline" id="clicAqui" click="reenvioEmail()"/>
+	<s:Label x="67" y="213" text="2. Abra el correo que le enviamos y confirme su registro dando clic al botón Activar Cuenta" fontWeight="normal" fontSize="15"/>
+	
+	<s:Button id="btnEmailAlterno" x="424" y="375" label="Enviar" click="enviarEmailAlt();"/>
+	<s:TextInput id="emailAlterno"  x="134" y="376" width="286"/>
+	
+	
+	<mx:Text x="100" y="409" fontWeight="normal" fontSize="15" width="627" id="messageTextWrong" height="116" color="#FF0000" visible="false" text="xxx"/>
+	<mx:Text x="100" y="409" fontWeight="normal" fontSize="15" width="627" id="messageTextTrue" height="116" color="#006699" visible="false" text="yyy"/>
+	<mx:Image source="assets/delete-icon_64.png" id="imageWrong" x="22" y="421" visible="false"/>
+	<mx:Image source="assets/accept-icon_64.png" id="imageTrue" x="22" y="421" visible="false"/>
+	
+		<mx:Button icon="@Embed(source='assets/goIcon32.png')" creationCompleteEffect="{glowButton}" 
+			   x="338" y="539" label="Ir a la aplicación" click="navegar();" height="35" width="170"/>
+	</s:Group>
+</s:Panel>
+</s:Application>

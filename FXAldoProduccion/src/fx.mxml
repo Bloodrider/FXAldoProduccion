@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="gob.mx.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	skinClass="skinR3" creationComplete="initApp();" applicationComplete="executeJavaScript();" 
+	pageTitle="Facturaxion">
+	
+<fx:Script source="r3Take.as"/>
+<fx:Style source="fx.css"/>
+<fx:Script>
+<![CDATA[
+	import flash.display.StageDisplayState;
+	import flash.events.TimerEvent;
+	import flash.external.*;
+	import flash.utils.Timer;
+	
+	import mx.containers.TitleWindow;
+	import mx.controls.Alert;
+	import mx.controls.Button;
+	import mx.core.IFlexDisplayObject;
+	import mx.core.SoundAsset;
+	import mx.events.CloseEvent;
+	import mx.events.MenuEvent;
+	import mx.managers.PopUpManager;
+	
+	import spark.components.*;
+	
+	public var clockCounter:Timer;
+	public var timeInSeconds:Number;
+		
+	
+	private	var strError:String="Las contraseñas de acceso debe contener:\n" + 
+								"“al menos 8 Caracteres”\n" + 
+								"“debe incluir al menos una Máyúscula”\n" + 
+								"“debe incluir al menos un Número”\n" + 
+								"“y debe incluir al menos un un Caracter Especial”";
+	
+	import mx.events.MenuEvent;
+	
+
+	
+	private function fullScreen():void{
+		switch (stage.displayState) 
+		{
+			case StageDisplayState.FULL_SCREEN:
+				stage.displayState = StageDisplayState.NORMAL;
+				iconFullScreen.source="newIcons/fullScreen.png";
+				iconFullScreen.toolTip = "Full Screen";
+				break;
+			default:
+				stage.displayState = StageDisplayState.FULL_SCREEN;
+				iconFullScreen.source="newIcons/noFullScreen.png";
+				iconFullScreen.toolTip = "No Full Screen";
+				break;
+		}
+	}
+	
+	 public function initApp():void
+	 {
+	    ExternalInterface.addCallback("myFlexFunction",myFunc);
+	    ExternalInterface.addCallback("myFlexFunctionIP",myFuncIP);
+	 }
+	
+	 public function myFunc(s:String):void 
+	 {
+	    Send(442);
+	 }
+	 
+	 public function myFuncIP(s:String):void 
+	 {
+	    getIP.text = s;
+	 }
+     
+	private function isNotPwdHist():void
+	{
+		if(newPwd1TW.text == newPwd2TW.text)
+		{
+			Send(467);//ESTABLECE SI EL PASSWORD YA SE ENCUENTRA EN EL TOP(n) DE SYS_PasswordHistory
+			newPwd1TW.errorString="";
+			newPwd2TW.errorString="";
+		}
+		else
+		{
+			newPwd1TW.errorString="Ambas contraseñas deben ser iguales. Favor de verificar";
+			newPwd2TW.errorString="Ambas contraseñas deben ser iguales. Favor de verificar";
+			pwdRepetido.text = "";
+					isOldPwdValid.text = "";
+		}
+	
+	}
+	
+	private function isPwdRepetido():void
+	{
+		if(isOldPwdValid.text >= "0")
+		{//SIGNIFICA QUE EL VIEJO PASSWORD SI CORRESPONDE CON EL USUARIO
+			if(pwdRepetido.text =="0")
+			{//SIGNIFICA QUE EL PASSWORD NUEVO NO ESTA DENTRO EL RANGO DE n PWD DEL HISTORIAL
+				if(checkFormat())
+				{
+					//HABILITAR PARA ACTUALIZAR EN SYS_User 
+					oldPwdHandle.text = oldPwdTW.text
+					pass.text = newPwd1.text;
+					
+					Send(466); //EJECUTA LA CLASE QUE ACTUALIZA LA CONTRASEÑA password.cs
+					Send(1);//EJECUTA LA CLASE DE security.cs
+					modal.visible = false;
+					
+					//HABILITAR PARA PRUEBAS DE TAL MANERA QUE NO SE ACTUILE EL PASSWORD DE SYS_User
+					//pass.text = newPwd1.text;
+					//Alert.show("La contraseña será exitosa","Alerta", Alert.OK);
+					resetPwdSession1.visible=false;
+					pwdRepetido.text = "-1";
+					isOldPwdValid.text = "-1";
+					isPwdUserExisted.text = "-1";
+				}
+				else
+				{
+					pwdRepetido.text = "-1";
+					isOldPwdValid.text = "-1";
+					isPwdUserExisted.text = "-1";
+					
+					Alert.show(strError,"Alerta", Alert.OK);
+				}				
+				
+			}
+			else if(pwdRepetido.text > "0")
+			{//SIGNIFICA QUE YA SE INTRODUJO UNA VEZ EL MISMO PASSWORD
+				Alert.okLabel = "Aceptar";
+				Alert.show("La contraseña ya ha sido introducido anteriormente. Favor de intentar de nuevo","Alerta", Alert.OK);
+				pwdRepetido.text = "-1";
+				isOldPwdValid.text = "-1";
+				isPwdUserExisted.text = "-1";
+			}
+			
+		}
+		else if(isOldPwdValid.text == "0")
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("La contraseña no corresponde al usuario introducido. Favor de verificar","Alerta", Alert.OK);
+			pwdRepetido.text = "-1";
+			isOldPwdValid.text = "-1";
+			isPwdUserExisted.text = "-1";
+		}
+	}
+	
+	private function checkFormat():Boolean
+	{
+		var pattern:RegExp =/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)[a-zA-Z0-9\S]{8,}$/;//--> 1 mayusculas, 1 minusculas, 1 números y 1 caracteres especiales,8 caracteres longitud
+		
+		if(pattern.test(newPwd1TW.text))
+		{
+			newPwd1TW.errorString="";
+			return true;
+		}
+		else
+		{
+			newPwd1TW.errorString=strError;
+			return false;
+		}
+		/*
+		return true;
+		*/
+	}
+	
+	private function checkFormatNewPwd2():void
+	{
+	
+	var pattern:RegExp =/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)[a-zA-Z0-9\S]{8,}$/;//--> 1 mayusculas, 1 minusculas, 1 números y 1 caracteres especiales,8 caracteres longitud
+		
+		if(pattern.test(newPwd2TW.text))
+		{
+			newPwd2TW.errorString="";
+			//return true;
+		}
+		else
+		{
+			newPwd2TW.errorString=strError;
+			//return false;
+		}
+	}
+	
+	public function initPage(event:Event):void
+	{
+		beginCountdown();
+	}	
+	
+	public function beginCountdown():void
+	{
+		timeInSeconds = int(1800);
+		clockCounter = new Timer(1000, this.timeInSeconds);
+		clockCounter.addEventListener(TimerEvent.TIMER, timeTick);
+		clockCounter.addEventListener(TimerEvent.TIMER_COMPLETE, timeEnd);
+		clockCounter.start();
+	}	
+	
+	
+	public function stopCountdown():void
+	{	
+		clockCounter.reset();
+	}
+	
+	private function timeTick(e:Event):void
+	{	
+		this.displayClockCount();		
+	}
+	
+	private function displayClockCount():void
+	{
+		titleFx.text = formatTime(clockCounter.repeatCount - clockCounter.currentCount);
+		//timeValue.text = princ.prueba.text;
+	}
+	
+	private function timeEnd(event:TimerEvent):void
+	{
+		Send(442);			
+		charger(1);
+		/* onvertToMDI(timeIsUp); */
+		
+	}
+
+	
+	public function formatTime(input:Number):String
+	{
+		var output:String = "";
+		var hour:String = "";
+		var min:String = "";
+		var sec:String = "";
+		
+		if(input >= 3600)
+		{
+			//tinh so gio
+			hour = String(int(input/3600));
+			min = String(int((input%3600)/60));
+			
+			if(min.length < 2)
+				min = "0" + min;
+			
+			sec = String(int((input%3600)%60));
+			
+			if(sec.length < 2)
+				sec = "0" + sec;
+			
+			output = hour + ":" + min + ":" + sec;
+			titleFx.setStyle("fontSize", 10);
+		}
+		else if(input >= 60)
+		{
+			//tinh so phuc
+			min = String(int(input/60));
+			sec = String(int(input%60));
+			if(sec.length < 2)
+				sec = "0" + sec;
+			
+			output = min + ":" + sec;
+			titleFx.setStyle("fontSize", 10);
+		}
+		else
+		{
+			output = String(input);
+			
+			if(input >= 10)
+				titleFx.setStyle("fontSize", 10);
+			else
+				titleFx.setStyle("fontSize", 10);
+		}
+		return output;
+	}
+	
+	public function iniciar():void
+	{
+		isPwdUserExisted.text = "-1";
+		resetPwd.text="";
+		Send(518);
+	}
+	
+	public function doIniciar():void
+	{
+		var isPUExisted:int =int(isPwdUserExisted.text); 
+		if(isPUExisted>0)
+		{
+			Send(1);
+			isPwdUserExisted.text = "-1";
+			resetPwd.text="";
+		}
+		else if(isPUExisted==0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El usuario y contraseña no están dadas de Alta en nuestro sistema. Favor de verificar el correo de confirmación para activarla y después ingresar con su usuario y contraseña provisional ","Alerta");
+			isPwdUserExisted.text = "-1";
+			resetPwd.text="";
+		}
+	
+	}
+	
+	public function fxIsPwdLocked():void
+	{
+		var status:int = int(isPwdLocked.text);
+		
+		if(status>0)
+		{//SIGNIFICA QUE EXISTE UNA CUENTA DE USUARIO Y EMAIL QUE CORRESPONDAN POR LO TANTO SE PUEDE ENVIAR EL CORREO ELECTRÓNICO
+		
+			Send(494);//EJECUTA LA CLASE QUE ENVIA LA LIGA PARA DESBLOQUEAR LA CUENTA
+			
+			isPwdLocked.text = "-1";
+		}
+		else if(status==0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("No existe una cuenta de correo electrónico asociado al usuario introducido. Favor de verificar o llame al Administrador del Sistema o en su defecto a la Mesa de Ayuda","Alerta", Alert.OK);
+			isPwdLocked.text = "-1";
+		}
+	}
+	
+	public function verResetPwdSession1():void
+	{
+		if(resetPwd.text=="1")
+		{
+			convertToMDI(resetPwdSession1);
+			
+			isPwdUserExisted.text = "-1";
+		}
+		resetPwd.text="";
+	}
+	
+	
+	public function executeJavaScript():void
+	{
+	   ExternalInterface.call("executeJavaScript", "");
+	}
+	
+	private function convertToMDI(titleW:IFlexDisplayObject):void
+	{
+		modal.visible = true;
+		user.enabled = false;
+		pass.enabled = false;
+		entrar.enabled = false;
+		resetPassBtn.enabled = false;
+		resetPassImage.enabled = false;
+		titleW.visible=true;
+	}
+	
+	private function enabledControls():void
+	{
+		modal.visible = false;
+		user.enabled = true;
+		pass.enabled = true;
+		entrar.enabled = true;
+		resetPassImage.enabled = true;
+		resetPassBtn.enabled = true;
+	}
+	
+	public function closeTitleWindow(TW:IFlexDisplayObject, txtInput:spark.components.TextInput):void
+	{
+		if(txtInput != null)
+		{
+			txtInput.text = "";
+		}
+		
+		//PopUpManager.removePopUp(TW);
+		enabledControls();
+		TW.visible = false;
+	}
+	
+	import spark.components.TitleWindow;
+	
+	protected var tlWindow1:twMDImsg;
+	
+	
+	private function Estatus(event:Event):void
+	{
+		if(event.currentTarget.id == "window")
+		{	
+			/* this.window.text = event.currentTarget.text; */
+			return;
+		}
+	}
+	
+	private function charger(op:int):void
+	{
+		if(op == 1)
+		{
+			tlWindow1 = PopUpManager.createPopUp(this, twMDImsg, true) as twMDImsg;
+			PopUpManager.centerPopUp(tlWindow1);		
+			
+			/* twMDImsg(tlWindow1).window.text = window.text;
+			twMDImsg(tlWindow1).window.addEventListener("valueCommit", Estatus); */
+		}
+	}
+	
+	private function resetPassword():void
+	{
+		if(correo.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El correo es requerido, favor de ingresarlo.","Mensaje r3Take",Alert.OK,null,null, iconAlert);
+			correo.setFocus();
+			correo.errorString = "El correo es requerido.";
+			return;
+		}
+		
+		if(rfc.text.length == 0)
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("El RFC es requerido, favor de ingresarlo.","Mensaje r3Take",Alert.OK,null,null, iconAlert);
+			rfc.setFocus();
+			rfc.errorString = "El RFC es requerido.";
+			return;
+		}
+		rfc.errorString = "";
+		correo.errorString = "";
+		Send(319);
+	}
+	
+]]>
+</fx:Script>
+	
+<fx:Declarations>
+	<mx:Sequence id="glowIcon" repeatCount="999">
+		<mx:Glow duration="7000" alphaFrom="0.4" alphaTo="0.9" blurXFrom="2.0" blurXTo="4.0" blurYFrom="2.0" blurYTo="4.0" color="0xffffff" /> 	
+		<mx:Glow duration="7000" alphaFrom="0.9" alphaTo="0.4" blurXFrom="4.0" blurXTo="2.0" blurYFrom="4.0" blurYTo="2.0" color="0xffffff" /> 	
+	</mx:Sequence>
+</fx:Declarations>
+	<mx:Image source="assets/ribbon_fx.png" right="0" bottom="6"/>
+	<s:TextInput id="getIP" x="0" y="0" visible="false"/>
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" gap="16">
+		
+			<s:Group  id= "principalConf" width="584" height="361">
+				
+				<s:TextInput x="463" y="220" width="100" id="resetPwd" visible="false" valueCommit="verResetPwdSession1()"/>
+				<s:TextInput x="463" y="260" width="100" id="oldPwd" visible="false" text="{this.oldPwdTW.text}" />
+				<s:TextInput x="463" y="280" width="100" id="newPwd1" visible="false" text="{this.newPwd1TW.text}" />
+				<s:TextInput x="463" y="300" width="100" id="oldPwdHandle" visible="false"  />
+				<s:TextInput x="400" y="220" width="100" id="idProcedencia" visible="false" text="1" />
+				
+				<s:TextInput x="323" y="283" width="100" id="userUnlock" visible="false" text="{this.userUnlockTW.text}" />
+				<s:TextInput x="206" y="283" width="100" id="emailUnlock" visible="false" text="{this.emailUnlockTW.text}" />
+				
+				<s:TextInput x="355" y="196" width="100" id="isPwdLocked" visible="false" valueCommit="fxIsPwdLocked();"/>
+				<s:TextInput x="355" y="296" width="100" id="isPwdUserExisted" visible="false" valueCommit="doIniciar();"/>
+				
+				<s:TextInput x="463" y="300" width="100" id="unlockPwd" visible="false" valueCommit="convertToMDI(unlockPwdTW);"/>
+				<s:TextInput x="463" y="300" width="100" id="unlockPwdRazon" visible="false" valueCommit="convertToMDI(unlockPwdTW);"/>
+				
+				
+				<s:TextInput x="59" y="240" width="160" id="user" maxChars="50" text="imartinez@facturaxion.com" />
+				<s:TextInput x="232" y="240" width="160" id="pass" displayAsPassword="true" maxChars="50"/>
+				
+				<mx:Label x="59" y="217" text="Usuario" fontWeight="normal" color="#FFFFFF" fontSize="12"/>
+				<mx:Label x="232" y="218" text="Contraseña" fontWeight="normal" color="#FFFFFF" fontSize="12"/>
+				<mx:Button x="403" y="239" label="  Entrar" id="entrar" height="24" click="iniciar();" fontWeight="bold" width="100" icon="@Embed(source='assets/keys-32.png')"/>		
+				<mx:LinkButton x="310" y="293" label="¿Olvidaste tu Contraseña?" color="#FFFFFF" click="convertToMDI(resetPass);" id="resetPassBtn" fontSize="12" fontWeight="normal"/>
+				
+				<mx:Image x="472" y="289" source="assets/2118-32.png" id="resetPassImage" click="resetPass.visible = true;"/>
+				<s:Label x="119.5" y="67" text="facturaxion" fontSize="64" fontWeight="bold" color="#FFFFFF" visible="false"/>
+				<mx:Image x="54" y="14" source="assets/logoBlanco.png"/>
+				
+				
+				
+			</s:Group>
+		<mx:Text text="Freight Ideas S.A. de C.V.&#xa;Avenida Fuerza Aérea Mexicana No. 520 Int. 1&#xa; Colonia Federal,  Delegación Venustiano Carranza&#xa;México, Distrito Federal  CP 15700" fontSize="9" textAlign="center" fontWeight="normal" color="#FFFFFF"/>
+	</s:VGroup>
+	<s:Panel x="0" y="0" width="100%" height="100%" id="mainPanel" title="www.facturaxion.net  		Su sesión finalizará en {titleFx.text}" visible="false" cornerRadius="0" color="#FFFFFF" skinClass="panelR3">
+		
+		<mx:Label visible="false" text="" scaleX="3" scaleY="3"  fontSize="50" id="titleFx" color="#FFFFFF" fontWeight="bold" width="36" height="17" right="4" textAlign="right" y="-8"/>
+		
+		<mx:ModuleLoader x="0" y="0" width="100%" height="100%" id="mainLoader" url="">
+		</mx:ModuleLoader>
+		<mx:Image source="newIcons/fullScreen.png" right="2" top="-30" click="fullScreen();" id="iconFullScreen" toolTip="Full Screen"/>
+	</s:Panel>	
+	
+	<s:Panel width="100%" height="100%" visible="false" id="modal" x="1" y="-30" backgroundColor="#635E5E" alpha=".5">
+	</s:Panel>
+
+	<s:TitleWindow id="resetPass" title="Reinicializar Contraseña" visible="false" width="202" height="175" borderAlpha=".95" close="closeTitleWindow(resetPass, null);" verticalCenter="-37" horizontalCenter="0">
+		<s:TextInput x="17" y="30" width="168" id="rfc" maxChars="60" enabled="true"/>
+		<s:Label text="Cuenta" x="17" y="16"/>
+		<s:TextInput x="17" y="78" width="168" id="correo" enabled="true"/>
+		<s:Label text="Correo Electrónico" x="17" y="64"/>
+		<mx:Button label="Enviar" id="enviar" icon="@Embed(source='newIcons/accept_24.png')" click="resetPassword();"  height="24" width="100" tabIndex="99" toolTip="Enviar cambio de Contraseña" x="84" y="110"/>	
+	</s:TitleWindow>
+	
+	<s:TitleWindow id="timeIsUp" title="Sesión Expirada" 
+				   visible="false" width="402" height="206" 
+				   borderAlpha=".95" 
+				   verticalCenter="0" horizontalCenter="0">
+		
+		<s:Label text="Por seguridad la sesión ha expirado!!!!!" x="10" y="36"/>
+		<s:Label text="Favor de actualizar la ventana apretando la tecla F5 de su teclado, o bien, " x="10" y="56"/>
+		<s:Label text="cerrar la ventana, ingresar la dirección electrónica en el explorador" x="10" y="76"/>
+		<s:Label text="y volver a introducir sus credenciales para ingresar en el sistema." x="10" y="96"/>
+		
+	</s:TitleWindow>
+	<s:TitleWindow id="resetPwdSession1" title="Reinicializar Contraseña" 
+				   visible="false" width="278" height="338" 
+				   borderAlpha=".95" close="closeTitleWindow(resetPwdSession1,resetPwd);" 
+				   verticalCenter="0" horizontalCenter="0">
+		
+		<s:Label text="Por disposición del Servicio de  Administración" x="10" y="16" width="248" fontSize="10"/>
+		<s:Label text="Tributaria, es necesario reiniciar nuevamente la" x="10" y="31" width="238" fontSize="10"/>
+		<s:Label text="contraseña en la primera sesión en el sistema y/o" x="10" y="46" width="238" fontSize="10"/>
+		<s:Label text="cuando ésta caducó" x="10" y="61" width="238" fontSize="10"/>
+		<s:Label text="Anterior Contraseña" x="10" y="93"/>
+		<s:Label text="Nueva Contraseña" x="10" y="140"/>
+		<s:Label text="Confirmar Nueva Contraseña" x="10" y="192"/>
+		
+		<s:TextInput x="10" y="109" width="238" id="oldPwdTW"  displayAsPassword="true" maxChars="50" enabled="true" text="{pass.text}"/>
+		<s:TextInput x="10" y="155" width="238" id="newPwd1TW" enabled="true" displayAsPassword="true" maxChars="50" focusOut="checkFormat()"/>
+		<s:TextInput x="10" y="209" width="238" id="newPwd2TW" enabled="true" displayAsPassword="true" maxChars="50" focusOut="checkFormatNewPwd2()"/>
+		
+		<s:TextInput x="10" y="226" width="36.5" id="pwdRepetido" visible="false" enabled="true" valueCommit="isPwdRepetido();"/>
+		<s:TextInput x="173.5" y="226" width="36.5" id="isOldPwdValid" visible="false" enabled="true"/>
+		
+		
+		<mx:Button label="Enviar" icon="@Embed(source='assets/ok_32.png')" click="isNotPwdHist();"  height="29" width="111" tabIndex="99" toolTip="Enviar cambio de Contraseña" x="73.5" y="250"/>	
+	</s:TitleWindow>
+	
+	<s:TitleWindow id="unlockPwdTW" title="Desbloquear Contraseña" 
+				   visible="false" width="278" height="338" 
+				   borderAlpha=".95" close="closeTitleWindow(unlockPwdTW, null);" 
+				   verticalCenter="0" horizontalCenter="0">
+		
+		<s:Label text="Su contraseña ha sido bloqueada debido a que" x="10" y="15" width="248" fontSize="10"/>
+		<s:Label id="lockPwdReason" text="{unlockPwdRazon.text}" x="10" y="30" width="248" fontSize="10"/>
+		<s:Label text="Para desbloquearla es necesio ingresar su usuario" x="10" y="45" width="238" fontSize="10"/>
+		<s:Label text="y correo electrónico que ingreso cuando realizó " x="10" y="60" width="238" fontSize="10"/>
+		<s:Label text="su registro en el sistema. Si los datos son correctos" x="10" y="75" width="238" fontSize="10"/>
+		<s:Label text="se le enviará otro correo electrónico con una liga para" x="10" y="90" width="238" fontSize="10"/>
+		<s:Label text="que usted dé clic sobre ella y automáticamente su" x="10" y="105" width="238" fontSize="10"/>
+		<s:Label text="cuenta estará desbloqueada." x="10" y="120" width="238" fontSize="10"/>
+		<s:Label text="Usuario" x="10" y="140"/>
+		<s:Label text="Correo Electrónico registrado en el sistema" x="10" y="192"/>
+		<s:TextInput x="10" y="155" width="238" id="userUnlockTW" enabled="true"  maxChars="50" />
+		<s:TextInput x="10" y="209" width="238" id="emailUnlockTW" enabled="true"  maxChars="50"/>
+		<mx:Button label="Enviar" icon="@Embed(source='assets/ok_32.png')" click="Send(493);"  height="29" width="111" tabIndex="99" toolTip="Enviar cambio de Contraseña" x="73.5" y="250"/>	
+	</s:TitleWindow>
+</s:Application>

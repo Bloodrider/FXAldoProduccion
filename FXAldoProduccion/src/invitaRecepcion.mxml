@@ -1,0 +1,1013 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:mx2="library://ns.adobe.com/flex/halo"
+			   width="100%" height="100%" creationComplete="Send(786);">
+	
+	<s:states>
+		<s:State name="START"/>
+		<s:State name="INIT"/>
+		<s:State name="ADDC"/>
+		<s:State name="VALD"/>
+	</s:states>
+	
+	<fx:Declarations>
+		<mx:EmailValidator
+			source="{correoElec}" property="text" requiredFieldError="El correo electrónico es un campo es obligatorio"  
+			invalidCharError="El formato de correo electrónico es incorrecto."		
+			invalidDomainError="El formato del dominio del correo electrónico es incorrecto."
+			invalidPeriodsInDomainError="El formato del dominio del correo electrónico es incorrecto."
+			missingPeriodInDomainError="El correo electrónico no contiene un dominio."
+			missingUsernameError="El correo electrónico no contiene un usuario de dominio."
+			missingAtSignError="La cuenta de correo electrónico no contiene el carácter @"
+			tooManyAtSignsError="La cuenta de correo electrónico contiene el carácter @ más de una vez"
+			valid="validNextMAIL.text = '1';" 
+			invalid="validNextMAIL.text = '0'" trigger="{correoElec}" triggerEvent="change"/>
+		
+		<mx:EmailValidator
+			source="{correoElecUPD}" property="text" requiredFieldError="El correo electrónico es un campo es obligatorio"  
+			invalidCharError="El formato de correo electrónico es incorrecto."		
+			invalidDomainError="El formato del dominio del correo electrónico es incorrecto."
+			invalidPeriodsInDomainError="El formato del dominio del correo electrónico es incorrecto."
+			missingPeriodInDomainError="El correo electrónico no contiene un dominio."
+			missingUsernameError="El correo electrónico no contiene un usuario de dominio."
+			missingAtSignError="La cuenta de correo electrónico no contiene el carácter @"
+			tooManyAtSignsError="La cuenta de correo electrónico contiene el carácter @ más de una vez"
+			valid="validNextMAIL.text = '1';" 
+			invalid="validNextMAIL.text = '0'" trigger="{correoElecUPD}" triggerEvent="change"/>
+	</fx:Declarations>
+	
+	<fx:Script source="r3Take.as"/>
+	<fx:Script source="validateIsEmpty.as"/>
+	<fx:Style source="fx.css"/>
+	<fx:Script>
+		<![CDATA[
+			import mx.core.IFlexDisplayObject;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			[Embed(source="assets/num/1.gif")]	[Bindable]	public var icon1:Class;
+			[Embed(source="assets/num/2.gif")]	[Bindable]	public var icon2:Class;
+			[Embed(source="assets/num/3.gif")]	[Bindable]	public var icon3:Class;
+			
+			[Embed(source="assets/message-64.png")]	[Bindable]	public var iconMSG:Class;
+			[Embed(source="assets/contact-64.png")]	[Bindable]	public var iconADD:Class;
+			[Embed(source="assets/emailValid-64.png")]	[Bindable]	public var iconVLD:Class;
+			
+			private function asignaGUID():void
+			{
+				guid.text = GUID.create();
+			}
+			
+			private function idItemRow(GW:mx.controls.DataGrid, idGW:spark.components.TextInput):void
+			{
+				if(GW.selectedItem != null)
+				{
+					idGW.text = GW.selectedItem["0"].toString();
+				}
+			}
+			
+			private function validData():String
+			{
+				var controlsValid:Array = new Array();
+				Alert.okLabel = "Aceptar";
+				
+				if(currentState == "INIT")//Valida Pantalla de Mensaje de invitación.
+				{
+					controlsValid.push(this.cuerpoMSG);
+				}
+				else if(currentState == "ADDC")//Valida Pantalla para agregar contactos.
+				{
+					if(GVW_Cntcts.dataProvider != null)
+					{
+						if(GVW_Cntcts.dataProvider.source.length > 0)
+						{
+							GVW_Cntcts.errorString = "";
+							currentState = "VALD";
+							txTITLE.text = "Validar Contenido del Mensaje.";
+							titleImg.source =  iconVLD;
+							siguiente.visible = false;
+							aceptar.visible = true;
+							return "1";
+						}
+						else
+						{
+							Alert.show("La lista de invitados a la recepción de CFDI´s, es Obligatoria.", "Alerta Datos Obligatorios", Alert.OK,null,null,iconAlert);
+							GVW_Cntcts.errorString = "*Campo requerido";
+							return "0";
+						}
+					}
+					else
+					{
+						Alert.show("La lista de invitados a la recepción de CFDI´s, es Obligatoria.", "Alerta Datos Obligatorios", Alert.OK,null,null,iconAlert);
+						GVW_Cntcts.errorString = "*Campo requerido";
+						return "0";
+					}
+				}
+				else if(currentState == "VALD")//Valida Pantalla para envió de la invitación.
+				{
+					controlsValid.push(this.aceptValid);
+				}
+				return validar(controlsValid);
+			}
+			
+			private function AddUpd(typeEVENT:int, TW:mx.containers.TitleWindow, 
+														 btnINST:mx.controls.Button, btnSAVE:mx.controls.Button,
+																								content:mx.containers.Canvas, 
+																													  GW:mx.controls.DataGrid, 
+																													  idGW:TextInput, load:int):void
+			{
+				if (typeEVENT == 1 )//VENTANDA PARA INSERTAR REGISTROS
+				{
+					if(GW.dataProvider != null)
+					{
+						if (idGW.text.length > 0 && GW.selectedIndex > -1)
+						{
+							TW.title = "Agregar Datos";
+							btnINST.visible = true;
+							btnSAVE.visible = false;
+							PopUpManager.addPopUp(TW, content, true);
+							PopUpManager.centerPopUp(TW);	
+							TW.visible = true;
+							TW.isPopUp = true;
+						}
+						else
+						{
+							Alert.show("Debe seleccionar un registro para adjuntar el documento.","Alerta", Alert.OK,null,null,iconAlert);
+						}
+					}
+					else
+					{
+						Alert.show("No hay datos en el Grid de " + GW.name + "para agregar un documento","Alerta", Alert.OK,null,null,iconAlert);
+					}
+				}
+					
+				else if (typeEVENT == 2 )//VENTANDA PARA MODIFICAR REGISTROS
+				{
+					if(GW.dataProvider != null)
+					{
+						if (idGW.text.length > 0)
+						{
+							Send(load);//Obtiene Datos a Modificar
+							TW.title = "Modificar Datos";
+							PopUpManager.addPopUp(twCNTO, contentCTLS, true);
+							PopUpManager.centerPopUp(twCNTO);	 
+							TW.visible = true;
+							TW.isPopUp = true;
+						}
+						else
+						{
+							Alert.show("Debe seleccionar un registro para modificar.","Alerta", Alert.OK,null,null,iconAlert);
+						}
+					}
+					else
+					{
+						Alert.show("No hay datos en el Grid de " + GW.name + "para modificar registros.","Alerta", Alert.OK,null,null,iconAlert);
+					}
+				}
+			}
+			
+			private function deleteRow(GW:mx.controls.DataGrid, id:TextInput, steapDel:int,steapReload:int):void
+			{
+				if(GW.selectedItem != null)
+				{
+					Alert.yesLabel="Si";
+					Alert.noLabel="No";
+					Alert.show("¿Esta seguro que desea eliminar el registro?","Aviso",
+						Alert.YES|Alert.NO,this,
+						function alertListenerFIS(eventObj:CloseEvent):void 
+						{
+							if (eventObj.detail==Alert.YES)
+							{
+								Send(steapDel);//Borrar registro
+								Send(steapReload);//Acutualizar registros del Grid View.
+								GW.selectedItem=null;
+								id.text="";
+							}
+							
+						},iconDel,Alert.OK);
+				}
+				else if(GW.selectedItem == null)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar el registro a borrar.","Alerta", Alert.OK,null,null,iconAlert);
+				}
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No hay datos en el Grid de " + GW.name,"Alerta", Alert.OK,null,null,iconAlert);
+				}
+			}
+			
+			private function validaAddUpd(op:int):void
+			{
+				var cntrlValid:Array = new Array();
+				var validInsert:String;
+				Alert.okLabel="Aceptar";
+				if(op==1)//Valida controles para agregar registro.
+				{	
+					var validADD:String="";
+					if(GVW_Cntcts.dataProvider == null)
+					{
+						validADD="ok";
+					}
+					else if(GVW_Cntcts.dataProvider.source.length == 0)
+					{
+						validADD="ok";
+					}
+					else if(GVW_Cntcts.dataProvider.source.length < 51)
+					{
+						var elementos:int = 0;
+						var tipoRFC:String = "";
+						
+						if(fisica.selected == true)
+						{
+							tipoRFC = fisica.label;
+						}
+						else if(moral.selected == true)
+						{				
+							tipoRFC = moral.label;
+						}
+						
+						elementos = GVW_Cntcts.dataProvider.source.length;
+						
+						for (var i:int = 0; i < elementos; i++)
+						{
+							if(GVW_Cntcts.dataProvider[i][4].toString() != RFC.text.toUpperCase())
+							{
+								validADD="ok";
+							}
+							else
+							{
+								validADD="duplicate";
+							}
+						}
+					}
+					else
+					{
+						validADD="fail";
+					}
+					
+					if(validADD == "ok")
+					{
+						lbMSG.text="Estatus de los mensajes enviados.";
+						twMSG.title="Estatus de los mensajes enviados.";
+						
+						cntrlValid.push(this.razonSocial);
+						
+						if(fisica.selected == true)
+						{
+							if(rfcFisica.text.length == 0)
+							{
+								cntrlValid.push(this.rfcFisica);
+							}
+						}
+						else if(moral.selected == true)
+						{
+							if(rfcMoral.text.length == 0)
+							{
+								cntrlValid.push(this.rfcMoral);
+							}
+						}
+						
+						if(validNextMAIL.text == "0")
+						{
+							Alert.show("EL Formato de Correo Electrónico es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+							return;
+						}
+						
+						if(validNextRFC.text == "0")
+						{
+							Alert.show("EL Formato del RFC es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+							return;
+						}
+						
+						if(numTel.text.length > 0)
+						{
+							if(validNextRFC.text == "0")
+							{
+								Alert.show("EL Formato del número telefónico es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+								return;
+							}
+						}
+						
+						cntrlValid.push(this.correoElec);
+						validInsert = validar(cntrlValid);
+						if(validInsert == "1")
+						{ 
+							Send(783);//Agrega el contacto
+							Send(781);//Recarga el Grid View de Lista de contactos.
+							validNextMAIL.text="";
+							validNextRFC.text="";
+							razonSocial.text="";
+							RFC.text="";
+							rfcFisica.text="";
+							rfcMoral.text="";
+							correoElec.text="";
+							numTel.text="";
+							fisica.selected=false;
+							moral.selected=true;						
+							razonSocial.errorString="";
+							RFC.errorString="";
+							rfcFisica.errorString="";
+							rfcMoral.errorString="";
+							correoElec.errorString="";
+							numTel.errorString="";
+						}
+					}
+					else if(validADD == "fail")
+					{
+						Alert.show("La lista de invitación a la recepción de CFDI´s solo perminte a 50 invitados por proceso.", "Alerta", Alert.OK,null,null,iconAlert);
+					}
+					else if(validADD == "duplicate")
+					{
+						Alert.show("En la lista de invitación a la recepción de CFDI´s ya existe esta persona "+tipoRFC+".", "Alerta", Alert.OK,null,null,iconAlert);
+					}					
+				}
+				else if(op==2)//Valida controles para editar registro.
+				{
+					cntrlValid.push(this.razonSocialUPD);
+										
+					if(validNextMAIL.text == "0")
+					{
+						Alert.show("EL Formato de Correo Electrónico es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+						return;
+					}
+					
+					if(numTelUPD.text.length > 0)
+					{
+						if(validNextRFC.text == "0")
+						{
+							Alert.show("EL Formato del número telefónico es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+							return;
+						}
+					}
+					
+					if(validPhoneEMP.text == "0")
+					{
+						Alert.show("EL Formato del RFC es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+						return;
+					}
+					
+					cntrlValid.push(this.correoElecUPD);
+					validInsert = validar(cntrlValid);
+					
+					if(validInsert == "1")
+					{
+						var elementosUP:int = 0;
+						var tipoRFCUP:String = "";
+						var validUPD:String="";
+						
+						if(GVW_Cntcts.selectedItem[4].toString() != RFC.text.toUpperCase())
+						{
+							validUPD="ok";
+						}
+						else
+						{
+							tipoRFCUP = GVW_Cntcts.selectedItem[5].toString();
+							validUPD="duplicate";
+						}
+						
+						if(validUPD == "ok")
+						{
+							Send(784);//Edita el contacto
+							Send(781);//Recarga el Grid View de Lista de contactos.
+							twCNTO.visible=false;
+							razonSocialUP.text="";
+							
+							RFC.text="";
+							correoElecUP.text="";
+							numTelUP.text="";
+							
+							fisicaUP.selected=false;
+							moralUP.selected=true;
+							
+							validNextMAIL.text="";
+							validNextRFC.text="";
+							
+							razonSocialUPD.errorString="";
+							razonSocialUPD.text="";
+							correoElecUPD.text="";
+							numTelUPD.text="";
+							correoElecUPD.errorString="";
+							numTelUPD.errorString="";
+							
+							razonSocialUP.errorString="";
+							razonSocialUP.errorString="";
+							
+							RFC.errorString="";
+							correoElecUP.errorString="";
+							numTelUP.errorString="";
+							getTipoPersona.text="";
+						}
+						else if(validUPD == "duplicate")
+						{
+							Alert.show("En la lista de invitación a la recepción de CFDI´s ya existe esta persona "+tipoRFCUP+".", "Alerta", Alert.OK,null,null,iconAlert);
+						}
+					}
+				}
+			}
+			
+			private function transWindow(forward:int):void
+			{
+				var valid:String;
+				var titleSUC:String;
+				
+				if(currentState == "INIT" && forward == 1)//Mensage >> Agregar contactos
+				{
+					valid = validData();
+					if(valid == "1")
+					{
+						currentState = "ADDC";
+						txTITLE.text = "Agregar Contactos.";
+						titleImg.source =  iconADD;
+						atras.visible= true;
+					}
+				}
+				else if(currentState == "ADDC" && forward == 0)//Agregar contactos >> Mensaje
+				{
+					currentState = "INIT";
+					txTITLE.text = "Construir Cuerpo del Mensaje..";
+					titleImg.source =  iconMSG;
+					atras.visible= false;
+				}
+				else if(currentState == "ADDC" && forward == 1)//Agregar contactos >> Cuerpo del mensaje
+				{
+					valid = validData();
+					if(valid == "1")
+					{
+						currentState = "VALD";
+						txTITLE.text = "Validar Contenido del Mensaje";
+						titleImg.source =  iconVLD;
+						siguiente.visible = false;
+						aceptar.visible = true;
+					}
+				}
+				else if(currentState == "VALD" && forward == 0)//Cuerpo del mensaje >> Agregar contactos 
+				{
+					currentState = "ADDC";
+					txTITLE.text = "Agrega Contactos.";
+					titleImg.source =  iconVLD;
+					siguiente.visible = true;
+					aceptar.visible = false;
+				}
+			}
+			
+			private function saveData():void
+			{
+				var valid:String;
+				valid = validData();
+				aceptValid.errorString="";
+				if(valid == "1")
+				{
+					aceptValid.errorString="";
+					cleanCTRLS(cnvsINIT);
+					cleanCTRLS(cnvsADDC);
+					cleanCTRLS(cnvsVALD);
+					Send(787);//Llamar Clase para Insertar Datos.
+				}
+				else
+				{
+					if(!aceptValid.selected)
+					{
+						aceptValid.errorString="*Campo requerido";	
+					}
+				}
+			}
+			
+			private function cleanCTRLS(myObject:mx.containers.Canvas):void
+			{
+				var elements:int = 0;
+				var className:String;
+				var currentCtl:Object;
+				
+				elements = myObject.numElements;
+				
+				for(var i:int=0; i < elements; i++)
+				{
+					currentCtl = myObject.getElementAt(i);
+					className = currentCtl.className.toString();
+					
+					if(className == "TextInput")
+					{
+						TextInput(currentCtl).text = "";
+						TextInput(currentCtl).errorString = "";
+					}
+					if(className == "TextArea")
+					{
+						TextArea(currentCtl).text = "";
+						TextArea(currentCtl).errorString = "";
+					}
+					if(className == "DateField")
+					{
+						DateField(currentCtl).text = "";
+						DateField(currentCtl).errorString = "";
+					}
+					if(className == "NumericStepper")
+					{
+						NumericStepper(currentCtl).value = 0;
+						NumericStepper(currentCtl).errorString = "";
+					}
+					if(className == "DropDownList")
+					{
+						DropDownList(currentCtl).selectedIndex = -1;
+						DropDownList(currentCtl).selectedItem = null;
+						DropDownList(currentCtl).dataProvider = null;
+						DropDownList(currentCtl).errorString = "";						
+					}
+					if(className == "ComboBox")
+					{
+						mx.controls.ComboBox(currentCtl).dataProvider = null;
+						mx.controls.ComboBox(currentCtl).selectedItem = null;
+						mx.controls.ComboBox(currentCtl).selectedIndex = -1;
+						mx.controls.ComboBox(currentCtl).errorString = "";
+					}
+					if(className == "CheckBox")
+					{
+						CheckBox(currentCtl).selected = false;
+						CheckBox(currentCtl).errorString = "";						
+					}
+				}
+			}
+			
+			private function closeWindow(TW:mx.containers.TitleWindow, CTRLS:mx.containers.Canvas):void
+			{
+				cleanCTRLS(CTRLS);
+				PopUpManager.removePopUp(TW);
+				TW.isPopUp = false;
+				TW.visible = false;
+			}
+			
+			private function setVal():void
+			{
+				if(fisica.selected)
+				{
+					rfcFisica.visible = true;
+					rfcMoral.visible = false;
+					
+				}
+				if(moral.selected)
+				{
+					rfcFisica.visible = false;
+					rfcMoral.visible = true; 
+				}
+				
+				existRFC.text = "";
+				rfcFisica.text = ""; 
+				rfcMoral.text = ""; 
+				rfcFisica.errorString = ""; 
+				rfcMoral.errorString = "";
+				RFC.text = "";
+				validNextRFC.text = "";
+			}
+			
+			
+			
+			private var validPhone:String = "^[0-9]{2}[\-]{1}[0-9]{2}[\-]{1}[0-9]{4}[\-]{1}[0-9]{4}$";
+			private var expPhone:RegExp = new RegExp(validPhone,"g");
+			
+			private function checkPhone(myCtrl:TextInput, valid:TextInput):void
+			{			
+				if(expPhone.test(myCtrl.text))
+				{
+					myCtrl.errorString = "";
+					valid.text = "1";
+				}
+				else
+				{
+					if(myCtrl.text.length < 5)
+					{
+						myCtrl.errorString = "Formato del Teléfono es Incorrecto\n\n" +
+							"Formatos “01-55-1234-45678”, en donde: \n" +
+							"01 = Clave lada nacional. \n" +
+							"       Acepta los valores [(0-9)]\n" +
+							"55-1234-45678 = Número Telefónico. \n" +
+							"                (acepta los valores [0-9).";
+						valid.text = "0";
+					}
+				}	
+			}
+			
+			private var validFormatPM:String = "^[A-Za-zñÑ&]{3}[0-9]{6}[0-9A-Za-z]{3}$";
+			private var validFormatPF:String = "^[A-Za-zñÑ&]{4}[0-9]{6}[0-9A-Za-z]{3}$";
+			
+			private var expRfcPM:RegExp = new RegExp(validFormatPM,"g");
+			private var expRfcPF:RegExp = new RegExp(validFormatPF,"g");
+			
+			private function checkRFCPF(myCtrl:TextInput, valid:TextInput):void
+			{
+				if(expRfcPF.test(myCtrl.text))
+				{
+					myCtrl.errorString = "";
+					valid.text = "1";
+				}
+				else
+				{
+					if(myCtrl.text.length < 13)
+					{
+						myCtrl.errorString = "RFC Persona Física Incorrecto\n\n" +
+							"Formato “AAAAaammddHHD”, en donde: \n" +
+							"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+							"              Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+							"aammdd = Fecha de nacimiento, numérico (año,mes,día). \n" +
+							"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"Los caracteres alfabéticos deben ser mayúsculas.";
+						valid.text = "0";
+					}
+				}	
+			}
+			
+			private function checkRFCPM(myCtrl:TextInput, valid:TextInput):void
+			{
+				if(expRfcPM.test(myCtrl.text))
+				{
+					myCtrl.errorString = "";
+					valid.text = "1";
+				}
+				else
+				{
+					if(myCtrl.text.length < 12)
+					{
+						myCtrl.errorString = "RFC Persona Moral Incorrecto\n\n" +
+							"Formato “AAAaammddHHD”, en donde: \n" +
+							"AAA = Siglas del contribuyente, alfanumérico. \n" +
+							"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+							"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+							"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"Los caracteres alfabéticos deben ser mayúsculas.";
+						valid.text = "0";
+					}
+				}			
+			}
+			
+			private function validRFC():void
+			{
+				if(existRFC.text == "1")//El registro existe como cliente
+				{
+					Alert.yesLabel="Aceptar";
+					existRFC.text = "ok";
+					razonSocial.text = "";
+					rfcMoral.text = "";
+					rfcFisica.text = "";
+					RFC.text = "";
+					existRFC.text = "";
+					correoElec.text = "";
+					numTel.text = "";		
+					Alert.show("Este RFC ya existe en el sistema, no puede invitar a usuarios que ya pertenecen a la red de FacturaXion.","Aviso", Alert.OK, null, null, iconAlert, Alert.YES);
+				}
+			}
+			
+			private function getTipoPersonaHandler():void
+			{
+				if(getTipoPersona.text=="Moral")
+				{
+					moralUP.selected=true;
+					fisicaUP.selected=false;
+				}
+				else if(getTipoPersona.text=="Física")
+				{
+					moralUP.selected=false;
+					fisicaUP.selected=true;
+				}
+			}	
+			
+			private function correoEnviadoHandler():void
+			{
+				if(correoEnviado.text.length > 0)
+				{
+					Send(788);//Obtiene el status de los mensajes de correo.
+					PopUpManager.addPopUp(twMSG, contentCTLS, true);
+					PopUpManager.centerPopUp(twMSG);	 
+					twMSG.visible = true;
+					twMSG.isPopUp = true;
+				}
+			}
+						
+			private function initProcess():void
+			{
+				txTITLE.text = "Construir Cuerpo del Mensaje.";
+				titleImg.source =  iconMSG;
+				siguiente.visible= true;
+				currentState = "INIT";
+								
+				if(nombreEmp.text.length > 0 )
+				{
+					title.text = "Para nosotros es un placer informarte que " + nombreEmp.text + " te invita a útilizar el sistema de Facturaxion, para que le hagas llegar sus CFDIs.";
+					title2.text = "Para nosotros es un placer informarte que " + nombreEmp.text + " te invita a útilizar el sistema de Facturaxion, para que le hagas llegar sus CFDIs.";
+				}
+				else
+				{
+					title.text = "Para nosotros es un placer informarte que te estan invitando a útilizar el sistema de Facturaxion, para que le hagas llegar sus CFDIs.";
+					title2.text = "Para nosotros es un placer informarte que te estan invitando a útilizar el sistema de Facturaxion, para que le hagas llegar sus CFDIs.";
+				}				
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+		<mx:Canvas id="contentCTLS" width="100%" height="100%" verticalScrollPolicy="auto" horizontalScrollPolicy="auto">
+			<mx:TabNavigator width="100%" height="100%" dropShadowVisible="true" paddingTop="0" tabOffset="10" 
+							 borderStyle="solid"  id="tabSEDIVER">
+				<s:NavigatorContent width="100%" height="100%"   
+									id="tabRegistro"  label="Invitación a Recepción de CFDI">
+					<s:VGroup width="100%" height="100%" paddingBottom="5" paddingTop="5" paddingLeft="5" paddingRight="5">	
+						<s:HGroup width="100%" paddingLeft="15" paddingBottom="10" paddingTop="15" verticalAlign="middle" gap="15">
+							<mx:Image id="titleImg" width="64" height="64" source="assets/num/blank.png" x="20" y="24"/>
+							<s:Label id="txTITLE" text="" x="60" y="28"  fontWeight="bold" fontSize="20" color="#3D3D3D" />
+							<s:TextInput id="validNextMAIL" visible="false" editable="false" enabled="false" width="0"/>
+							<s:TextInput id="validNextRFC" visible="false" editable="false" enabled="false" width="0"/>
+							<s:TextInput id="idCntct" visible="false" editable="false" enabled="false" width="0"/>
+							<s:TextInput id="guid" creationComplete="asignaGUID();" visible="false" editable="false" enabled="false" width="0"/>
+							<s:TextInput id="getTipoPersona" editable="false" enabled="false" width="90" valueCommit="getTipoPersonaHandler();" visible="false"/>
+							<s:TextInput id="validPhoneEMP" visible="false" editable="false" width="0"/>
+							<s:TextInput id="rutaLogo" width="0" visible="false" valueCommit="initProcess();" />
+							<s:TextInput id="nombreEmp" width="0" visible="false"/>
+							<s:TextInput id="correoEnviado" valueCommit="correoEnviadoHandler();" width="0" visible="false" />
+							
+						</s:HGroup>
+						<s:HGroup width="100%" height="100%" paddingLeft="20" paddingBottom="10" paddingRight="20">
+							<s:Group width="100%" height="100%">
+								<mx:Canvas width="100%" height="100%" id="cnvsINIT" showEffect="showEffect" visible.INIT="true" visible="false">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" paddingTop="10">
+										<s:VGroup width="100%" height="100%"/>
+										<s:VGroup width="700" height="100%" gap="1" paddingBottom="10">
+											<mx:Image source="assets/facturaxion.png"/>
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingTop="30" paddingBottom="10">
+												<s:Label text="Apreciable:" fontWeight="normal" fontStyle="normal"/>
+												<s:Label text="Nombre de tu(s) Invitado(s)" color="#006bbd" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+											</s:HGroup>
+											<s:VGroup width="100%" gap="5" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingBottom="10">
+													<s:Label fontWeight="normal" fontStyle="normal" id="title" width="680"/>
+											</s:VGroup>
+											<s:Group width="100%">
+												<s:Label x="10" y="0" text="* Mensaje de invitación:" fontWeight="bold"/>
+												<s:TextArea x="10" y="20" height="93" width="680" fontFamily="Verdana" fontWeight="bold" id="cuerpoMSG" name="Mensaje de invitación" 
+															textAlign="justify" fontSize="12" maxChars="150" restrict="0-9a-zA-Z.\-\_, áéíóúÁÉÍÓÚ"/>
+											</s:Group>
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingTop="10">
+												<s:Label text="FACTURAXION Electrónica se absuelve de toda responsabilidad de la información que le sea enviada." fontWeight="normal" fontStyle="italic"/>
+											</s:HGroup>
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingBottom="30">
+												<s:Label text="El contenido de este mensaje son responsabilidad de la empresa que realiza la recomendación." fontWeight="normal" fontStyle="italic"/>
+											</s:HGroup>
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" horizontalAlign="right" verticalAlign="middle" paddingBottom="30">
+												<s:Label text="Mensaje Enviado Por Facturaxion." fontWeight="normal" color="#006bbd" fontStyle="italic"/>
+											</s:HGroup>
+											<s:HGroup width="100%" gap="10" verticalAlign="middle">
+												<s:BorderContainer width="100%" height="180" dropShadowVisible="false" backgroundColor="#2a82cc" borderColor="#2a82cc">
+													<s:VGroup width="100%" height="100%" gap="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+														<s:HGroup width="100%" verticalAlign="middle" gap="5" paddingBottom="10">
+															<s:Label text="r3Take" color="#FFFFFF" fontSize="11" fontFamily="Arial" fontWeight="bold" />
+															<s:Label text="Algunos derechos reservado" color="#FFFFFF" fontSize="11" fontFamily="Arial" fontWeight="bold"/>
+														</s:HGroup>
+														<s:Label text="La información en este correo electrónico es confidencial y legalmente puede ser privilegiada. Está  dirigida únicamente al destinatario, o destinatarios indicados en la cabecera del mismo, y nadie más está autorizado a tener acceso a este correo electrónico.  Si usted no es el destinatario a quien está  dirigido, le está  prohibido o puede ser ilícito el copiar, distribuir o tomar cualquier acción en relación con el contenido de este correo electrónico."
+																 textAlign="justify"
+																 color="#FFFFFF" fontSize="11" fontFamily="Arial"  fontWeight="bold" width="100%"/>
+														<s:Label text="Information contained in this electronic mail is confidential and can be absolutely privileged communication. This message, including any attachments, contains confidential information intended solely for the addressee and purpose. If you are not the intended recipient, please contact sender immediately by reply e-mail and destroy all copies. You are hereby notified that any disclosure, copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited."
+																 textAlign="justify"
+																 color="#FFFFFF" fontSize="11" fontFamily="Arial"  fontWeight="bold" width="100%"/>
+													</s:VGroup>
+												</s:BorderContainer>
+											</s:HGroup>									
+										</s:VGroup>
+										<s:VGroup width="100%" height="100%"/>
+									</s:HGroup>
+								</mx:Canvas>
+								
+								<mx:Canvas width="100%" height="100%" id="cnvsADDC" showEffect="showEffect" visible.ADDC="true" visible="false">
+									<s:VGroup width="100%" height="100%" paddingLeft="10">
+										<s:HGroup width="100%" verticalAlign="middle" paddingLeft="10">
+											<s:Group width="100%" height="100%" showEffect="showEffect">
+												<s:Label x="0" y="10" text="* Nombre o Razón Social" fontWeight="bold"/>
+												<s:Label x="309" y="10" text="* Tipo de persona" fontWeight="bold"/>
+												<s:Label x="427" y="10" text="* RFC" fontWeight="bold"/>
+												<s:Label x="286" y="82" text="Número Telefónico de la Empresa"/>
+												<s:Label x="0" y="82" text="* Correo Electrónico Empresa" fontWeight="bold"/>
+												
+												<s:TextInput x="0" y="31" id="razonSocial" toolTip="Capture su nombre comercial o razón social." 
+															 restrict="[A-Za-z0-9&amp;ñÑ-_.,áÁéÉíÍóÓúÚ ]" name="Nombre o Razón Social" height="24" width="267" maxChars="350"/>
+												
+												<s:RadioButton x="290" y="34" id="fisica" label="Física" groupName="tipoPersona" valueCommit="setVal();" click="setVal();" />
+												<s:RadioButton x="360" y="34" id="moral"  label="Moral"  groupName="tipoPersona" valueCommit="setVal();" click="setVal();" selected="true" />
+												
+												<s:TextInput id="validado" valueCommit="validRFC();" editable="false" visible="false" width="20"/>
+												<s:TextInput id="existRFC" editable="false" visible="false" width="20"/>
+												
+												<s:TextInput x="427" y="10" id="RFC" visible="false" width="20" typographicCase="uppercase"/>
+												
+												<s:TextInput x="427" y="31" id="rfcFisica" name="RFC Persona Fisica" width="106" maxChars="13" 
+															 change="if(rfcFisica.text!=&quot;&quot;)checkRFCPF(rfcFisica,validNextRFC);" 
+															 valueCommit="RFC.text = rfcFisica.text;" visible="false"  restrict="A-Za-z0-9ñÑ&amp;"
+															 focusOut="if(rfcFisica.text.length == 13){Send(645);}" typographicCase="uppercase" height="24"/>
+												
+												<s:TextInput x="427" y="31" id="rfcMoral" name="RFC Persona Moral" width="106" maxChars="12" 
+															 change="if(rfcMoral.text!=&quot;&quot;){checkRFCPM(rfcMoral,validNextRFC);}" 
+															 valueCommit="RFC.text = rfcMoral.text;" restrict="A-Za-z0-9ñÑ&amp;"
+															 focusOut="if(rfcMoral.text.length == 12){Send(645);}" typographicCase="uppercase" height="24"/>
+												
+												<s:TextInput x="0" y="103" id="correoElec" name="Correo electrónico de la Empresa" height="24" width="267" maxChars="100"
+															 restrict="\-\_a-no-zA-NO-Z0-9@." typographicCase="lowercase"/>
+												
+												<s:TextInput x="285" y="103" id="numTel" height="24" width="248" 
+															 change="if(numTel.text.length > 0){checkPhone(numTel,validPhoneEMP);}"
+															 restrict="\-\-0-9" name="Número Telefónico de la Empresa" 
+															 maxChars="15" toolTip="Formato valido: XX-XX-XXXX-XXXX Ejemplo: (Lada)-55-5555-5555"/>
+											</s:Group>
+										</s:HGroup>
+										<s:HGroup width="100%" verticalAlign="middle" horizontalAlign="right" paddingLeft="10" paddingRight="25" paddingTop="10" paddingBottom="10">
+											
+											<s:TextInput id="razonSocialUP" width="0" visible="false" typographicCase="uppercase"/>
+											
+											<s:TextInput id="correoElecUP" width="0" visible="false" typographicCase="lowercase"/>
+											
+											<s:TextInput id="numTelUP" width="0" visible="false"/>
+											
+											
+											<mx:Button  id="addCnct" label="Agregar Contacto" 
+														click="validaAddUpd(1);" 
+														icon="@Embed(source='assets/add.png')" 
+														labelPlacement="right" height="26" />
+											
+											<mx:Button  id="updCnct" label="Editar Contacto" 
+														click="AddUpd(2,twCNTO,insert,save,contentCTLS,GVW_Cntcts,idCntct,785);" 
+														icon="@Embed(source='assets/edit.png')" 
+														labelPlacement="right" height="26"/>
+											
+											<mx:Button  id="delCnct" label="Eliminar Contacto"  
+														icon="@Embed(source='assets/delete-icon_16.png')" 
+														click="deleteRow(GVW_Cntcts,idCntct,782,781);" height="26"/>
+											
+										</s:HGroup>
+										<s:VGroup width="100%" paddingLeft="10" paddingRight="20" paddingBottom="20" verticalAlign="middle" gap="10">
+											<s:Label x="0" y="82" text="* Lista de Invitados a la Recepción de CFDI´s" fontWeight="bold"/>
+											<mx:DataGrid id="GVW_Cntcts" 
+														 name="* Lista de Invitados a la Recepción de CFDI´s." variableRowHeight="true"
+														 horizontalScrollPolicy="on" verticalScrollPolicy="auto" 
+														 wordWrap="true" headerStyleName="headerStyle"  width="100%" height="300"
+														 click="idItemRow(GVW_Cntcts,idCntct);">
+												<mx:columns>
+													<mx:DataGridColumn headerText="idInvitado"	 		dataField="0" visible="false"/>
+													<mx:DataGridColumn headerText="idEmpresa"	 		dataField="1" visible="false"/>
+													<mx:DataGridColumn headerText="guid"		 		dataField="2" visible="false"/>
+													<mx:DataGridColumn headerText="Razón Social"	 	dataField="3" width="400" paddingLeft="10"/>
+													<mx:DataGridColumn headerText="RFC"				 	dataField="4" width="150" paddingLeft="10"/>
+													<mx:DataGridColumn headerText="Tipo Persona"		dataField="5" width="110" textAlign="center" />
+													<mx:DataGridColumn headerText="Teléfono" 	dataField="7" paddingLeft="10" paddingRight="10" />
+													<mx:DataGridColumn headerText="Correo Electrónico"	 		dataField="6" paddingLeft="10"/>											
+												</mx:columns>
+											</mx:DataGrid>
+										</s:VGroup>							
+									</s:VGroup>
+									<!-- Title Window Agregar Contacto true false -->
+									<mx:TitleWindow id="twCNTO" close="closeWindow(twCNTO,twCTRLS);" visible="false" title="Contactos" 
+													width="584" height="300" showCloseButton="true" y="186" horizontalCenter="0">
+										<mx:Canvas id="twCTRLS" width="100%" height="100%" >
+											
+											<s:Label x="20" y="60" text="* Nombre o Razón Social" fontWeight="bold"/>
+											<s:Label x="319" y="60" text="* Tipo de persona" fontWeight="bold"/>
+											<s:Label x="447" y="60" text="* RFC" fontWeight="bold"/>
+											<s:Label x="306" y="132" text="Número Telefónico de la Empresa" />
+											<s:Label x="20" y="132" text="* Correo Electrónico Empresa" fontWeight="bold"/>
+											
+											<mx:Image source="assets/num/1.png" x="20" y="17"/>
+											<s:Label text="Datos del Contacto" x="60" y="25" color="#0066BB" fontSize="18" fontWeight="bold"/>
+											
+											<s:TextInput x="20" y="81" id="razonSocialUPD" valueCommit="razonSocialUP.text=razonSocialUPD.text;" toolTip="Capture su nombre comercial o razón social." 
+														 restrict="[A-Za-z0-9&amp;ñÑ-_.,áÁéÉíÍóÓúÚ ]" name="Nombre o Razón Social" height="24" width="267" maxChars="350"/>
+											
+											
+											<s:RadioButton x="310" y="84" id="fisicaUP" label="Física" groupName="tipoPersona" enabled="false" />
+											<s:RadioButton x="380" y="84" id="moralUP"  label="Moral"  groupName="tipoPersona" enabled="false" />
+											
+											
+											<!--<s:TextInput id="getRFC" visible="false" editable="false" enabled="false" width="0"/>
+											
+											<s:TextInput x="447" y="81" id="rfcFisicaUP" name="RFC Persona Fisica" width="106" maxChars="13" 
+														 visible="false"  restrict="A-Za-z0-9ñÑ&amp;" editable="false"
+														 typographicCase="uppercase" height="24"/>-->
+											
+											<s:TextInput x="447" y="81" id="getRFC" name="RFC Persona Moral" width="106" 
+														 restrict="A-Za-z0-9ñÑ&amp;" editable="false"
+														 typographicCase="uppercase" height="24"/>
+											
+											
+											<s:TextInput x="20" y="153" id="correoElecUPD" valueCommit="correoElecUP.text=correoElecUPD.text;" name="Correo electrónico de la Empresa" height="24" width="267" maxChars="100"
+														 restrict="-_a-no-zA-NO-Z0-9@." typographicCase="lowercase" />
+											
+											<s:TextInput x="305" y="153" id="numTelUPD" valueCommit="numTelUP.text=numTelUPD.text;" 
+														 change="if(numTel.text.length > 0){checkPhone(numTel,validPhoneEMP);}"
+														 restrict="-0-9" name="Número Telefónico de la Empresa" 
+														 maxChars="15" toolTip="Formato valido: XX-XX-XXXX-XXXX Ejemplo: (Lada)-55-5555-5555" 
+														 width="251" height="24"/>
+											
+											<mx:Button label="Aceptar" id="save" tabIndex="4" click="validaAddUpd(2);" top="207" right="100" icon="@Embed(source='assets/accept-icon_16.png')" />
+											<mx:Button label="Aceptar" id="insert" tabIndex="4" click="validaAddUpd(2);" top="207" right="100" icon="@Embed(source='assets/accept-icon_16.png')" />
+											<mx:Button label="Cerrar" tabIndex="5" click="closeWindow(twCNTO,twCTRLS);"
+													   top="207" right="20" icon="@Embed(source='assets/delete-icon_16.png')"/>
+											
+										</mx:Canvas>	
+									</mx:TitleWindow>
+									<!-- Title Window Agregar Física -->
+								</mx:Canvas>
+								
+								<mx:Canvas width="100%" height="100%" id="cnvsVALD" showEffect="showEffect" visible.VALD="true" visible="false">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" paddingTop="10">
+										<s:VGroup width="100%" height="100%"/>
+										<s:VGroup width="700" height="100%" gap="10" paddingBottom="10">
+											<mx:Image source="assets/facturaxion.png"/>
+											
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingTop="30">
+												<s:Label text="Apreciable:" fontWeight="normal" fontStyle="normal"/>
+												<s:Label text="Nombre de tu(s) Invitado(s)" color="#006bbd" fontSize="12" fontWeight="bold" fontStyle="italic"/>
+											</s:HGroup>											
+											<s:VGroup width="100%" gap="5" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingBottom="10">
+												<s:Label fontWeight="normal" fontStyle="normal" id="title2" width="680" />
+											</s:VGroup>
+											<s:Group width="100%">
+												<s:Label x="10" y="0" text="Mensaje de invitación:" fontWeight="bold"/>
+												<s:Label x="10" y="30" height="100%" width="100%" fontFamily="Arial" fontWeight="bold" 
+														 verticalAlign="justify" fontSize="12" text="{cuerpoMSG.text}"/>
+											</s:Group>
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingTop="10">
+												<s:Label text="FACTURAXION Electrónica se absuelve de toda responsabilidad de la información que le sea enviada." fontWeight="normal" fontStyle="italic"/>
+											</s:HGroup>
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" verticalAlign="middle" paddingBottom="30">
+												<s:Label text="El contenido de este mensaje son responsabilidad de la empresa que realiza la recomendación." fontWeight="normal" fontStyle="italic"/>
+											</s:HGroup>
+											<s:HGroup width="100%" gap="10" paddingLeft="10" paddingRight="20" horizontalAlign="right" verticalAlign="middle" paddingBottom="30">
+												<s:Label text="Mensaje Enviado Por Facturaxion." fontWeight="normal" color="#006bbd" fontStyle="italic"/>
+											</s:HGroup>
+											<s:HGroup width="100%" gap="10" verticalAlign="middle">
+												<s:BorderContainer width="100%" height="180" dropShadowVisible="false" backgroundColor="#2a82cc" borderColor="#2a82cc">
+													<s:VGroup width="100%" height="100%" gap="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+														<s:HGroup width="100%" verticalAlign="middle" gap="5" paddingBottom="10">
+															<s:Label text="r3Take" color="#FFFFFF" fontSize="11" fontFamily="Arial" fontWeight="bold" />
+															<s:Label text="Algunos derechos reservado" color="#FFFFFF" fontSize="11" fontFamily="Arial" fontWeight="bold"/>
+														</s:HGroup>
+														<s:Label text="La información en este correo electrónico es confidencial y legalmente puede ser privilegiada. Está  dirigida únicamente al destinatario, o destinatarios indicados en la cabecera del mismo, y nadie más está autorizado a tener acceso a este correo electrónico.  Si usted no es el destinatario a quien está  dirigido, le está  prohibido o puede ser ilícito el copiar, distribuir o tomar cualquier acción en relación con el contenido de este correo electrónico."
+																 textAlign="justify"
+																 color="#FFFFFF" fontSize="11" fontFamily="Arial"  fontWeight="bold" width="100%"/>
+														<s:Label text="Information contained in this electronic mail is confidential and can be absolutely privileged communication. This message, including any attachments, contains confidential information intended solely for the addressee and purpose. If you are not the intended recipient, please contact sender immediately by reply e-mail and destroy all copies. You are hereby notified that any disclosure, copying, or distribution of this message, or the taking of any action based on it, is strictly prohibited."
+																 textAlign="justify"
+																 color="#FFFFFF" fontSize="11" fontFamily="Arial"  fontWeight="bold" width="100%"/>
+													</s:VGroup>
+												</s:BorderContainer>
+											</s:HGroup>
+											<s:HGroup verticalAlign="bottom" width="100%" height="100%" paddingBottom="10" paddingLeft="10">
+												<s:CheckBox id="aceptValid" name="Aceptar el contendio de este mensaje" label="* Acepto el contendio de este mensaje" fontWeight="bold"/>
+											</s:HGroup>
+										</s:VGroup>
+										<s:VGroup width="100%" height="100%"/>
+									</s:HGroup>
+								</mx:Canvas>	
+							</s:Group>
+						</s:HGroup>
+						<s:HGroup id="Ctrls" width="100%" verticalAlign="middle" horizontalAlign="right" paddingRight="10" paddingBottom="10">
+							<s:HGroup width="100%" paddingLeft="20">
+								<s:Label x="0" y="11" text="Todos los campos marcados con * son obligatorios" fontWeight="bold"/>
+							</s:HGroup>
+							
+							<mx:Button id="atras" label="Atrás" visible="false" click="transWindow(0);" height="24" width="100" icon="@Embed(source='assets/back-icon_16.png')"/>
+							
+							<s:HGroup verticalAlign="middle">
+								<s:Group>
+									<mx:Button id="siguiente" label="Siguiente" visible="true"  click="transWindow(1);" height="24" width="100" icon="@Embed(source='assets/next-icon_16.png')"/>
+									<mx:Button id="aceptar"   label="Envíar"   visible="false" click="saveData()" height="24" width="100" icon="@Embed(source='assets/accept-icon_16.png')"/>
+								</s:Group>
+							</s:HGroup>
+						</s:HGroup>
+					</s:VGroup>
+				</s:NavigatorContent>
+			</mx:TabNavigator>
+			<!-- Title Window Mensaje de Envío de Correos true false -->
+			<mx:TitleWindow id="twMSG" close="closeWindow(twMSG,twCTRLSMSG); contentCTLS.enabled=false;" visible="false" 
+							showCloseButton="true" y="186" horizontalCenter="0" width="470" height="270">
+				<mx:Canvas id="twCTRLSMSG" width="100%" height="100%">
+					<s:VGroup width="100%" height="100%" verticalAlign="middle" paddingLeft="10" paddingRight="10" paddingTop="10" gap="10">
+						<s:Label x="20" y="20" id="lbMSG" fontWeight="bold" fontSize="20" color="#3D3D3D" />
+						<mx:DataGrid id="GVW_CntctsMSJ" variableRowHeight="true"
+									 horizontalScrollPolicy="auto" verticalScrollPolicy="auto" 
+									 wordWrap="true" headerStyleName="headerStyle"  width="100%" height="100%">
+							<mx:columns>
+								<mx:DataGridColumn headerText="idMSGInvitado"	 	dataField="0" visible="false"/>
+								<mx:DataGridColumn headerText="Estatus"		 		dataField="1" textAlign="center" width="120" itemRenderer="statusINV"/>	
+								<mx:DataGridColumn headerText="Correo Electrónico"  dataField="2" paddingLeft="10" paddingRight="10" width="280"/>
+							</mx:columns>
+						</mx:DataGrid>
+						<s:HGroup width="100%" horizontalAlign="right">
+							<mx:Button label="Cerrar" click="closeWindow(twMSG,twCTRLSMSG);contentCTLS.enabled=false;
+									   mx.controls.SWFLoader(findObject('globalLoader', 'SWFLoader')).source ='init.swf';"
+									   top="167" right="20" icon="@Embed(source='assets/accept-icon_16.png')"/>
+						</s:HGroup>
+					</s:VGroup>
+				</mx:Canvas>	
+			</mx:TitleWindow>
+			<!-- Title Window Agregar Física -->
+		</mx:Canvas>
+	</s:HGroup>
+</s:Application>

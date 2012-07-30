@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:mx2="library://ns.adobe.com/flex/halo" 
+			   xmlns:ns1="com.flashdev.file.*"
+			   backgroundAlpha="0" width="100%" height="100%">
+<fx:Script source="r3Take.as" />
+<fx:Script>
+<![CDATA[
+	import mx.events.*;
+	import flash.desktop.Clipboard;
+    import flash.desktop.ClipboardFormats;
+
+
+	public function doCopy():void
+	{
+        Clipboard.generalClipboard.clear();
+        Clipboard.generalClipboard.setDataHandler(ClipboardFormats.TEXT_FORMAT, renderData);
+    }
+    
+    public function renderData():String
+    {
+        trace("Rendering data");
+        return response.text;
+    }
+    
+    [Embed(source="assets/corporativo-64.png")]	[Bindable]	public var iconXMLfail:Class;
+	[Embed(source="assets/corporativo-64.png")]	[Bindable]	public var iconXMLok:Class;
+    
+    private function viewTW():void
+    {
+    	if(viewResponse.text == "0")
+    	{
+    		responseTW.titleIcon = iconXMLfail; 
+    		responseTW.title = "Error de Timbrado";
+    	}
+    	else if(viewResponse.text == "1")
+    	{
+    		responseTW.titleIcon = iconXMLok; 
+    		responseTW.title = "Validación Timbrado";
+    	}
+		responseTW.visible = true;
+		responseTW.isPopUp = true;
+    	viewResponse.text = "";
+    }
+]]>
+</fx:Script>
+<fx:Declarations>
+	<s:RadioButtonGroup id="tipoPersona"/>
+	
+	<mx:Sequence id="glowButton" repeatCount="100">
+		<mx:Glow duration="4000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="10.0" blurYFrom="0.0" blurYTo="10.0" color="#054a95" /> 	
+		<mx:Glow duration="4000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="10.0" blurXTo="0.0" blurYFrom="10.0" blurYTo="0.0" color="#054a95" /> 	
+	</mx:Sequence>
+</fx:Declarations>
+<s:Panel right="10" left="10" top="10" bottom="10" title="  Carga de XML">
+	<s:VGroup width="100%" height="100%" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
+		<mx:HBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" paddingLeft="50" paddingRight="50">
+			<s:Group width="100%" height="100%">
+				<s:VGroup width="100%" height="100%" paddingTop="50" paddingBottom="20">
+					<s:HGroup width="100%" gap="10" verticalAlign="middle" paddingBottom="20">
+						<mx:Image source="assets/iconXML_48.png"/>	
+						<s:Label text="Carga de XML (otros proveedores)" fontWeight="bold" fontSize="14"/>	
+					</s:HGroup>
+					<s:HGroup width="100%"  paddingLeft="20">
+						<s:Label text="XML" fontSize="12" fontWeight="bold"/>
+					</s:HGroup>
+					<s:HGroup width="100%" height="100%" paddingBottom="20" paddingLeft="20">
+						<s:TextArea width="800" height="100%" id="xml"/>
+					</s:HGroup>
+					<s:HGroup width="100%" paddingBottom="50" paddingLeft="20">
+						<mx:Button label="Timbrar XML" width="150" height="24" icon="@Embed(source='assets/accept-icon_24.png')" click="Send(531)"/>
+						<s:HGroup width="480"/>
+						<mx:Button label="Limpiar control" click="xml.text = '';" height="24" icon="@Embed(source='assets/3518-32.png')" width="150"/>
+					</s:HGroup>
+				</s:VGroup>
+			</s:Group>
+		</mx:HBox>
+	</s:VGroup>
+	<mx:TextInput id="viewResponse" visible="false" valueCommit="viewTW();"/>
+	<mx:TitleWindow id="responseTW" close="responseTW.visible = false;" visible="false" width="600" height="350" 
+					layout="absolute" showCloseButton="true" horizontalCenter="0" verticalCenter="0" >
+		<s:VGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="30" verticalAlign="middle" horizontalAlign="right" gap="10">
+			<s:TextArea width="100%" height="100%" id="response"/>
+			<mx:Button label="Copiar al porta papeles" click="doCopy();" icon="@Embed(source='assets/certificados-64.png')"/>
+		</s:VGroup>
+	</mx:TitleWindow>
+</s:Panel>
+</s:Application>

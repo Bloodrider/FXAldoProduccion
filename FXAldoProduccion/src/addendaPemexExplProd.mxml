@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="0" minHeight="0" width="446" pageTitle="Addenda de PEMEX" height="269" backgroundColor="#FFFFFF">
+	<fx:Script>
+		<![CDATA[
+			import com.Captcha;
+			
+			import flash.events.*;
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			public var addendaValor:String;
+			//public var stringData:String;
+			public var xmlData:XML;
+			private var bandera:int;
+			private var addField:String;
+			
+			/*protected function setParametros(data:String)
+			{
+				xmlData=new XML(data);
+			}*/
+			
+			protected function agregar_clickHandler(event:MouseEvent):void
+			{
+				Alert.okLabel = "Aceptar";
+				bandera=0;
+				var errorRespuesta:String;
+				errorRespuesta="Los siguientes campos requeridos se encuentran vacíos, favor de capturarlos:";
+				addField=((noCOPADE.text.length==0)? "\n - COPADE":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				addField=((pedido.text.length==0)? "\n - Pedido":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				addField=((noRemisionEstimacion.text.length==0)? "\n - No. Remisión o Estimación":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				addField=((vURegionActivo.text.length==0)? "\n - VU-Región-activo":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				addField=((claveAcreedor.text.length==0)? "\n - No. Clave Acreedor":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				addField=((fichaFuncionarioElaboraCOPADE.text.length==0)? "\n - Ficha funcionario que elabora COPADE":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				addField=((fichaFuncionarioFirmaCOPADE.text.length==0)? "\n - Ficha funcionario que firma COPADE":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				if(bandera>0)
+				{
+					Alert.show(errorRespuesta,"Error",Alert.OK,null,null,null);
+				}
+				else
+				{
+					addendaValor=noCOPADE.text+"|"+pedido.text+"|"+noRemisionEstimacion.text+"|"+vURegionActivo.text+"|"+claveAcreedor.text+"|"+fichaFuncionarioElaboraCOPADE.text+"|"+fichaFuncionarioFirmaCOPADE.text;
+					root.dispatchEvent(new Event("complete",true,false));
+				}
+			}
+			public function setParametros(data:XML):void
+			{
+					xmlData=data;	
+			}
+
+
+		]]>
+	</fx:Script>
+
+
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+<!--	<s:Panel height="298" title="Addenda de PEMEX" horizontalCenter="0" verticalCenter="2" width="435">-->
+		<s:Label x="35" y="52" text="No. COPADE" width="84" height="15"/>
+		<s:Label x="35" y="77" text="Pedido" width="74"/>
+		<s:Label x="35" y="102" text="No. Remisión o Estimación" width="189"/>
+		<s:Label x="35" y="127" text="VU-Región-activo" width="130"/>
+		<s:Label x="35" y="152" text="Clave Acreedor" width="189"/>
+		<s:Label x="35" y="177" text="Ficha funcionario que elabora COPADE" width="225"/>
+		<s:Label x="35" y="202" text="Ficha funcionario que firma COPADE" width="225"/>
+		<s:TextInput x="281" y="47" id="noCOPADE" />
+		<s:TextInput x="281" y="72" id="pedido"/>
+		<s:TextInput x="281" y="97" id="noRemisionEstimacion"/>
+		<s:TextInput x="281" y="122" id="vURegionActivo"/>
+		<s:TextInput x="281" y="147" id="claveAcreedor"/>
+		<s:TextInput x="281" y="172" id="fichaFuncionarioElaboraCOPADE"/>
+		<s:TextInput x="281" y="197" id="fichaFuncionarioFirmaCOPADE"/>
+		<mx:Button id="agregar" width="100" height="24" label="Agregar"  click="agregar_clickHandler(event)" icon="@Embed(source='newIcons/edit-icon_24.png')" x="50" y="238"/>
+		<mx:HRule x="269" y="21" width="177"/>
+		<s:Label x="9" y="15" text="Addenda de PEMEX (Exploración y Producción)" width="273"/>
+		
+<!--	</s:Panel>-->
+	
+	
+	
+	
+</s:Application>

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF"
+	applicationComplete="validateUser('grafica.swf');"
+	xmlns:amcharts="http://www.amcharts.com/com_internal" pageTitle="Graficas">
+	
+	<fx:Script source="r3Take.as"/> 
+    <fx:Style>
+        .MyTextStyle 
+        { 
+            font-family: Tahoma; 
+        }
+
+    </fx:Style>	 
+	 
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			
+			import spark.filters.DropShadowFilter;
+		
+			[Bindable]
+			private var chartData:Array = [{country:"USA",visits:4252},{country:"China",visits:1882},{country:"Japan",visits:1809},{country:"Germany",visits:1322},{country:"UK",visits:1122},{country:"France",visits:1114},{country:"India",visits:984},{country:"Spain",visits:711},{country:"Netherlands",visits:665},{country:"Russia",visits:580},{country:"South Korea",visits:443},{country:"Canada",visits:441},{country:"Brazil",visits:395},{country:"Italy",visits:386},{country:"Australia",visits:384},{country:"Taiwan",visits:338},{country:"Poland",visits:328}];
+			
+			[Bindable]
+			private var shadow:spark.filters.DropShadowFilter = new DropShadowFilter(2,45,0,0.5);
+			
+			
+			private function selectChart():void
+			{
+				if(tipoIndicador.selectedItem[0].toString() == 1)
+				{
+					Send(325);
+				}
+				if(tipoIndicador.selectedItem[0].toString() == 2)
+				{
+					Send(326);
+				}
+				if(tipoIndicador.selectedItem[0].toString() == 3)
+				{
+					Send(327);
+				}
+				if(tipoIndicador.selectedItem[0].toString() == 4)
+				{
+					Send(328);
+				}
+			}
+			
+			private function loadChart():void
+			{
+
+				if(tipoGrafica.selectedValue == "Pie")
+				{
+					myPie.visible = true;		
+					myBar.visible = false;	
+					myArea.visible = false;	
+					lableMyArea.visible = false;		
+					var gb:ArrayCollection = new ArrayCollection();
+					gb = new ArrayCollection(ArrayUtil.toArray(dsGraficas.dataProvider.source));
+					
+					if(gb.length > 0)
+					{
+						myPie.dataProvider = gb;
+					}					
+				} 
+				if(tipoGrafica.selectedValue == "Barras")
+				{
+					myBar.visible = true;	
+					//myPie.visible = false;	
+					myArea.visible = false;	
+					lableMyArea.visible = false;		
+					var gb:ArrayCollection = new ArrayCollection();
+					gb = new ArrayCollection(ArrayUtil.toArray(dsGraficas.dataProvider.source));
+					myBar.dataProvider = gb;
+				}
+				if(tipoGrafica.selectedValue == "Area")
+				{
+					myArea.visible = true;
+					lableMyArea.visible = true;
+					myBar.visible = false;	
+					//myPie.visible = false;	
+					
+					var gb:ArrayCollection = new ArrayCollection();
+					gb = new ArrayCollection(ArrayUtil.toArray(dsGraficas.dataProvider.source));
+					myArea.dataProvider = gb;
+				}
+				labelGrafica.text = tipoIndicador.selectedItem[1].toString().toUpperCase();
+				dsGraficas.visible = true;
+			}
+			
+			private function disableAnio():void
+			{
+				if(tipoIndicador.selectedItem[0].toString() == 1)
+				{
+					anio.enabled = true;
+				}
+				if(tipoIndicador.selectedItem[0].toString() == 2)
+				{
+					anio.enabled = true;
+				}
+				if(tipoIndicador.selectedItem[0].toString() == 3)
+				{
+					anio.enabled = false;
+				}
+				if(tipoIndicador.selectedItem[0].toString() == 4)
+				{
+					anio.enabled = false;
+				}
+			}
+			
+			private function setYear():void
+			{
+				var date:Date = new Date();
+				anio.value = date.fullYear;
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	<fx:Declarations>
+		<s:RadioButtonGroup id="tipoGrafica"/>
+	</fx:Declarations>
+	<s:HGroup horizontalCenter="-40" top="20">
+		<s:VGroup width="193">
+			<s:Label text="Tipo de Gráfica" fontWeight="bold" fontSize="12"/>				
+			<s:RadioButton label="Pie" groupName="tipoGrafica"/>
+			<s:RadioButton label="Barras" groupName="tipoGrafica"/>
+			<s:RadioButton label="Area" groupName="tipoGrafica"/>
+		</s:VGroup>		
+		<s:VGroup width="226">
+			<s:Label text="Tipo de Indicadores" fontWeight="bold" fontSize="12"/>			
+			<s:ComboBox id="tipoIndicador" width="220" creationComplete="Send(324);" change="disableAnio();"></s:ComboBox>
+		</s:VGroup>
+		<s:VGroup width="76">
+			<s:Label text="Año" fontWeight="bold" fontSize="12"/>
+			<s:NumericStepper minimum="2010" maximum="2040" id="anio" creationComplete="setYear();"/>			
+		</s:VGroup>
+		
+		<s:VGroup height="100%" verticalAlign="top">
+			<mx:Button x="1051" y="23" icon="@Embed(source='assets/grafica.png')" click="selectChart();" height="39" width="170" tabIndex="99" label="Graficar"/>
+		</s:VGroup>
+	</s:HGroup>
+	
+	<s:TextInput id="typeChart" x="0" y="0" width="100" height="20" visible="false"/>
+
+	<s:Group horizontalCenter="-280" top="150" width="340">	
+		<mx:DataGrid id="dsGraficas" borderStyle="outset" visible="false" height="370" editable="false" valueCommit="loadChart();">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Mes" dataField="0" width="200"/>
+						<mx:DataGridColumn headerText="Facturas" dataField="1" width="100"/>
+						<mx:DataGridColumn headerText="Colores" visible="false" dataField="2" width="0"/>
+					</mx:columns>
+				</mx:DataGrid>
+	</s:Group>
+	
+	<s:Group horizontalCenter="130" top="150" height="400" width="520">	
+		<!--<amcharts:AmPieChart id="myPie" styleName="MyTextStyle" width="500" height="400" visible="false" valueField="1" titleField="0" angle="5" depth3D="20" innerRadius="30" gradient="radial" filters="{[shadow]}" startDuration="2" startRadius="100" >			 
+			<amcharts:balloon>
+				<amcharts:AmBalloon cornerRadius="10" borderThickness="2" borderColor="#FFFFFF" borderAlpha="1"/>				
+			</amcharts:balloon>			 					
+		</amcharts:AmPieChart>	-->
+		
+		<amcharts:AmPieChart width="500" height="400" id="myPie" dataProvider="{chartData}" valueField="1" titleField="0" angle="5" depth3D="5" innerRadius="30" gradient="radial" visible="false">			
+			<amcharts:balloon>
+				<amcharts:AmBalloon cornerRadius="10" borderThickness="2" borderColor="#FFFFFF" borderAlpha="1"/>
+			</amcharts:balloon>			
+		</amcharts:AmPieChart>
+			
+		<amcharts:AmSerialChart id="myBar" styleName="MyTextStyle" visible="false"	width="500"	height="400" categoryField="0" startDuration="2" angle="30"	depth3D="15">
+			<amcharts:categoryAxis>
+				<amcharts:CategoryAxis gridCount="12" labelRotation="90"/>
+			</amcharts:categoryAxis>
+			<amcharts:graphs>
+				<amcharts:AmGraph balloonText="[[category]]: [[value]]" id="g0" valueField="1" type="column" colorField="2" lineAlpha="0" fillAlphas="[0.8]"/>						
+			</amcharts:graphs>
+			<amcharts:balloon>
+				<amcharts:AmBalloon cornerRadius="10" borderThickness="2" borderColor="#FFFFFF" borderAlpha="1"/>				
+			</amcharts:balloon>	
+			<amcharts:chartCursor>
+				<amcharts:ChartCursor zoomable="false" cursorAlpha="0" categoryBalloonEnabled="false"/>					
+			</amcharts:chartCursor>	
+		</amcharts:AmSerialChart>
+		
+		<amcharts:AmSerialChart width="500" id="myArea" height="400" visible="false" marginTop="45" categoryField="0" plotAreaFillAlphas="[0]"><amcharts:graphs>
+						<amcharts:AmGraph color="#FFFFFF" title="Ver Estadísticas"	valueField="1" type="line"	lineThickness="2" lineAlpha="1"	fillAlphas="[0.7]" showBalloon="true"/>
+		</amcharts:graphs>
+					
+					<amcharts:valueAxes>
+						<amcharts:ValueAxis stackType="regular" gridAlpha="0.1"/>					
+					</amcharts:valueAxes>
+					
+					<amcharts:categoryAxis>
+						<amcharts:CategoryAxis gridAlpha="0.1" fontWeight="bold" startOnAxis="true" position="top"/>
+					</amcharts:categoryAxis>
+					
+					<amcharts:chartScrollbar>
+						<amcharts:ChartScrollbar height="20"/>					
+					</amcharts:chartScrollbar>
+					
+					<amcharts:chartCursor>
+						<amcharts:ChartCursor/>					
+					</amcharts:chartCursor>
+					
+				</amcharts:AmSerialChart>
+				
+				<amcharts:AmLegend fontWeight="bold" reversedOrder="true" rollOverGraphAlpha="0.1" dataProvider="{myArea}" width="100%"	marginLeft="300" marginRight="20" marginTop="0"  markerType="circle" switchType="v" visible="false" id="lableMyArea"/>
+		
+		
+	</s:Group>
+	<s:Label fontWeight="bold" fontSize="22" y="88" color="#F52604" horizontalCenter="-40" id="labelGrafica"/>
+
+</s:Application>

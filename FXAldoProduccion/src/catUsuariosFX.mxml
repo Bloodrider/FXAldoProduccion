@@ -1,0 +1,695 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('catUsuariosFX.swf');" 
+	pageTitle="Catálogo de Usuarios">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;
+			
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+			private var checkPWD:RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)[a-zA-Z0-9\S]{8,}$/;
+			
+			private function selectIdUser():void
+			{
+				if (gvwUser.selectedIndex >= 0)
+				{
+					txtIdUser.text = gvwUser.selectedItem["0"].toString();
+					Send(581); //Actualiza Grid Sucursales x Usuario
+				}
+			}
+			
+			private function selectIdSucursales():void
+			{
+				if (gvwSucursales.selectedIndex >= 0)
+					txtUserxSuc.text = gvwSucursales.selectedItem["0"].toString();
+			}
+			
+			private function checkMail(myCtrl:TextInput):void
+			{
+				if(expMail.test(myCtrl.text))			
+					myCtrl.errorString = "";
+					
+				else 
+				{				
+					myCtrl.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+				}			
+			}
+			
+			private function realizaBusqueda():void
+			{
+				txtIdUser.text= "";
+				txtUserxSuc.text = "";
+				
+				if(cmbSelectSucursal.selectedIndex > 0)
+				{
+					cleanCtrlsSucursales();
+					Send(1101); //Actualiza GridView Usuarios
+				}
+					
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una Sucursal para trabajar.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbSelectSucursal.errorString = "Seleccione una Sucursal para trabajar";
+				}
+			}
+			
+			private function validaMostarTTWUser():void
+			{ 
+				if(cmbSelectSucursal.selectedIndex > 0)
+				{
+					cleanCtrlsUsuarios();
+					lblTitulo.text = "Agregar Usuario"; 
+					ttwUser.title = "Agregar Usuario";
+					txtCuenta.enabled = true;
+					txtConfirmPass.enabled = true;
+					txtPass.enabled = true;
+					//lblTipoRol.visible = true; 
+					//cmbMultiRol.visible = true;
+					btnGuardar.visible = true;
+					btnActualizar.visible = false;
+					ttwUser.visible = true;
+				}	
+					
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione la Sucursal a la que tendrá acceso el Usuario.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+			}
+			
+			private function validaUser(op:int):void
+			{	
+				// op = 1 > Edicion de Usuario
+				// op = 2 > Agregar Sucursal
+				// op = 3 > Eliminar Usuario
+				
+				var mensaje:String;
+				
+				if(op == 1)
+					mensaje = "Seleccione el Usuario a Editar";
+				else if (op == 2)
+					mensaje = "Seleccione el Usuario que tendra acceso a otras sucursales";
+				else if (op == 3)
+					mensaje = "Seleccione el Usuario a eliminar";
+				
+				if (txtIdUser.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show(mensaje,"Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if (op == 1) //Muestra TTW para editar Usuario
+				{
+					cleanCtrlsUsuarios();
+					lblTitulo.text = "Modificar Usuario"; 
+					ttwUser.title = "Modificar Usuario";
+					txtCuenta.enabled = false;
+					txtConfirmPass.enabled = false;
+					txtPass.enabled = false;
+					//lblTipoRol.visible = false; 
+					//cmbMultiRol.visible = false;
+					btnGuardar.visible = false;
+					btnActualizar.visible = true;
+					
+					traeDatosEdit(); //Trae datos de User a Editar
+					
+					ttwUser.visible = true;
+					return;
+				}
+					
+				else if (op == 2) //Muestra TTW para agregar Sucursal
+				{
+					cmbSucAdd.selectedIndex = 0;
+					ttwSucxUser.visible = true;
+					return;
+				}
+					
+				else if (op == 3) //Elimina Usuario
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Está seguro que desea eliminar el registro?","Aviso",Alert.YES|Alert.NO, null, eliminarUser, iconDel);
+				}
+			}
+			
+			private function traeDatosEdit():void
+			{				
+				txtCuenta.text = gvwUser.selectedItem[1].toString();
+				txtNombre.text = gvwUser.selectedItem[4].toString();
+				txtApPatern.text = gvwUser.selectedItem[5].toString();
+				txtApMatern.text = gvwUser.selectedItem[6].toString();
+				txtMail.text = gvwUser.selectedItem[3].toString();
+				txtPass.text = "*****";
+				txtConfirmPass.text = "*****";
+			}
+			
+			private function eliminarUser(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(576); //Elimina Usuario
+					Send(1101); //Carga Grid Usuarios
+					cleanCtrlsSucursales();
+					txtIdUser.text = "";
+				}
+			}
+			
+			private function cleanCtrlsUsuarios():void
+			{
+				lblTitulo.text = ""; 
+				ttwUser.title = "";
+				txtMail.text = "";
+				txtNombre.text = "";
+				txtConfirmPass.text = "";
+				txtPass.text = "";
+				txtApMatern.text = "";
+				txtApPatern.text = "";
+				txtCuenta.text = "";
+				existeUser.text = "";
+				cmbMultiRol.selectedIndex = 0;
+			}
+			
+			private function cleanCtrlsSucursales():void
+			{
+				gvwSucursales.dataProvider = null;
+				txtUserxSuc.text = "";
+			}
+			
+			private function guardarUsuario(op:int):void
+			{
+				//op = 1 > Guardar
+				//op = 2 > Actualizar
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(txtCuenta.text.search(patternBlank) != -1 )
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta de acceso al sistema no debe llevar espacios en blanco.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La cuenta de acceso no debe llevar espacios en blanco.";
+					return;
+				}
+				
+				if(txtCuenta.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta de acceso al sistema es un campo requerido, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La Cuenta de acceso al sistema es requerida.";
+					return;
+				}
+				
+				if(txtCuenta.text.length < 5)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta de acceso al sistema debe contener como mínimo 5 caractéres.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La Cuenta de acceso al sistema debe contener mínimo 5 caractéres.";
+					return;
+				}
+				
+				if(txtNombre.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Nombre es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtNombre.errorString = "El Nombre es requerido.";
+					return;
+				}
+				if(txtApPatern.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Apellido Paterno es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtApPatern.errorString = "El Apellido Paterno es requerido.";
+					return;
+				}	
+				
+				if(op == 1)
+				{
+					if(txtPass.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La contraseña es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtPass.errorString = "La contraseña es un campo requerido.";
+						return;
+					}
+					
+					if(txtConfirmPass.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La confirmación de contraseña es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtConfirmPass.errorString = "La confirmación de contraseña es un campo requerido.";
+						return;
+					}
+					
+					if(txtPass.text != txtConfirmPass.text)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Las dos contraseñas deben de ser iguales, favor de corregirlas.","Aviso",Alert.OK,null,null, iconAlert);
+						txtConfirmPass.errorString = "Las dos contraseñas deben de ser iguales.";
+						return;
+					}
+					
+					if (txtPass.text.length > 0)
+					{
+						if(!checkPWD.test(txtPass.text))
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("La contraseña no cuenta con los requisitos mínimos de seguridad.","Aviso",Alert.OK,null,null, iconAlert);
+							
+							txtPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+								"“al menos 8 Caracteres”\n" + 
+								"“debe incluir al menos una Mayúscula”\n" + 
+								"“debe incluir al menos un Número”\n" + 
+								"“y debe incluir al menos un Caracter Especial”";
+							return;
+						}
+					}
+					
+					if (txtConfirmPass.text.length > 0)
+					{
+						if(!checkPWD.test(txtConfirmPass.text))
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("La contraseña no cuenta con los requisitos mínimos de seguridad.","Aviso",Alert.OK,null,null, iconAlert);
+							
+							txtConfirmPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+								"“al menos 8 Caracteres”\n" + 
+								"“debe incluir al menos una Mayúscula”\n" + 
+								"“debe incluir al menos un Número”\n" + 
+								"“y debe incluir al menos un Caracter Especial”";
+							return;
+						}
+					}	
+				}
+				
+				if(txtMail.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El E-mail es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMail.errorString = "El E-mail es requerido.";
+					return;					
+				}
+				
+				if(!expMail.test(txtMail.text))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato de Correo Electrónico es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMail.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+					return;
+				}
+				
+				if(cmbMultiRol.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione el rol que tendrá el nuevo Usuario.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbMultiRol.errorString = "Seleccione un rol válido.";
+					return;	
+				}
+					
+				if(op == 1)
+				{	
+					if(parseInt(existeUser.text) == 0) //No existe el usuario 
+					{
+						Send(1105); //Guardar Usuario
+						//Send(); //Envia mail Usuario Alta
+						Send(1101); //Carga Grid Usuarios
+						
+						txtIdUser.text = "";
+						ttwUser.visible = false;
+						gvwSucursales.dataProvider = null; 
+					}
+					
+					else if(existeUser.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La Cuenta es inválida, ingresela de nuevo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtCuenta.errorString = "Ingrese de nuevo la cuenta.";
+						return;
+					}
+						
+					else if(parseInt(existeUser.text) == 1 || parseInt(existeUser.text) == 2) //1 > El usuario ya existe activo; 2 > Existe mas de un usuario con esa cuenta 
+					{
+						existUser();
+					}
+					
+					if(parseInt(existeUser.text) == 3) //El usuario ya existe pero esta inactivo
+					{
+						Send(1304); //Activa nuevamente Usuario con la sucursal elegida
+						//Send(); //Envia mail Usuario Alta
+						Send(1101); //Carga Grid Usuarios
+						
+						txtIdUser.text = "";
+						ttwUser.visible = false;
+						gvwSucursales.dataProvider = null; 
+					}
+				}
+				
+				else if(op == 2)
+				{
+					Send(1302); //Actualizar Usuario
+					Send(1101); //Carga Grid Usuarios
+					
+					txtIdUser.text = "";
+					ttwUser.visible = false;
+					gvwSucursales.dataProvider = null; 
+				}
+			}
+			
+			private function existUser():void
+			{
+				//existeUser = 0 > No existe el usuario
+				//existeUser = 1 > Existe el Usuario activo
+				//existeUser = 2 > Existe mas de un usuario con esa cuenta
+				//existeUser = 3 > Existe el usuario inactivo
+				
+				var existeUsuario:int;
+				existeUsuario = parseInt(existeUser.text);
+				
+				if(existeUsuario == 1 || existeUsuario == 2)
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("Ya existe registro de éste Usuario en el sistema. Si desea agregar más sucursales a un usuario, de clic sobre él y vaya a la tabla Sucursales Asignadas, y asocie las sucursales que desee.","Aviso",Alert.OK, null, null, iconAlert);
+					txtCuenta.errorString = "Ya existe registro de éste Usuario en el sistema. Intente con otra cuenta.";
+				}
+			}
+			
+			private function validaSucursalxUser():void
+			{
+				if(cmbSucAdd.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione la Sucursal a la que tendrá acceso el usuario.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbSucAdd.errorString = "Seleccione una Sucursal.";
+					return;
+				}
+				Send(574); //Agrega a Sucursales x Usuario
+				Send(581); //Actualiza Grid Sucursales x Usuario
+				
+				txtUserxSuc.text = "";
+				ttwSucxUser.visible = false;
+				cmbSucAdd.selectedIndex = 0;
+			}
+			
+			private function isUserValid():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				existeUser.text == "";
+				if(txtCuenta.text.search(patternBlank) != -1 )
+				{
+					txtCuenta.errorString = "La Cuenta no debe llevar espacios en blanco";	
+					return;
+				}
+					
+				else if(txtCuenta.text.length == 0)
+				{
+					txtCuenta.errorString = "La Cuenta es requerida";	
+					return;
+				}
+					
+				else
+					txtCuenta.errorString = "";	
+				
+				Send(1303); //Verifica que no exista el Usuario
+			}
+			
+			private function checkPass(chkCtrl:TextInput):void
+			{            
+				if(checkPWD.test(chkCtrl.text))
+				{
+					chkCtrl.errorString = "";
+				}
+				else
+				{    
+					chkCtrl.errorString  =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Mayúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un Caracter Especial”";
+					return;     
+				}
+				
+				if(txtConfirmPass.text.length > 0 && txtPass.text.length > 0)
+				{
+					if(txtPass.text == txtConfirmPass.text)
+					{
+						txtPass.errorString = "";
+						txtConfirmPass.errorString = "";
+					}
+					else
+					{				
+						txtPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+						txtConfirmPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+					}	
+				}	
+			}
+			
+			private function validaSucxUser():void
+			{
+				if (txtUserxSuc.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione la Sucursal del Usuario a Eliminar.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				else
+				{
+					if(gvwSucursales.rowCount == 2)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Un Usuario no puede quedarse sin Sucursales Asignadas.","Aviso",Alert.OK,null,null, iconAlert);
+						return;
+					}
+					else
+					{
+						Alert.yesLabel = "Si";
+						Alert.noLabel = "No";
+						Alert.show("¿Está seguro que desea eliminar la Sucursal del Usuario?","Aviso",Alert.YES|Alert.NO, null, eliminarUserxSuc, iconDel);
+					}
+				}
+			}
+			
+			private function eliminarUserxSuc(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES)
+				{
+					Send(577); //Elimina SucursalesxUsuario
+					Send(581); //Actualiza Data Grid Sucursales x Usuario
+					
+					txtUserxSuc.text = "";
+				}
+			}
+			
+			private function muestrattwInfo():void
+			{
+				gFacturaT.visible = false; 
+				gPrepagoEspecial.visible = false; 
+				gTelmex.visible = false;
+				gDistribuidor.visible = false;
+				
+				if(txtIdRol.text.length > 0)
+				{
+					if(txtIdRol.text == "17")
+						gTelmex.visible = true;
+					
+					else if(txtIdRol.text == "22")
+						gFacturaT.visible = true;
+					
+					else if(txtIdRol.text == "24")
+						gPrepagoEspecial.visible = true;
+					
+					else if(txtIdRol.text == "32")
+						gDistribuidor.visible = true;
+					
+					else if(txtIdRol.text == "49")
+						gSEDENAAdminCentral.visible = true;
+					
+					else if(txtIdRol.text == "50")
+						gSEDENAAdminDireccion.visible = true;
+					
+					else if(txtIdRol.text == "51")
+						gSEDENASupervisor.visible = true;
+
+					ttwInfo.visible = true;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+		<s:VGroup width="100%" height="100%" horizontalAlign="left" verticalAlign="middle" >
+			<s:HGroup width="100%" horizontalAlign="left" verticalAlign="middle" paddingLeft="10">
+				<mx:Image source="assets/UserCat_64.png" />
+				<s:Label text="USUARIOS" fontWeight="bold"/>
+				
+				<s:HGroup width="100%" horizontalAlign="right" verticalAlign="middle" paddingRight="10">
+					<s:Label text="*Sucursal:  "  height="24" verticalAlign="middle" fontWeight="bold"/>
+					<s:ComboBox creationComplete="Send(582);Send(1117);" id="cmbSelectSucursal" width="290" height="24" focusOut="if(cmbSelectSucursal.selectedIndex > 0) cmbSelectSucursal.errorString=''"/>
+					<s:Label text="Filtrar por Cuenta:  "  height="24" verticalAlign="middle"/>
+					<s:TextInput id="txtAccount" width="125" tabIndex="1" height="24"/>
+					<mx:Button icon="@Embed(source='assets/search-24.png')" label="Buscar" click="realizaBusqueda();" height="24" tabIndex="2" width="85" x="927"/>
+				</s:HGroup>
+			</s:HGroup>
+			
+			<s:VGroup width="100%" horizontalAlign="left" verticalAlign="middle" paddingLeft="10" paddingRight="10">
+				<mx:DataGrid id="gvwUser" wordWrap="true" variableRowHeight="true" click="selectIdUser();" liveScrolling="true" height="100%" width="100%">
+					<mx:columns>
+						<mx:DataGridColumn headerText="idUser" 					dataField="0" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="Cuenta de Usuario" 		dataField="1" width="40"/>
+						<mx:DataGridColumn headerText="NombreC" 				dataField="2" width="50"/>
+						<mx:DataGridColumn headerText="E-Mail" 					dataField="3" width="50"/>
+						<mx:DataGridColumn headerText="Nombre" 					dataField="4" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="ApPat" 					dataField="5" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="ApMat" 					dataField="6" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="Rol" 					dataField="7" width="50" />
+					</mx:columns>
+				</mx:DataGrid>
+			</s:VGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="left" verticalAlign="middle" paddingLeft="10">
+				<mx:Image source="assets/empresa-64.png" />
+				<s:Label text="SUCURSALES ASIGNADAS" fontWeight="bold"/>
+				<s:HGroup width="100%" height="100%" horizontalAlign="right" verticalAlign="top" paddingRight="10">
+					<s:TextInput id="txtIdUser" width="38" maxChars="50" visible="false" enabled="false" editable="false"/>
+					<s:TextInput id="txtIdRol" width="38" maxChars="50" visible="false" enabled="false" editable="false"/>
+					<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="validaUser(3);" height="24" tabIndex="6" width="95" toolTip="Eliminar Usuario" x="648"/>
+					<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="validaUser(1);" height="24" tabIndex="5" width="95" toolTip="Editar Usuario" x="739"/>
+					<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="validaMostarTTWUser();" height="24" tabIndex="4" width="95" toolTip="Agregar Usuario"/>
+				</s:HGroup>
+			</s:HGroup>	
+			
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingLeft="10" paddingRight="10">
+				<mx:DataGrid id="gvwSucursales" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectIdSucursales();">
+					<mx:columns>
+						<mx:DataGridColumn headerText="idUserXSuc" 		dataField="0" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="idUser" 			dataField="1" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="idSucursal" 		dataField="2" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="Sucursal" 		dataField="3" width="40"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</s:VGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingBottom="10">
+				<s:TextInput id="txtUserxSuc" width="0" maxChars="50" visible="false" enabled="false" editable="false"/>
+				<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="validaSucxUser();" height="24" tabIndex="8" width="95" toolTip="Eliminar Sucursal a Usuario" x="961"/>
+				<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="validaUser(2);" height="24" tabIndex="7" width="95" x="1052" toolTip="Agregar Sucursal a Usuario"/>
+			</s:HGroup>	
+			
+		</s:VGroup>
+		
+		<s:TitleWindow width="722" height="278" id="ttwUser" visible="false" close="ttwUser.visible=false;cleanCtrlsUsuarios();" horizontalCenter="0" verticalCenter="14">
+			<s:Group width="100%" height="100%">
+				<s:Label text="*Cuenta de Acceso" x="34" y="81" fontWeight="bold"/>
+				<s:Label id="lblTitulo" text="" x="114" y="41" fontWeight="bold"/>
+				<s:Label text="*E-mail" x="342" y="131" fontWeight="bold"/>
+				<s:Label text="*Tipo de Rol" id="lblTipoRol" x="487" y="131" fontWeight="bold" visible="true"/>
+				<s:Label text="*Contraseña" x="34" y="131" fontWeight="bold"/>
+				<s:Label text="*Nombre" x="179" y="80" fontWeight="bold"/>
+				<s:Label text="*Confirmación Contraseña" x="179" y="131" fontWeight="bold"/>
+				<s:Label text="*Apellido Paterno" x="342" y="80" fontWeight="bold"/>
+				<s:Label text="Apellido Materno" x="487" y="80"/>
+				<s:Label text="Todos los campos marcados con *, son obligatorios." x="34" y="210" fontWeight="bold"/>
+				
+				<s:TextInput x="342" y="144" id="txtMail" change="if(txtMail.text.length != 0) checkMail(txtMail);" width="135" tabIndex="26"/>
+				<s:TextInput x="179" y="93" id="txtNombre" width="153" tabIndex="21" focusOut="if(txtNombre.text.length > 0) txtNombre.errorString='';"/>
+				<s:TextInput x="179" y="144" id="txtConfirmPass" change="if(txtPass.text.length != 0) checkPass(txtPass)" width="153" displayAsPassword="true" tabIndex="25"/>
+				<s:TextInput x="34" y="144" id="txtPass" change="if(txtPass.text.length != 0) checkPass(txtPass)" width="135" displayAsPassword="true" tabIndex="24"/>
+				<s:TextInput x="487" y="93" id="txtApMatern" width="135" tabIndex="23"/>
+				<s:TextInput x="342" y="93" id="txtApPatern" width="135" tabIndex="22" focusOut="if(txtApPatern.text.length > 0) txtApPatern.errorString='';"/>
+				<s:TextInput x="34" y="94" id="txtCuenta" focusOut="isUserValid(); if(txtCuenta.text.length > 0) txtCuenta.errorString='';" width="135" tabIndex="20" maxChars="100" change="existeUser.text=''"/>
+				<s:ComboBox x="486" y="143" creationComplete="Send(1109);" id="cmbMultiRol" width="190" focusOut="if(cmbMultiRol.selectedIndex>0) cmbMultiRol.errorString=''" visible="true" tabIndex="27"/>
+				
+				<mx:Button id="btnGuardar" x="598" y="198" icon="@Embed(source='assets/accept-icon_24.png')" label="Guardar" click="guardarUsuario(1);" height="24"  width="94" toolTip="Guardar Usuario" visible="false"/>
+				<mx:Button id="btnActualizar" x="598" y="198" icon="@Embed(source='assets/accept-icon_24.png')" label="Actualizar" click="guardarUsuario(2);" height="24" width="115" toolTip="Actualizar Usuario" visible="false"/>
+				<s:TextInput id="existeUser" width="38" maxChars="50" visible="false" valueCommit="existUser();" enabled="false" editable="false"/>
+				<mx:Image source="assets/115_68.png"  x="30" y="7"/>
+				<mx:Image source="assets/2118-32.png"  x="668" y="17" width="32" height="32" click="muestrattwInfo();"/>
+			</s:Group>	
+		</s:TitleWindow>
+		
+		<s:TitleWindow width="486" height="234" title="Agregar Sucursal a Usuario" id="ttwSucxUser" visible="false" close="ttwSucxUser.visible=false;" horizontalCenter="0" verticalCenter="-26">
+			<s:Label text="*Sucursal" x="15" y="89" fontWeight="bold"/>
+			<s:Label text="Agregar Sucursal a Usuario" x="85" y="29" fontWeight="bold"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="15" y="175" fontWeight="bold"/>
+			<s:ComboBox x="80" y="83" creationComplete="Send(573);" id="cmbSucAdd" width="339"/>
+			<mx:Button x="316" y="124" icon="@Embed(source='assets/accept-icon_24.png')" label="Agregar Sucursal" click="validaSucursalxUser()" height="24" tabIndex="10" width="150"/>
+			<mx:Image source="assets/empresa-64.png"  x="22" y="4"/>
+		</s:TitleWindow>
+	
+		<s:TitleWindow width="590" height="335" title="Información" id="ttwInfo" visible="false" close="ttwInfo.visible=false;" horizontalCenter="0" verticalCenter="24">
+			<s:Label text="Información de Roles" x="65" y="13" fontWeight="bold"/>
+			<mx:Image source="assets/2118-32.png"  x="22" y="4" width="32" height="32" click="muestrattwInfo();"/>
+			
+			<s:Group width="100%" height="100%" id="gFacturaT" visible="false">
+				<s:Label text="Rol: FacturaT > Usuario Supervisor" x="15" y="49" fontWeight="bold"/>
+				<s:Label text="Generación de CFDI, Cancelación de CFDI, Generación de Transacciones, Alta de Clientes, Consulta de CFDI Emitidos en la Sucursal, Historial de Transacciones en la sucursal.  " x="35" y="62" width="515"/>
+				
+				<s:Label text="Rol: FacturaT > Usuario Operativo(1)" x="15" y="99" fontWeight="bold"/>
+				<s:Label text="Generación de CFDI, Cancelación de CFDI, Generación de Transacciones, Alta de Clientes." x="35" y="112" width="515"/>
+				
+				<s:Label text="Rol: FacturaT > Usuario Operativo(2)" x="15" y="145" fontWeight="bold"/>
+				<s:Label text="Generación de CFDI, Generación de Transacciones, Alta de Clientes. " x="35" y="158" width="515"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="gPrepagoEspecial" visible="false">
+				<s:Label text="Rol: Prepago Especial > Capturista" x="15" y="59" fontWeight="bold"/>
+				<s:Label text="Generación de CFDI, Alta de Clientes, Consulta de CFDI Emitidos en la Sucursal." x="35" y="72" width="515"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="gTelmex" visible="false">
+				<s:Label text="Rol: Telmex/PYMES > Capturista " x="15" y="59" fontWeight="bold"/>
+				<s:Label text="Generación de CFDI, Alta de Clientes, Consulta de CFDI Emitidos en la Sucursal." x="35" y="72" width="515"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="gDistribuidor" visible="false">
+				<s:Label text="Rol: Timbrado > Usuario " x="15" y="59" fontWeight="bold"/>
+				<s:Label text="Consulta de CFDI Emitidos en la Sucursal, Detalle Proveedores Autorizados." x="35" y="72" width="515"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="gSEDENAAdminCentral" visible="false">
+				<s:Label text="Rol: SEDENA > Administrador de Dirección" x="15" y="49" fontWeight="bold"/>
+				<s:Label text="Emitir reportes de su serie de las sucursales asociadas.                                                                      Dar de alta y/o baja tanto de supervisores como de operadores por sucursal.                                             Dar de alta y actualizar catálogos de productos y servicios (Solo el catalogo de la sucursal asignada). " x="35" y="62" width="515"/>
+				
+				<s:Label text="Rol: SEDENA > Supervisor / Validador." x="15" y="129" fontWeight="bold"/>
+				<s:Label text="Verificar la totalidad de los datos asentados en cada factura.                                         						 Autorizar y asegurar la emisión del comprobante fiscal (facturas, notas de crédito, etc)                              Llevar a cabo la cancelación de facturas emitidas.                                                                            Verificar los requisitos fiscales.                                                                                                                    Puede editar la pre-factura, cambiar datos como descuento, productos, etc" x="35" y="142" width="515"/>
+				
+				<s:Label text="Rol: SEDENA > Operador." x="15" y="225" fontWeight="bold"/>
+				<s:Label text="Será el encargado de capturar el comprobante fiscal (facturas, nota de crédito, etc)                   						 Enviará la documentación por internet a los clientes.                                                                 Responsable de generar el respaldo de las facturas emitidas.                                                                    Corroborar en un primer paso el correcto llenado de cada factura. " x="35" y="238" width="515"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="gSEDENAAdminDireccion" visible="false">
+				<s:Label text="Rol: SEDENA > Supervisor / Validador." x="15" y="69" fontWeight="bold"/>
+				<s:Label text="Verificar la totalidad de los datos asentados en cada factura.                                         						 Autorizar y asegurar la emisión del comprobante fiscal (facturas, notas de crédito, etc)                              Llevar a cabo la cancelación de facturas emitidas.                                                                            Verificar los requisitos fiscales.                                                                                                                    Puede editar la pre-factura, cambiar datos como descuento, productos, etc" x="35" y="82" width="515"/>
+				
+				<s:Label text="Rol: SEDENA > Operador." x="15" y="165" fontWeight="bold"/>
+				<s:Label text="Será el encargado de capturar el comprobante fiscal (facturas, nota de crédito, etc)                   						 Enviará la documentación por internet a los clientes.                                                                 Responsable de generar el respaldo de las facturas emitidas.                                                                    Corroborar en un primer paso el correcto llenado de cada factura. " x="35" y="178" width="515"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="gSEDENASupervisor" visible="false">
+				<s:Label text="Rol: SEDENA > Operador." x="15" y="55" fontWeight="bold"/>
+				<s:Label text="Será el encargado de capturar el comprobante fiscal (facturas, nota de crédito, etc)                   						 Enviará la documentación por internet a los clientes.                                                                 Responsable de generar el respaldo de las facturas emitidas.                                                                    Corroborar en un primer paso el correcto llenado de cada factura. " x="35" y="68" width="515"/>
+			</s:Group>
+			
+			
+		</s:TitleWindow>
+</s:Application>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600" height="558" width="745"
+	           xmlns:mx2="library://ns.adobe.com/flex/halo"
+			   xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+			   xmlns:ns="library:adobe/flex/gumbo" 
+			   backgroundColor="#FFFFFF" pageTitle="Generar Código de Proveedor Autorizado"
+			   applicationComplete="validateUser('generaCPA.swf');">
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.*;
+			
+			private function limpiar():void
+			{
+				txtRFC.text = "";
+				txtNomContacto.text = "";
+				txtEmailContacto.text = "";
+				txtTelefono.text = "";
+				txtWeb.text = "";
+				txtTimbres.text = "";
+				txtCPA.text = "";
+				txtCU.text = "";
+				txtCUP.text = "";
+			}
+			
+			private function validaBuscar():void
+			{
+				if(txtRFC.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo RFC es obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+				Send(797);	//Realiza Consulta
+			}
+
+			private function validaGenerar():void
+			{
+				if(txtRFC.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo RFC es obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+
+				if(txtNomContacto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo Nombre del Contacto es obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+
+				if(txtEmailContacto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo Email del Contacto es obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+				
+				if(txtTelefono.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo Número Telefónico es obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+
+				var timbres:int = parseInt(txtTimbres.text);
+				if(timbres < 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La cantidad de Timbres Adquiridos no puede ser negativa ..","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+				
+				if(txtTimbres.text.length == 0 || txtTimbres.text == "0")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar la cantidad de Timbres Adquiridos y esta no puede ser cero ..","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+				Send(794);	//Realiza Generación
+			}
+			
+		]]>
+	</fx:Script>
+
+	<s:Panel x="10" y="10" width="726" height="538" title=" Generación de Código de Proveedor Autorizado" fontFamily="Arial" color="#0B5798" fontSize="14">
+		<s:VGroup x="10" y="10" width="702" height="472">
+			<mx:HRule width="687"/>
+			<s:Group width="687" height="47">
+				<s:Label x="29" y="23" text="* RFC del Proveedor:" fontWeight="bold" color="#000000" fontSize="12"/>
+				<s:TextInput id="txtRFC" maxChars="13" x="243" y="15" width="131"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="100" x="391" y="14" fontFamily="Arial" fontSize="14"/>
+				<mx:Button id="botonConsultar" label="Consultar" icon="@Embed(source='newIcons/01.png')" height="24" width="119" click="validaBuscar();" x="500" y="13" fontFamily="Arial" fontSize="14" color="#0B5798"/>
+			</s:Group>
+			<mx:HRule width="688"/>
+			<s:Group width="688" height="399">
+				<s:Label x="30" y="32" text="* Nombre del Conctacto:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:TextInput id="txtNomContacto" maxChars="500" x="243" y="21" width="375"/>
+				<s:Label x="30" y="68" text="* Email del Contacto:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:TextInput id="txtEmailContacto" maxChars="250" x="243" y="57" width="375"/>
+				<s:Label x="30" y="108" text="* Número Telefónico:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:TextInput id="txtTelefono" maxChars="50" x="243" y="91" width="375"/>
+				<s:Label x="30" y="146" text="  Sitio WEB:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:TextInput id="txtWeb" maxChars="500" x="243" y="129" width="375"/>
+				<s:TextInput id="txtTimbres" x="243" y="173" width="375"/>
+				<s:Label x="30" y="181" text="* Timbres Adquiridos:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:Label x="30" y="235" text="Todos los campos marcados con * son obligatorios" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:Label x="30" y="295" text="Código de Proveedor Autorizado:" fontWeight="bold" color="#000000" fontSize="12"/>
+				<s:Label x="30" y="337" text="Código de Usuario:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:TextInput id="txtCU" x="243" y="326" width="375" editable="false"/>
+				<s:Label x="30" y="372" text="Código de Usuario Proveedor:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:TextInput id="txtCUP" x="243" y="361" width="375" editable="false"/>
+				<s:TextInput id="txtCPA" x="243" y="288" width="375" editable="false"/>
+				<mx:HRule x="0" y="215" width="688"/>
+				<mx:HRule x="0" y="268" width="688"/>
+				<mx:HRule x="0" y="396" width="688"/>
+				<mx:Button id="botonGenerar" width="116" height="24" label="Generar" icon="@Embed(source='newIcons/accept_24.png')" click="validaGenerar();" x="504" y="225"/>
+			</s:Group>
+		</s:VGroup>
+	</s:Panel>
+</s:Application>

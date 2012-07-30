@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow  
+	name="Unidad de Medida" title="Sesión Bloqueada"
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*"
+	xmlns:ns2="com.flashdev.file.*" 
+	 width="400" height="200">
+
+	<fx:Script source="r3Take.as"/>
+	<fx:Style source="fx.css"/>
+	<fx:Script>
+		<![CDATA[
+		import mx.controls.Alert;
+		import mx.core.IFlexDisplayObject;
+		import mx.events.CloseEvent;
+		import mx.events.FlexEvent;
+		import mx.events.ListEvent;
+		import mx.formatters.NumberFormatter;
+		import mx.managers.PopUpManager;
+		
+		import spark.components.*;
+		
+		]]>
+	</fx:Script>
+	<mx:Image  source="assets/2172-64.png" x="0" y="10"/>
+	<s:Label text="Por seguridad la sesión ha expirado!" x="71" y="38" fontSize="16" fontWeight="bold"/>
+	<s:Label text="Favor de actualizar la ventana apretando la tecla F5 de su teclado, o bien, " x="10" y="86"/>
+	<s:Label text="cerrar la ventana, ingresar la dirección electrónica en el explorador" x="10" y="106"/>
+	<s:Label text="y volver a introducir sus credenciales para ingresar en el sistema." x="10" y="126"/>	
+</s:TitleWindow>

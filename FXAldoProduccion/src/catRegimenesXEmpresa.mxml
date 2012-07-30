@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('catRegimenesXEmpresa.swf');" pageTitle="Catálogo de Regimenes por Empresa">
+
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			
+			private function selectConceptosxEmpresa():void
+			{
+				if (gvwRegimenesxEmp.selectedItem != null)
+				{
+					txtIdRegimenXEmpresa.text = gvwRegimenesxEmp.selectedItem["0"].toString();
+					txtRegimen.text = gvwRegimenesxEmp.selectedItem["2"].toString();;
+				}
+			} 
+			
+			private function validaEmpresa():void
+			{
+				if (cmbSelectEmpresa.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una empresa.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				Send(1410);//carga Data Grid Régimen x Empresa
+			}
+			
+			private function selectRegimen(op:int):void
+			{
+				//op = 1 > Editar Régimen
+				//op = 2 > Eliminar Régimen
+				var msj:String;
+				
+				if(op == 1)
+					msj = "Seleccione el Régimen a Editar."
+						
+				else
+					msj = "Seleccione el Régimen a Eliminar."
+				
+				if(txtIdRegimenXEmpresa.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show(msj,"Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if(op == 1) //Editar
+				{
+					btnGuardaRegimen.visible = false;
+					btnActualizaRegimen.visible = true;
+					
+					ttwAgregarRegimen.title = "Editar Régimen";
+					ttwAgregarRegimen.visible = true;
+				}
+				
+				else if(op == 2) //Eliminar
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Desea eliminar el Régimen de la empresa?","Aviso",Alert.YES|Alert.NO, null, eliminarRegimen, iconAlert);
+				}
+			}
+			
+			private function eliminarRegimen(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(1413); //Elimina Régimen
+					Send(1410); //Actualiza GridView Regimenes x Empresa
+					
+					txtIdRegimenXEmpresa.text = "";
+				}	
+			}
+
+			private function guardarRegimen(op:int):void
+			{
+				//op = 1 > Guardar régimen
+				//op = 2 > Actualizar régimen
+				
+				if(txtRegimen.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Régimen es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtRegimen.errorString = "Régimen es un campo obligatorio.";
+					return;
+				}
+				
+				if (op == 1) //Guardar
+					Send(1411); //Inserta Régimen x Empresa
+				
+				else if (op == 2) //Actualizar
+					Send(1412); //Actualizar Régimen x Empresa
+					
+				Send(1410); //Actualiza GridView Regimenes
+				
+				txtIdRegimenXEmpresa.text = "";
+				ttwAgregarRegimen.visible = false;
+			}
+			
+			private function cleanCtrls():void
+			{
+				gvwRegimenesxEmp.dataProvider = null;
+				cmbSelectEmpresa.selectedIndex = 0;
+				txtIdRegimenXEmpresa.text = "";
+			}
+			
+			private function muestraTTWRegimen():void
+			{
+				if (cmbSelectEmpresa.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para poder agregar un Régimen, seleccione una empresa.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				btnGuardaRegimen.visible = true;
+				btnActualizaRegimen.visible = false;
+					
+				ttwAgregarRegimen.title = "Agregar Régimen";
+				txtRegimen.text = "";
+				
+				ttwAgregarRegimen.visible = true;
+			}
+			
+			private function bloqueaBtns():void
+			{
+				if((txtIdRol.text == "50") || (txtIdRol.text == "51") || (txtIdRol.text == "52"))
+				{
+					btnEliminar.enabled = false; 
+					btnAgregar.enabled = false; 
+					btnEditar.enabled = false;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Régimen Fiscal" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="15" paddingBottom="5">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">	
+					<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="RÉGIMEN FISCAL" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="*Seleccione Empresa" fontWeight="bold" verticalAlign="middle"/>
+							<s:ComboBox creationComplete="Send(584);" id="cmbSelectEmpresa" width="325" tabIndex="1" height="24" x="185"/>
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="validaEmpresa();" height="24" tabIndex="3" width="100"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrls();" height="24" tabIndex="4" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0">
+						<mx:DataGrid id="gvwRegimenesxEmp" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectConceptosxEmpresa();">
+							<mx:columns>
+								<mx:DataGridColumn headerText="idRegimenesxEmp" 			dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="idEmpresa" 					dataField="1" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Régimen" 					dataField="2" width="50" visible="true"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+						<s:TextInput id="txtIdRegimenXEmpresa" width="38" maxChars="50" visible="false" enabled="false"/>
+						<s:TextInput id="txtIdRol" width="38" maxChars="50" visible="false" enabled="false" creationComplete="Send(1414);" valueCommit="bloqueaBtns();"/>
+						
+						<mx:Button id="btnEliminar" icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="selectRegimen(2);" height="24" tabIndex="7" width="100" toolTip="Eliminar Régimen"/>
+						<mx:Button id="btnAgregar" icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="muestraTTWRegimen();" height="24" tabIndex="5" width="100" x="673" toolTip="Agregar Régimen"/>
+						<mx:Button id="btnEditar" icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="selectRegimen(1);" height="24" tabIndex="6" width="100" toolTip="Editar Régimen"/>
+					</s:HGroup>
+				</s:VGroup>
+				
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>
+	
+	<s:TitleWindow width="454" height="176" title="" id="ttwAgregarRegimen" visible="false" close="ttwAgregarRegimen.visible=false;" horizontalCenter="0" verticalCenter="-37">
+		<s:Group width="100%" height="100%">
+			
+			<s:Label x="37" y="36" text="* Régimen" fontWeight="bold"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="37" y="113" fontWeight="bold"/>
+			
+			<s:TextInput x="37" y="50"  id="txtRegimen" width="250" height="24" maxChars="50" tabIndex="20"  focusOut="if(txtRegimen.text.length > 0) txtRegimen.errorString='';"/>
+			
+			<mx:Button id="btnGuardaRegimen" x="305" y="50" icon="@Embed(source='newIcons/add_24.png')" label="Guardar" click="guardarRegimen(1);" height="24" tabIndex="41" width="115" toolTip="Guardar Régimen" visible="false"/>
+			<mx:Button id="btnActualizaRegimen" x="305" y="50" icon="@Embed(source='newIcons/edit-icon_24.png')" label="Actualizar" click="guardarRegimen(2);" height="24" tabIndex="41" width="115" toolTip="Actualizar Régimen" visible="false"/>
+	
+		</s:Group>
+	</s:TitleWindow>	
+</s:Application>

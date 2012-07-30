@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="0" minHeight="0" width="446" 
+			   pageTitle="Addenda Super Neto" height="160" backgroundColor="#FFFFFF">
+	<fx:Script>
+		<![CDATA[
+			import com.Captcha;
+			import flash.events.*;
+			import flash.utils.setTimeout;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			public var addendaValor:String;
+			public var stringData:String;
+			private var xmlData:XML;
+			private var bandera:int;
+			private var addField:String;
+			private var tipos:ArrayCollection;
+			
+			/*protected function setParametros(data:String)
+			{
+				xmlData=new XML(data);
+			}*/
+			
+			protected function agregar_clickHandler(event:MouseEvent):void
+			{
+				if(plazoPago.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar un Plazo de Pago.","Error",Alert.OK,null,null, null);				
+				}
+				else if(folioOrdenCompra.text.length==0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el folio de Orden de Compra.","Error",Alert.OK,null,null, null);
+				}
+				else if(tipoComprobante.selectedIndex<0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el Tipo de Comprobante.","Error",Alert.OK,null,null, null);
+				}
+				else
+				{
+					addendaValor="";
+					addendaValor+='<ap:ap tipoComprobante="';
+					addendaValor+=tipoComprobante.selectedItem.label;
+					addendaValor+='" plazoPago="';
+					addendaValor+=plazoPago.text;
+					addendaValor+='"><ap:Detalle folio="';
+					addendaValor+=folioOrdenCompra.text;
+					addendaValor+='"/></ap:ap>';
+					root.dispatchEvent(new Event("complete",true,false));
+				}
+			}
+			public function setParametros(data:XML):void
+			{
+				try
+				{
+					xmlData=data;
+					if (xmlData.@['tipoComprobante']=="ingreso")
+					{
+						tipos=new ArrayCollection([{label:"FE"}]);
+					}
+					else if(xmlData.@['tipoComprobante']=="egreso")
+					{
+						tipos=new ArrayCollection([{label:"NC"},{label:"ND"}]);
+					}
+					tipoComprobante.dataProvider=tipos;
+					tipoComprobante.selectedIndex=0;
+					folioOrdenCompra.text=xmlData.@['numeroOrdenCompra'];
+				}
+				catch (e:Error)
+				{
+					stringData=data;
+				}
+			}
+
+
+		]]>
+	</fx:Script>
+
+
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<!--<s:Panel height="185" title="Addenda Super Neto (Servicios)" horizontalCenter="0" verticalCenter="0" width="435">-->
+		<s:Label x="33" y="48" text="Tipo de Comprobante" width="151" height="15"/>
+		<s:Label x="33" y="78" text="Plazo de Pago" width="152"/>
+		<s:Label x="33" y="105" text="Folio Orden de Compra" width="189"/>
+		<s:ComboBox x="279" y="40" id="tipoComprobante" width="128"/>
+		<s:TextInput x="279" y="68" id="plazoPago"/>
+		<s:TextInput x="279" y="93" id="folioOrdenCompra"/>
+		<mx:Button id="agregar" width="100" height="24" label="Agregar"  click="agregar_clickHandler(event)" icon="@Embed(source='newIcons/edit-icon_24.png')" x="64" y="125"/>
+		<mx:HRule x="180" y="20" width="266"/>
+		<s:Label x="8" y="15" text="Addenda Superneto (Servicios)" width="176" height="16"/>
+		
+	<!--</s:Panel>-->
+	
+</s:Application>

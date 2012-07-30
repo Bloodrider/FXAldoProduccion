@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="gob.mx.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" pageTitle="Envío de Layout a TELMEX"
+	applicationComplete="validateUser('SSH.swf');">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+		import mx.events.*;
+		import mx.controls.Alert;
+		import mx.collections.ArrayCollection;
+		import com.flashdev.file.FileUpload;
+		import com.as3xls.xls.ExcelFile;          
+		import com.as3xls.xls.Sheet;
+		import com.ExcelExports;
+
+			
+		
+		private function filtrar():void
+		{
+			Send(715);//LLENAR EL GRIDVIEW DE LAS LINEAS SSH
+			btnGenTXT.enabled = true;
+		}
+		
+		private function generarTXT():void
+		{
+			if(DGSSH.dataProvider!=null){
+				
+				var url:String = "http://fx.facturaxion.net/FlushSSH.aspx";
+				//var url:String = "http://localhost:49224/r3Take/FlushSSH.aspx";
+				var request:URLRequest = new URLRequest(url);
+				var variables:URLVariables = new URLVariables();
+				variables.diaInicio=diaInicio.text;
+				variables.mesInicio=mesInicio.text;
+				variables.anioInicio =anioInicio.text;
+				variables.diaFin=diaFin.text;
+				variables.mesFin= mesFin.text;
+				variables.anioFin=anioFin.text;
+				request.data = variables;
+				request.method = URLRequestMethod.POST;
+				navigateToURL(request,"_blank");
+			
+			}
+			
+		}
+		
+		private function enviarSSH():void
+		{
+			
+		}
+		
+		
+		
+		private function recibirSSH():void
+		{
+			
+		}
+		
+		public function setEndDate():void{
+		
+			
+			btnFiltrar.enabled=false;
+			fechaFin.selectedDate = null;
+			fechaFin.selectableRange = {rangeStart:new Date(fechaInicio.selectedDate)};
+		
+		}
+		
+		public function enableBtn():void{
+			btnFiltrar.enabled= true;
+			btnGenTXT.enabled = false;
+			btnEnviarSSH.enabled=false;
+			btnRecibirSSH.enabled=false;
+			
+		
+		}
+			
+		
+		
+		
+	]]>
+	</fx:Script>
+	
+<s:VGroup x="0" y="0" width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+	<mx:ApplicationControlBar width="100%" fillColors="[#000000, #333333]" color="#FFFFFF" height="42">		
+		<s:Label text="Archivo SSH para pago TELMEX" fontSize="14" fontWeight="bold" color="#FFFFFF"/>
+		<mx:Spacer width="100%"/>
+		<s:HGroup width="100%" horizontalAlign="right">
+			<s:TextInput x="10" y="1" id="diaInicio" text="{fechaInicio.text.substring(0,2)}" width="98" editable="true" enabled="true" visible="false" />
+			<s:TextInput x="90" y="1" id="mesInicio" text="{fechaInicio.text.substring(3,5)}" width="98" editable="true" enabled="true" visible="false" />
+			<s:TextInput x="170" y="1" id="anioInicio" text="{fechaInicio.text.substring(6,10)}" width="98" editable="true" enabled="true" visible="false" />
+			<s:TextInput x="250" y="1" id="diaFin" text="{fechaFin.text.substring(0,2)}" width="98" editable="true" enabled="true" visible="false" />
+			<s:TextInput x="320" y="1" id="mesFin" text="{fechaFin.text.substring(3,5)}"  width="98" editable="true" enabled="true" visible="false" />
+			<s:TextInput x="400" y="1" id="anioFin" text="{fechaFin.text.substring(6,10)}" width="98" editable="true" enabled="true" visible="false" />
+			<mx:Text text="Sistema de Facturación Eletrónica" color="#FFFFFF" fontSize="10" right="22" top="17" textAlign="right" fontWeight="bold"/>
+		</s:HGroup>		
+	</mx:ApplicationControlBar>
+	<s:HGroup width="100%" paddingBottom="10" paddingTop="10">
+		<s:Group width="100%" height="100%">
+						
+			<mx:Button id="btnFiltrar" label="Generar Línea" icon="@Embed(source='assets/0176_20.png')" click="filtrar();" x="421" y="24" visible="true" enabled = "false" width="160"/>
+			<mx:Button id="btnGenTXT" label="Generar TXT" icon="@Embed(source='assets/ordering-icon_20.png')" click="generarTXT();" x="589" y="24" visible="true" enabled = "false" height="32" width="160"/>
+			<mx:Button id="btnEnviarSSH" label="Enviar Archivo SSH" icon="@Embed(source='assets/ordering-icon_20.png')" click="enviarSSH();" x="757" y="25" visible="true" enabled = "false" height="32" width="160"/>
+			<mx:Button id="btnRecibirSSH" label="Recibir Archivo SSH" icon="@Embed(source='assets/ordering-icon_20.png')" click="recibirSSH();" x="925" y="25" visible="true" enabled = "false" height="32" width="160"/>
+			<mx:DateField id="fechaInicio" x="11" y="32" width="199" change="setEndDate();" formatString="DD/MM/YYYY"/>
+			<mx:DateField id="fechaFin" x="218" y="32" width="199"  change="enableBtn();" formatString="DD/MM/YYYY"/>
+			<s:Label x="10" y="10" text="Fecha de Inicio"/>
+			<s:Label x="222" y="11" text="Fecha de Fin"/>
+			
+		</s:Group>
+	</s:HGroup>
+	<s:Panel width="100%" height="100%">
+		<s:VGroup x="0" y="0" width="100%" height="100%">
+			<mx:DataGrid width="100%" id="DGSSH" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%"  enabled="false">
+				<mx:columns>
+					<mx:DataGridColumn headerText="Lineas de captura" dataField="0" width="500"/>
+					
+				</mx:columns>
+			</mx:DataGrid>
+		</s:VGroup>
+	</s:Panel>
+</s:VGroup>
+</s:Application>

@@ -1,0 +1,860 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:fc="com.adobe.flex.extras.controls.*"
+	width="100%" height="880" 
+	creationComplete="init();" mouseWheelOutside="init();" 
+	xmlns:local="*" backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1" pageTitle="Registro de Usuarios"
+	applicationComplete="validateUser('registro.swf');">
+	
+	<fx:Declarations>
+		<mx:Sequence id="glowIcon" repeatCount="100">
+			<mx:Glow duration="5000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="12.0" blurYFrom="0.0" blurYTo="12.0" color="#ffffff" /> 	
+			<mx:Glow duration="5000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="12.0" blurXTo="0.0" blurYFrom="12.0" blurYTo="0.0" color="#ffffff" /> 	
+		</mx:Sequence>	
+		<mx:Sequence id="glowButton" repeatCount="100">
+			<mx:Glow duration="4000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="10.0" blurYFrom="0.0" blurYTo="10.0" color="#054a95" /> 	
+			<mx:Glow duration="4000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="10.0" blurXTo="0.0" blurYFrom="10.0" blurYTo="0.0" color="#054a95" /> 	
+		</mx:Sequence>
+	</fx:Declarations>
+	
+	<fx:Script source="r3Take.as"/>
+	<fx:Script source="validateIsEmptyTELMEX.as"/>
+	<fx:Style source="fx.css" />
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		
+		global
+		{
+			fontFamily: "Verdana";
+			fontWeight: normal;
+			fontStyle: normal;
+			
+		}
+		
+		Application
+		{
+			
+			fontSize: 11;	
+			fontFamily: "Verdana";
+		}
+		
+		mx|FormItem 
+		{
+			paddingLeft: 4;
+			paddingRight: 4;
+			paddingTop: 4;
+			paddingBottom: 4;
+		}
+	</fx:Style>
+	
+	<fx:Declarations>
+		
+		<mx:EmailValidator
+			source="{email}" property="text" requiredFieldError="El correo electrónico es un campo es obligatorio."  
+			invalidCharError="El formato de correo electrónico es incorrecto."
+			invalidDomainError="El formato del dominio del correo electrónico es incorrecto." 
+			invalidPeriodsInDomainError="El formato del dominio del correo electrónico es incorrecto." 
+			missingPeriodInDomainError="El dominio del correo electrónico no contiene un punto." 
+			missingUsernameError="El correo electrónico no contiene un nombre de usuario."
+			missingAtSignError="La cuenta de correo electrónico no contiene el carácter @" 
+			tooManyAtSignsError="La cuenta de correo electrónico contiene el carácter @ más de una vez"
+			valid="validNextMAIL.text = '1';" 
+			invalid="validNextMAIL.text = '0'" trigger="{email}" triggerEvent="valueCommit"/>
+		
+		<mx:EmailValidator
+			source="{emailConfirm}" property="text" requiredFieldError="El correo electrónico es un campo es obligatorio."  
+			invalidCharError="El formato de correo electrónico es incorrecto."
+			invalidDomainError="El formato del dominio del correo electrónico es incorrecto." 
+			invalidPeriodsInDomainError="El formato del dominio del correo electrónico es incorrecto."
+			missingPeriodInDomainError="El dominio del correo electrónico no contiene un punto." 
+			missingUsernameError="El correo electrónico no contiene un nombre de usuario."
+			missingAtSignError="La cuenta de correo electrónico no contiene el carácter @"
+			tooManyAtSignsError="La cuenta de correo electrónico contiene el carácter @ más de una vez"
+			valid="validNextMAILC.text = '1';" 
+			invalid="validNextMAILC.text = '0'" trigger="{emailConfirm}" triggerEvent="valueCommit"/>
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.Captcha;
+			
+			import flash.external.ExternalInterface;
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.printing.*;
+			
+			import spark.components.*;
+			
+			public var msgNota:String  = "* Los precios con IVA incluyen el 16%. Precios expresados en";
+			public var msgNota1:String = "   Moneda Nacional.";
+			public var msgNota2:String = "* El cargo de la renta mensual del servicio se verá reflejado";
+			public var msgNota3:String = "   en el Recibo Telmex correspondiente.";
+			public var msgNota4:String = "* Para cualquier comentario o duda por favor comunicarse al ";
+			public var msgNota5:String = "   01 800 838 2912";
+			public var msgNota6:String = "* En breve recibirá en el correo electrónico registrado un";
+			public var msgNota7:String = "   mensaje de bienvenida.";
+			public var msgNota8:String = "* Le recomendamos imprimir este comprobante para cualquier";
+			public var msgNota9:String = "   aclaración.";
+			
+			public var captchaTypes:XML = 
+				<root>
+					<item label="simple" data="" />
+					<item label="letters" data="alphaChars" />
+					<item label="letter & numbers" data="alphaCharsnum" />
+					<item label="secure" data="secure" />
+				</root>;
+			
+			[Bindable]
+			public var captchaTypesXMLList:XMLList;
+			
+			public var captchaObj:Captcha;
+			public var captchaCode:String;
+			
+			public var printJob:FlexPrintJob = new FlexPrintJob();
+			
+			private var options:PrintJobOptions = new PrintJobOptions();       
+			
+			public function print(myObject:UIComponent):void
+			{	
+				printJob.start();
+				printJob.addObject(myObject, FlexPrintJobScaleType.MATCH_WIDTH);
+				printJob.send(); 
+			}
+			
+			public function init():void
+			{
+				if (captchaObj && this.getChildIndex(captchaObj)) this.removeChild(captchaObj);
+				captchaObj = new Captcha("",6,154,40);
+				captchaCode = captchaObj.securitycode;
+				captchaObj.x = 0;
+				captchaObj.y = 0;
+				captcha.addElement(captchaObj);
+			}
+			
+			public function remakeCaptcha():void
+			{
+				captcha.removeElement(captchaObj);
+				captchaObj = null;
+				init();
+			}
+			
+			public function checkit():void
+			{
+				if (captchaCode == checkInput.text)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.cancelLabel="Cancelar";
+					Alert.show("Respuesta Correcta!");
+				}
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.cancelLabel="Cancelar";
+					Alert.show("Respuesta Incorrecta!");
+				}
+			}
+			
+			[Embed(source="assets/accept-icon_24.png")]	[Bindable]	public var iconAcp:Class;
+			[Embed(source="assets/2519-32.png")]		[Bindable]	public var iconNot:Class;
+			[Embed(source="assets/userOK2.png")]		[Bindable]	public var imgOK:Class;
+			[Embed(source="assets/userFail2.png")]		[Bindable]	public var imgFail:Class;
+			
+			[Bindable]
+			private var text:String ="<html><body><p><font face='Verdana, Geneva, sans-serif' size='16'><b>Condiciones de servicio de Facturaxion®</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif' size='14'><b>Le damos la bienvenida a Facturaxion®</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Este contrato describe los términos y  condiciones generales (los “Términos y Condiciones Generales”) que se aplican a  la utilización de los servicios ofrecidos por Freight Ideas S.A. de C.V. (en  adelante “FI”) a través de Facturaxion®.  El uso que usted haga de productos, software,  servicios y sitios web de Facturaxion®  (en adelante los &quot;Servicios de Facturaxion®&quot;,  excluyendo cualquier otro servicio que Freight Ideas, a través de otro acuerdo  consensuado por escrito, pueda proporcionarle), se rige por los términos de un  acuerdo legal entre usted y Freight Ideas SA de CV, cuyo domicilio social se  encuentra en Av. Fuerza Aérea Mexicana No. 520 Interior No. 1, Col. Federal,  Del. Venustiano Carranza, CP 15700, México Distrito Federal.  <br />  Cualquier acuerdo con FI siempre incluirá,  como mínimo, los términos y condiciones generales presentes,  a menos que usted y FI establezcan lo  contrario por escrito.<br />  Para los diferentes Servicios de Facturaxion®,  FI podrá incluir los términos de cualquier aviso legal referente a los mismos,  éstos se denominarán “Condiciones Adicionales”, y serán expresadas en el  espacio destinado del  Servicio de Facturaxion®  al que se refieran.<br />  Los Términos y Condiciones Generales, junto  con las Condiciones adicionales, conforman un acuerdo legalmente vinculante  entre usted y FI en relación con el uso que usted haga de los Servicios de Facturaxion®.  En adelante, este acuerdo legal  se  denominará las &quot;Condiciones&quot;.<br />En el  caso de que exista alguna incoherencia entre los Términos y Condiciones  Generales y las Condiciones adicionales en relación con el Servicio de Facturaxion®,  prevalecerán las disposiciones de los primeros.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>1. Sobre la Aceptación de las Condiciones</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>El cliente  debe leer, entender y aceptar todos los términos  y condiciones establecidos en las Condiciones.<br />  Cualquier persona que no acepte estas  Condiciones, las cuales tienen un carácter obligatorio y vinculante, no podrá y  deberá abstenerse de utilizar el sitio y/o los Servicios de Facturaxion®; para  aceptar las Condiciones, usted deberá  hacer clic donde FI ofrezca la opción de  aceptar dichas condiciones.<br />  La utilización del sitio y/o los Servicios de  Facturaxion®  expresa la adhesión plena y  sin reservas del Cliente a las presentes Condiciones, liberando a FI de toda  responsabilidad por no haber leído cuidadosamente el presente acuerdo. Antes de  continuar, se le recomienda  imprimir las  Condiciones o guardar una copia de estas para su referencia.<br />  Las Condiciones de este documento aplican de  igual forma para personas físicas y morales.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>2. Sobre los Requisitos que debe cumplir el Cliente para la Contratación de los Servicios de Facturaxion®</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Para poder realizar la contratación de los  Servicios de Facturaxion®, el Cliente no deberá  tener adeudos con Telmex al momento del  registro, toda vez que dicha compañía telefónica fungirá como intermediaria de  la cobranza a favor de FI, empresa esta última que será la directa y absoluta  responsable de la prestación de los servicios indicados en este instrumento. En  caso de detectarse algún adeudo, no se podrá llevar a cabo la contratación  hasta que el titular lo cubra. A través de este acuerdo usted reconoce y acepta  que FI podrá realizar la validación de su línea telefónica Telmex o su Cuenta  Maestra Telmex, dependiendo el caso, para aprobar la contratación de los  Servicios de Facturaxion®.<br />  El Cliente deberá tener a su disposición la  Firma Electrónica Avanzada (FIEL), contar con su Certificado de Sello Digital y  con uno o varios rangos de Folios Electrónicos (autorizados por el SAT), igual  manera, deberá  presentar en su caso el  Aviso de Inicio de Operaciones ante el SAT,   así como <b>l</b>levar la  contabilidad de su negocio en medios  electrónicos.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Para poder ingresar a los Servicios de  Facturaxion® el usuario necesitará contar con   acceso a Internet (recomendable Banda Ancha: Infinitum). <br />  El cliente deberá llenar la solicitud de  registro situada en el sitio web de FI <a href='http://fx.facturaxion.com/facturaxion/registrotelmex.html'>http://fx.facturaxion.com/facturaxion/registrotelmex.html</a>,  ó haber sido levantada por el call center para mercado PYME de Telmex. En  mercado empresarial es a través del ejecutivo de cuenta o CARE de Telmex.  <b>E</b>l  cliente deberá firmar el contrato que por vía mail o por el sitio web que le  ponga a su disposición FI.<br />  En cualquier momento el cliente podrá solicitar  la terminación del contrato para lo cual, de manera previa, deberá liquidar  absolutamente cualquier tipo de adeudo derivado de este contrato. En este  sentido, el cliente deberá solicitar por escrito dirigido a FI la terminación  del contrato, y como anexo deberá acompañar la constancia de estar al corriente  del pago de los servicios prestados por FI. Una vez que FI corrobore que el  cliente no le adeuda, le comunicará por escrito que los efectos jurídicos del  contrato han cesado plenamente. El cliente deberá firmar el  contrato de tiempo indefinido, este será  enviado por FI vía mail o puesto en el sitio  web al Cliente, una vez llenada la solicitud de registro. <br />  La firma del contrato, será llevada  a cabo mediante la utilización del  Certificado de Sello Digital y FI. Se utilizará el Certificado de Sello  digital, sólo para los clientes que compren por web.<br />  El Cliente deberá estar enterado, previo a la  firma del contrato, de los rangos de número de folios para ubicar su costo y  los cargos fijos y variables del servicio. </font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>3. Sobre la  Prestación de los Servicios de Facturaxion® por parte de Freight Ideas</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>FI cuenta con diversas alianzas estratégicas  con otras organizaciones e instituciones, para   la provisión ocasional de Servicios a nuestros clientes en nombre de FI.  En el caso de que sea necesaria la prestación de algún servido por parte de  determinado aliado estratégico, FI informará oportunamente al cliente dicha  circunstancia, por lo que a través de este acuerdo, usted reconoce y acepta que  eventualmente alguno de los aliados de FI están autorizadas a proveerle cierto Servicio. <br />  De igual manera FI cuenta con una alianza  estratégica con Telmex, la cual estipula que FI le brindará los Servicios de  Facturaxion®, cediendo el derecho de cobro por los mismos a Telmex.<br />  FI se comprometen a una disponibilidad del  Sistema en una proporción que nunca será menor al 95%; sin embargo,  FI no será responsables por la interrupción o  alteración temporal del sistema, aplicación o herramienta, por causas de fuerza  mayor.<br />  Por el presente Acuerdo, usted reconoce y  acepta  que el contenido y la naturaleza  de los Servicios de Facturaxion® ofrecidos por FI pueden variar sin previo  aviso en beneficio de los servicios prestados,   esto generalmente ocurrirá como parte de las  políticas de FI, que incluyen  mantener  una constante innovación para ofrecer  una  mejora en los Servicios de Facturaxion®  a nuestros Clientes. <br />  FI se reserva el derecho de realizar la  prestación del Servicio de Facturaxion®, solamente a aquellos que no tengan  adeudos con Telmex o con FI, pudiendo revocar esta decisión al cubrir los  mismos en caso de que existieran, o bajo común acuerdo entre Telmex y FI.<br />  Tomando como base nuestra  continua   innovación, usted reconoce y acepta que FI pueda suspender por un lapso  no mayor a 24 horas, por razón de ventanas de mantenimiento, los Servicios, o  alguna de las funciones incluidas en éstos, para usted o para los usuarios en  general, a discreción de FI  y sin previo  aviso. <br />  Usted reconoce y acepta que, si bien FI  puede no haber fijado ningún límite en cuanto  al número de transmisiones para  recibir  elementos a través de los Servicios ni tampoco en la cantidad de espacio de  almacenamiento disponible para la provisión de cualquiera de los Servicios,  FI  se reserva el derecho de establecer  límites al respecto en cualquier momento y a su absoluta discreción.<br />  El resguardo de los comprobantes fiscales electrónicos será por el plazo  que establece la Ley, en caso de requerir mayor tiempo, el Cliente podrá  solicitar una cotización para extender el tiempo de resguardo de la información  o proporcionar dispositivos externos para que le sea transferida y entregada la  información.<br />  El tiempo de resguardo de información se respetará no importando si existe  relación aún con el Cliente.<br />En caso de que FI llegara a detectar algún  uso inadecuado de la herramienta, por el presente acuerdo, usted reconoce y  acepta que  FI podrá inhabilitar el acceso  a su cuenta o a la información contenida en la misma.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>4. Sobre la  utilización de los Servicios</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Después de que FI reciba  firmado el contrato por parte del Cliente, el servicio de Facturaxion® será  habilitado en un plazo no mayor a 24 horas.</font></p><p><font face='Verdana, Geneva, sans-serif'>El Cliente estará en la  posibilidad de hacer uso del Sistema siempre y cuando tenga el carácter de  Usuario Activo y hasta en tanto no concluya la vigencia del presente Contrato,  ni la vigencia del Certificado de Sello otorgado por el SAT e  instalado en la aplicación, herramienta o  solución.</font></p><p><font face='Verdana, Geneva, sans-serif'>El Cliente y/o usuario podrá hacer uso del Servicio las  veinticuatro horas del día, los 365 días del año, excepto en aquellos días y  horas en que, por así requerirlo FI o Telmex, deban realizarse tareas de  mantenimiento y/o actualización de cualquiera de los Servicios de Facturaxion®.<br />  El aprovechamiento de los Servicios de  Facturaxion® es su exclusiva responsabilidad y   deberá utilizarlos acorde a las funcionalidades permitidas y a los usos  autorizados en las presentes Condiciones, de modo tal que no atenten contra las  normas de uso y convivencia en Internet, los ordenamientos jurídicos de los  Estados Unidos Mexicanos, cualquier regulación aplicable o cualquiera de las  prácticas o directrices aceptadas en las jurisdicciones pertinentes, incluida  cualquier ley relativa a la exportación de datos, emisión y recepción de  Comprobantes Fiscales Digitales  o  Comprobantes Fiscales Digitales por Internet,  o cualquier regulación en materia  de Firma Electrónica Avanzada, de registro  contable, de conservación de la información para efectos fiscales y de  presentación de los reportes y declaraciones a que haya lugar por el uso de los  Servicios de Facturaxion®, así como las disposiciones que emitan las  autoridades pertinentes en relación al manejo, almacenamiento y envío de  Comprobantes Fiscales Digitales por Internet.<br />  A menos que FI establezca en un acuerdo por escrito  lo contrario, usted se obliga a no acceder ni a intentar acceder a ninguno de  los Servicios de Facturaxion® por ningún otro medio que no sea la herramienta, aplicación  o solución  provista por FI, ni  utilizando algún medio automatizado, incluidos secuencias de comandos o  rastreadores web, y se asegurará de cumplir las instrucciones dispuestas en  cualquier archivo robots.txt correspondiente a los Servicios.<br />  A menos que se establezca lo contrario en un  acuerdo independiente entre usted y FI, usted se compromete a no reproducir,  duplicar, copiar, vender, comercializar ni revender los Servicios de  Facturaxion®  o parte de ellos.<br />  De igual manera, a través de este acuerdo  usted se encuentra comprometido a no involucrarse en cualquier actividad que  interfiera o interrumpa cualquiera de los Servicios de Facturaxion®, o los  servidores y redes conectados a aquellos.<br />  FI no será responsable de cualquier daño o  perjuicio que sufra usted o cualquier tercero, a consecuencia del  incumplimiento de sus obligaciones en virtud de las Condiciones. Las  recomendaciones y consejos  que puedan  obtenerse a través de los Servicios de Facturaxion®  son de naturaleza general, por lo que no deben  tomarse en cuenta en la adopción de decisiones personales. Asimismo queda usted  como el único responsable por el uso que dé a la aplicación, herramienta o  solución  provista por FI  para la otorgación del Servicio de Facturaxion®  y las consecuencias que dicho uso pueda traer consigo.<br />En ningún caso y bajo ninguna circunstancia TELMEX realizará  bonificaciones, en efectivo o en especie, por cambio de planes o esquemas de  contratación. La relación jurídica que implica este contrato es exclusivamente  entre el cliente y FI. </font></p><p>&nbsp;</p><font face='Verdana, Geneva, sans-serif'><b>5. Contraseñas y Seguridad de la Información del Cliente</b></font><p>&nbsp;</p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>A través de este acuerdo, usted acepta que el  Servicio de Facturaxion®  podrá ser  utilizado solamente con posterioridad a la inscripción o registro previo por el  usuario, por lo que  es posible que se le  solicite información personal, por ejemplo, datos identificativos e información  de contacto y fiscal. Usted se compromete a que cualquier información de  registro que facilite a FI  será precisa,  correcta y actual, quedando usted como único responsable de la información  brindada y sus posibles consecuencias.<br />  Cualquier modificación, cambio o reemplazo de  los datos generales del Cliente, del contacto administrativo, de los correos  electrónicos o demás información relacionada con el Cliente, incluso la  modificación o cancelación de contraseñas o la generación de una nueva  contraseña deberá ser solicitada por escrito a   FI por parte del representante legal o de la o las personas designadas  como contacto Administrativo por parte del Cliente a través del o los canales  que para tal efecto TELMEX  establezcan<br />  Los cambios en datos e información que podrá realizar el Cliente para los  Servicios de  Facturaxion® son los siguientes:</font></p><p>&nbsp;</p><ul>  <li><font face='Verdana, Geneva, sans-serif'>Cambio de nombre: Cambia el  titular y se transmiten los derechos y obligaciones a quién quede como titular,  siempre y cuando el cambio de nombre no implique una modificación en el RFC, si  este caso se presenta implicará la cancelación de la cuenta original y la  activación de una nueva, con la forma del contrato de servicio implícita. Con  el cambio de nombre se deben solicitar cambios a los PDFs de las facturas. </font></li>  <li><font face='Verdana, Geneva, sans-serif'>Cambio de domicilio: Traslada su  empresa a otro domicilio físico. Cambia su PDF</font></li></ul><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Estos cambios deberán realizarse a través de los siguientes canales de  atención:</font></p><p>&nbsp;</p><ul>  <li><font face='Verdana, Geneva, sans-serif'>01 800 838  2912</font></li>  <li><font face='Verdana, Geneva, sans-serif'>Ejecutivos  de Cuenta las Direcciones Divisionales.</font></li>  <li><font face='Verdana, Geneva, sans-serif'>Ejecutivos de Cuenta de la  Dirección de Cuentas Nacionales. </font></li></ul><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>En todo momento, usted es el responsable  único y final de mantener la confidencialidad de las contraseñas y claves de  acceso que posee para utilizar los Servicios de Facturaxion®.  En consecuencia, acepta que usted será el  único responsable ante FI de todas y cada una de las actividades que se  desarrollen en su cuenta. A través de este acuerdo, usted se obliga a  notificar de inmediato a FI cualquier uso no  autorizado de su contraseña o cuenta de que tenga conocimiento, mediante un  correo electrónico a la dirección soporte@facturaxion.com ó al teléfono 01 800  838 2912.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>6. Política de Privacidad de los Servicios de  Facturaxion®</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>La Política de  privacidad de Freight Ideas®  describe el  empleo que hacemos de la información personal cuando el usuario utiliza los  productos y los servicios de FI, incluida la información suministrada al  utilizar Facturaxion®. Además, la información siguiente describe las prácticas  de privacidad específicas de Facturaxion®.</font></p><p><font face='Verdana, Geneva, sans-serif'> 	</font></p><blockquote>  <p><font face='Verdana, Geneva, sans-serif'>		   <i>6.1. Información personal</i></font></p>  <p>&nbsp;</p></blockquote><ul>  <blockquote>    <blockquote>      <p>		<i>6.1.1.</i> <font face='Verdana, Geneva, sans-serif'>El  usuario necesita una cuenta  para acceder  a Facturaxion®. Nuestro sistema, herramienta o aplicación,  solicita algunos datos personales cuando se  crea una cuenta de Facturaxion®, incluida la información de contacto,  dirección, datos fiscales y contraseña, la cual se utiliza para proteger la  cuenta de accesos no autorizados. Una cuenta de Facturaxion® permite acceder a  nuestro servicio de facturación electrónica y servicios adicionales.</font></p>      <p>&nbsp;</p>      <p>		<i>6.1.2.</i> <font face='Verdana, Geneva, sans-serif'>Facturaxion®  almacena, procesa y mantiene los Comprobantes Fiscales Digitales por Internet (CFDIs),  listas de contactos y otros datos relacionados con la cuenta del usuario a fin  de suministrarle el servicio de Facturaxion®, de igual manera brinda la  administración del Certificado de Sello digital y la serie de folios; sin  embargo no es responsabilidad de FI la información contenida en ellos, así como  la información y montos contenidos en los CFDI´s emitidos por el usuario.</font></p>      <p>&nbsp;</p>      <p>		<i>6.1.3.</i> <font face='Verdana, Geneva, sans-serif'>Cuando  utiliza Facturaxion®, los servidores de FI registran automáticamente  determinados datos acerca de dicho uso. Del mismo modo que otros servicios web,  Facturaxion® registra información como, por ejemplo, la actividad de la cuenta  (incluido el uso de almacenamiento, el número de acceso), los datos mostrados o  sobre los que se hace clic (como los elementos de la IU, anuncios, enlaces) y  otra información de inicio de sesión (por ejemplo, el tipo de navegador, la  dirección IP, la fecha y la hora de acceso, la ID de cookie y la dirección URL  de referencia)asi como el número de CFDI emitido con su serie y folio  correspondiente, entre otros datos y reportes almacenados.</font></p>    </blockquote>    <p>&nbsp;</p>  </blockquote></ul><blockquote>  <p><i>6.2. <font face='Verdana, Geneva, sans-serif'>Usos</font></i></p>  <p>&nbsp;</p>  <blockquote>    <blockquote>      <p><font face='Verdana, Geneva, sans-serif'>		<i>6.2.1.</i> El servicio de Facturaxion® incluye publicidad  relevante y enlaces relacionados basados en la dirección IP, el contenido de la  publicidad y otra información relacionada es de uso exclusivo de  de Facturaxion®, quien se reserva el derecho  sobre esta.</font></p>      <p>&nbsp;</p>      <p><font face='Verdana, Geneva, sans-serif'>		<i>6.2.2.</i> Los  equipos informáticos de Facturaxion® procesan la información de los mensajes  del usuario para diversos fines, incluido emitir  y recibir CFDIs , ofrecer anuncios y enlaces  relacionados, realizar copias de seguridad de los CFDIs y para otros propósitos  relacionados con la ejecución del servicio de Facturaxion®.</font></p>      <p>&nbsp;</p>      <p><font face='Verdana, Geneva, sans-serif'>		<i>6.2.3.</i> Es  posible que FI envíe información al usuario relacionada con su cuenta de  Facturaxion®  u otros servicios de FI</font></p>    </blockquote>    <p>&nbsp;</p>  </blockquote>  <p><i>6.3. <font face='Verdana, Geneva, sans-serif'>Opciones  del usuario</font></i></p>  <p>&nbsp;</p>  <blockquote>    <blockquote>      <p><font face='Verdana, Geneva, sans-serif'>		<i>6.3.1.</i> El  usuario puede cambiar la configuración de su cuenta en Facturaxion siguiendo  los diferentes menús que ofrece el sistema. </font></p>      <p>&nbsp;</p>      <p><font face='Verdana, Geneva, sans-serif'>		<i>6.3.2.</i>En  algunos de los Servicios de Facturaxion®, el usuario podrá crear o modificar  diversos catálogos e información siguiendo las indicaciones propias de cada  proceso, entendiendo que dichas modificaciones podrán alterar de forma temporal  o permanente la información contenida en su cuenta y por tanto las facturas y  demás documentos emitidos a través de ella, si el usuario decide hacer dichas  modificaciones, queda bajo su responsabilidad las consecuencias que esto pueda  ocasionar.</font></p>      <p>&nbsp;</p>      <p><font face='Verdana, Geneva, sans-serif'>		<i>6.3.3.</i> Los  Servicios de Facturaxion®, en algunos casos, ofrecen la opción para “diseñar  sus facturas”, donde el usuario podrá modificar la plantilla que Facturaxion  pone a su disposición, sin embargo dicha  plantilla tiene limitantes, si el usuario así lo desea podrá crear su propia  plantilla con las especificaciones que guste, considerando que dichas  modificaciones son responsabilidad solamente de usted excluyendo a FI y sus  colaboradores de cualquier proceso que tenga que ver con estas modificaciones y  diseño.</font></p>      <p>&nbsp;</p>    </blockquote>  </blockquote></blockquote><ul></ul><p><font face='Verdana, Geneva, sans-serif'><b>7.    Contenido  de los Servicios</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>  Por el presente acuerdo, usted reconoce que  toda la información, como archivos de datos, texto escrito, imágenes, direcciones,  RFC, datos fiscales, Certificado de Sello digital, serie de folios, información  de clientes o terceros, información o datos confidenciales, a la que tenga  acceso como parte de los Servicios de Facturaxion® o a través del uso de estos,  es responsabilidad exclusiva del Cliente y/o el Usuario que ha creado dicha  información. En adelante, dicha información se denominará el  &quot;Contenido&quot;.<br />  El Contenido ofrecido en los Servicios de  Facturaxion®, como los anuncios publicitarios, imágenes, textos o cualquier  otro,  podría estar protegido por derechos  de propiedad intelectual, por lo que a menos que FI o los propietarios del Contenido  autoricen expresamente lo contrario en un acuerdo independiente, usted se  compromete a no modificar, reproducir, extraer ni distribuir este Contenido, ni  crear trabajos derivados basados en él, ya sea en su totalidad o en parte.<br />  FI se reserva el derecho, aunque ello no  constituye una obligación, de seleccionar anticipadamente, revisar, marcar,  filtrar, modificar, rechazar o eliminar parcial o íntegramente el Contenido  disponible a través de los Servicios de Facturaxion®. <br />  A través del presente acuerdo, usted se declara  consciente de que al utilizar los Servicios de Facturaxion® podría estar  expuesto a Contenido que, según su parecer, sea molesto, innecesario o  interfiera de alguna forma en sus actividades dentro de la solución,  herramienta o aplicación. </font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>8. Sobre  la facturación y cobranza</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>La facturación al Cliente del servicio de  Facturaxion® será a través del Recibo TELMEX o Cuenta Maestra según  corresponda.<br />  El cliente tendrá la  opción de elegir los paquetes de servicios establecidos en el anexo de este  instrumento, el cual establece una renta mensual fija de acuerdo con el tiempo  que contrate el servicio; a esta renta mensual  fija se le sumará el costo de acuerdo al número total de folios emitidos al  mes. El costo será de acuerdo al rango en el que se ubique el cliente de  acuerdo a la tabla de tarifas de precios. <br />  FI se reserva el derecho de suspender el  acceso al Servicio de Facturaxion®, si el Cliente  no cumple con su obligación de pagos  correspondientes a los servicios prestados transcurrido un plazo de 60 días, y  hasta que el Cliente no se ponga al corriente en sus pagos.<br />  En caso de que el Cliente dejara de pagar  puntualmente cualquier cantidad a su cargo, éste incurrirá en mora y pagará un  interés moratorio sobre saldos insolutos a razón de multiplicar el monto del  adeudo por de la Tasa de Interés Interbancaria de Equilibrio (TIIE) a 28  (veintiocho) días que publica el Banco de México, o la tasa que le sustituya,  multiplicada por 1.5 (uno punto cinco) y dividida entre 360 (trescientos  sesenta) días. El cálculo se efectuará durante todo el período de mora.   <br />  Para reactivar el Servicio, en cualquier caso  de suspensión por causas imputables al Cliente, éste deberá pagar las  cantidades adeudadas a TELMEX, las cantidades correspondientes al período de  suspensión y una cuota de reactivación equivalente al 50% (cincuenta por  ciento)  de las cantidades  correspondientes a los meses suspendidos.<br />  Los ajustes, en el caso de  ser validados, podrán aplicarse de acuerdo a los procedimientos, motivos y  niveles de firma autorizados vigentes,  y  podrán realizarse  por servicios no  reconocidos o no suministrados, bajo previa investigación y pudiendo ser o no  ser autorizados por Telmex.<br />  Las políticas de  Aclaraciones y Ajustes de Atención a solicitudes de Factura Electrónica de  Telmex  son atendidas a través de:</font></p><p>&nbsp;</p><ul>  <li><font face='Verdana, Geneva, sans-serif'>01 800 838 2912</font></li>  <li><font face='Verdana, Geneva, sans-serif'>Ejecutivos de Cuenta de las  Direcciones Divisionales.</font></li>  <li><font face='Verdana, Geneva, sans-serif'>Ejecutivos de Cuenta de la  Dirección Comercial Empresarial. (Telecorp)</font></li></ul><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Los Clientes empresariales deben realizar la  solicitud de ajuste por escrito en papel membreteado debidamente firmado por su  representante legal.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>9. Derechos  sobre la propiedad</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>A través de este acuerdo, usted acepta que  ninguna de las disposiciones de las Condiciones le otorga el derecho a utilizar  los nombres,  marcas comerciales,  logotipos, nombres de dominio u otras características distintivas de FI o de  los Servicios de Facturaxion®, a menos que se acuerde lo contrario por escrito.<br />  FI, es el propietario de todos los derechos,  títulos e intereses asociados a los Servicios de Facturaxion®, incluidos los  derechos sobre  propiedad intelectual que  actúen sobre ellos, independientemente de si los mencionados derechos están  registrados o no y de donde existan. Asimismo, reconoce que los Servicios de  Facturaxion® pueden contener información considerada confidencial por FI y se  compromete a no revelar dicha información sin el consentimiento previo por  escrito de FI.<br />  FI renuncia a todo derecho, título o interés  que le concedan usted o sus proveedores de licencias, de acuerdo con lo  estipulado en estas Condiciones, y relativo a cualquier Contenido que usted  facilite, publique, transfiera o muestre en los Servicios de Facturaxion®  o a través de ellos, usted se compromete a  proteger y aplicar los mencionados derechos y exime a FI de la obligación de  hacerlo en su nombre.<br />  Con base en este acuerdo, usted acepta no  eliminar, ocultar ni alterar los avisos de derechos sobre la propiedad, entre  ellos, avisos de derechos de autor y de marcas registradas, tanto los incluidos  en los Servicios de Facturaxion® como los contenidos que pueda facilitar a FI.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>10. Servicio Pos-Venta y Actualizaciones </b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Telmex proporcionará al Cliente  y/o usuario la asesoría y soporte necesarios para resolver las dudas que se  presenten respecto a la Atención de solicitudes y contratación de los Servicios  de Facturaxion®a través de:</font></p><p>&nbsp;</p><ul>  <li><font face='Verdana, Geneva, sans-serif'>01  800 838 2912</font></li>  <li><font face='Verdana, Geneva, sans-serif'>Ejecutivos  de Cuenta las Direcciones Divisionales.</font></li>  <li><font face='Verdana, Geneva, sans-serif'>Ejecutivos  de Cuenta de la Dirección de Cuentas Nacionales.</font></li></ul><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'> El  Sistema, aplicación o herramienta  de los  Servicios de Facturaxion®, podrá descargar e instalar automáticamente  actualizaciones, las cuales están diseñadas para mejorar, optimizar y  desarrollar los Servicios de Facturaxion®  y pueden presentarse en forma de correcciones,  funciones mejoradas, nuevos módulos del sistema y versiones totalmente nuevas.  Usted acepta recibir dichas actualizaciones, y permite a FI proporcionárselas,  como parte de estos Servicios.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>11.  Finalización de su relación con FI</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Las Condiciones  seguirán vigentes hasta el término del contrato realizado por FI y el Cliente,  o en el momento en que FI o usted decida resolverlas, según lo estipulado a  continuación.<br />  En caso de querer terminar la relación  contractual, el Cliente deberá notificar por escrito su voluntad de no  prorrogar el acuerdo con al menos de 30 (treinta) días naturales de  anticipación a la fecha de conclusión de su vigencia.<br />  En este caso, FI no estará  obligado a hacer devolución de importe alguno por remanentes de renta mensual;  sin embargo, el Cliente siempre podrá seguir haciendo uso del Servicio hasta el  último día de vigencia de su Contrato, fecha en que será dado de baja en  definitiva del Sistema.<br />  El Cliente podrá realizar la cancelación  anticipada de los Servicios de Facturaxion®  en cualquier momento que lo desee, notificando  a FI  con 90 días naturales de anticipación,  excepto en su fase de implementación para las soluciones o los Servicios de  Facturaxion® que apliquen,  siempre y  cuando el Cliente se encuentre al corriente en sus pagos.<br />  En caso de cancelación del servicio, el  Cliente dispondrá de quince días naturales para descargar del Sistema toda la  información que le pertenezca, ya que vencido dicho plazo el Cliente procederá  a dar de baja del Sistema al USUARIO<br />  La notificación deberá enviarse por escrito a  la dirección de FI que se indica al principio de estas Condiciones.<br />  FI podrá resolver el acuerdo legal  establecido con usted en cualquier momento si:</font></p><p>&nbsp;</p><ul>  <li><font face='Verdana, Geneva, sans-serif'>Ha  incumplido alguna de las disposiciones de las Condiciones o ha actuado de algún  modo que demuestre que no tiene intención de cumplir tales disposiciones o que  no puede cumplirlas.</font></li>  <li><font face='Verdana, Geneva, sans-serif'> Así se lo exige a FI la ley.</font></li>  <li><font face='Verdana, Geneva, sans-serif'>La  provisión de los Servicios de Facturaxion® por parte de FI ha dejado de ser  comercialmente viable desde el punto de vista de FI.</font></li></ul><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Ninguna de las disposiciones expuestas en  esta Sección afectará  los derechos de FI  en cuanto a la provisión de los Servicios de Facturaxion® en virtud de la  Sección 2 de las presentes Condiciones.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>12.  Exclusión de garantías</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Ninguna de las disposiciones de estas  condiciones, constituirá la exclusión o limitación de las responsabilidades de  FI por pérdidas que no estén excluidas o limitadas por la legislación vigente.  De acuerdo con ello, sólo las limitaciones que  sean legales en su jurisdicción se aplicarán en su caso, y nuestra  responsabilidad se limitará al máximo permitido por la ley.<br />  Usted manifiesta y admite expresamente que el  uso del servicio se realiza bajo su propia responsabilidad y que el servicio se  suministra &quot;tal cual&quot; y en función de su &quot;disponibilidad&quot;.</font></p><p><font face='Verdana, Geneva, sans-serif'><br />  FI no garantiza que:</font></p><blockquote>  <p><font face='Verdana, Geneva, sans-serif'><br />    a. el uso que usted haga de los servicios se  ajuste a sus necesidades específicas.<br />    b. los servicios se proporcionen de forma  ininterrumpida, precisa, segura o sin errores.<br />    c. la información que obtenga como  consecuencia del uso de los servicios sea exacta o fiable.</font></p></blockquote><p><font face='Verdana, Geneva, sans-serif'><br />  Usted acepta que ningún tipo de notificación  o información, ya sea oral o escrita, obtenida por usted de FI o de los  servicios de Facturaxion®, o mediante estos últimos, originará garantías no  mencionadas expresamente en las presentes condiciones.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>  <b>13.   Limitación de responsabilidades</b></font></p><p><font face='Verdana, Geneva, sans-serif'> </font></p><p><font face='Verdana, Geneva, sans-serif'>FI no  se hará responsable de  ningún daño  directo, indirecto, fortuito, especial, derivado ni ejemplar en que usted haya  incurrido, sea cual sea su causa, incluye, entre otros, cualquier pérdida de  beneficios, ya sea directa o indirecta, cualquier pérdida de prestigio  profesional o reputación empresarial, pérdida de datos por su parte, gastos del  abastecimiento de bienes o servicios sustitutivos u otras pérdidas intangibles  originadas como consecuencia de: </font></p><p>&nbsp;</p><ol type='a'>  <li type='a'><font face='Verdana, Geneva, sans-serif'>la  confianza depositada por usted en la exhaustividad, precisión o existencia de  publicidad que  aparezca en los servicios  de Facturaxion®;</font></li>  <li type='a'><font face='Verdana, Geneva, sans-serif'> los cambios que FI pueda incorporar en los  servicios o la interrupción temporal o definitiva de estos o de alguna de sus  funciones;</font></li>  <li type='a'><font face='Verdana, Geneva, sans-serif'> la eliminación o daño del contenido y de otros  datos de divulgación que se alojan en los servicios o se ofrecen a través de  estos, así como la imposibilidad de almacenarlos;</font></li>  <li type='a'><font face='Verdana, Geneva, sans-serif'> la imposibilidad de proporcionar a FI  información precisa ;</font></li>  <li type='a'><font face='Verdana, Geneva, sans-serif'> la negligencia por no haber preservado su  contraseña o la información de su cuenta de forma segura y confidencial.</font></li></ol><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>14.   Sobre la  publicidad</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Algunos de los Servicios de Facturaxion® podrán  mostrar anuncios y promociones.  La  manera, el modo y el alcance de dicha publicidad de FI en los Servicios de  Facturaxion® están sujetos a cambios sin previo aviso. Usted acepta que FI muestre  dicha publicidad en los Servicios de Facturaxion®.</font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>15. Sobre  otros contenidos</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>Los Servicios podrán incluir hipervínculos a  otros sitios, contenido o recursos de Internet. FI no ejerce ningún control  sobre los mismos y  no se responsabiliza  de la disponibilidad de dichos sitios web o recursos externos y que no respalda  ni es responsable de  la publicidad, u  otros materiales proporcionados a través de los Servicios de Facturaxion®.    </font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><b>16.  Condiciones legales generales</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>En ocasiones, es posible que, como  consecuencia del uso de los Servicios de Facturaxion®, usted decida utilizar un  servicio  proporcionado por otra persona  o empresa, el uso que haga del mismo  estará sujeto a los términos establecidos  entre la persona o empresa en cuestión y usted, y  las presentes Condiciones no afectarán a la  relación legal que establezca con estas otras personas o empresas.<br />  Usted acepta que Freight Ideas puede proporcionarle  avisos, incluidos los relativos a los cambios de las Condiciones, a través del  correo electrónico, correo postal o mediante su publicación en los Servicios de  Facturaxion®.</font></p>  <p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'><br />   <b>17. Jurisdicción y  competencia</b></font></p><p>&nbsp;</p><p><font face='Verdana, Geneva, sans-serif'>  Para  todas las cuestiones relativas al alcance de la interpretación y cumplimiento  de las obligaciones y derechos que se consignan en este contrato, las partes  contratantes se someten expresamente a las leyes y a los tribunales competentes  en el Distrinto Federal, renunciando al fuero que por sus domicilios actuales o  futuros o que por cualquier otra razón pudiere corresponderles. </font></p></body></html>";
+			
+			
+			private function validData1():void			
+			{				
+				
+				var validarTab:String;	
+				var mError:String = ""
+				var controlsValid:Array = new Array();
+				
+				controlsValid.push(this.nombre,this.apePat,this.apeMat,this.email,
+					this.emailConfirm,this,telefono,this.nombreNegocio,this.giroNegocio,
+					this.numEmpleados,this.checkInput);
+				
+				if(chkUserCode.selected == true)
+				{
+					controlsValid.push(this.userCode);
+				}
+				
+				validarTab = validar(controlsValid);
+				
+				if(validarTab == "1")
+				{
+					if (validUser.text > "0")
+					{
+						mError+="La cuenta ingresada ya existe en el sistema, intente con otra opción.\n";
+						email.text = "";
+						emailConfirm.text = "";
+					}
+					if(validNextMAIL.text == "0")
+					{
+						mError+="EL Formato de Correo Electrónico es incorrecto.\n";
+					}
+					if(validNextMAILC.text == "0")
+					{
+						mError+="EL Formato de la Confirmación de Correo Electrónico es incorrecto.\n";
+					}
+					if(email.text.length > 0 && emailConfirm.text.length > 0)
+					{
+						if(email.text != emailConfirm.text)
+						{		
+							mError+="El correo electrónico y su confirmación deben coincidir.\n";
+						}
+					}
+					if(email.text.length<8)
+					{
+						mError+="La cuenta debe tener mínimo 8 caracteres.\n";
+					}
+					if(telefono.text.length != 10)
+					{		
+						mError+= "El número de teléfono debe ser de 10 dígitos.\n";
+					}
+					if (captchaCode != checkInput.text)
+					{					
+						mError+="El código de la imagen no corresponde al ingresado.\n";
+						remakeCaptcha();	
+					}
+					
+					if(chkUserCode.selected)
+					{
+						if (userCode.text.length != 40) 
+						{					
+							mError+="El código de usuario deberá contener 40 caracteres.\n";	
+						}
+						
+						if (isUserCodeValid.text == "0")
+						{
+							mError+= "El Código de Usuario ingresado es incorrecto. Favor de verificar.\n";
+						}
+						else if (isUserCodeValid.text == "2")
+						{
+							mError+= "El Código de Usuario ingresado ya está asignado a otra cuenta. Favor de verificar\n";
+						}
+						else if (isUserCodeValid.text == "3")
+						{
+							mError+= "El Código de Usuario ingresado ya está dado de baja. Favor de verificar.\n";
+						}
+					}
+					
+					if(mError.length > 0)
+					{
+						Alert.cancelLabel="Cancelar";
+						Alert.okLabel = "Aceptar";
+						Alert.show(mError, "Aviso", Alert.OK, null, null, iconNot);
+						mError="";
+						return;	
+					}
+					else
+					{
+						//Send(662);//VALIDA SI ES UN CODIGO DE USUARIO VALIDO
+						btnFlujo(2);
+					}
+				}
+			}
+			/*
+			private function passOrReject():void{
+				if(this.isUserCodeValidToSave.text=="")
+			
+			}
+			*/
+			private function guardarRegistro():void
+			{
+				var mError:String = ""
+				
+				if(!TyC.selected)
+				{
+					mError+="Acepte los Términos y Condiciones de uso del Servicio.\n";
+				}
+				if(mError.length > 0)
+				{
+					Alert.cancelLabel="Cancelar";
+					Alert.okLabel = "Aceptar";
+					Alert.show(mError, "Aviso", Alert.OK, null, null, iconNot);
+					mError="";
+					return;	
+				}
+				else
+				{
+					Send(623);//GUARDAR SOLICITUD	
+				}
+			}
+			
+			private function viewMSG():void
+			{
+				if(resultMsg.text.length > 0)
+				{
+					lblResultMsg.text = resultMsg.text;
+					msgSolicitud.visible = true;
+				}
+			}
+			
+			private function btnFlujo(OP:int):void
+			{        	
+				if(OP == 1)
+				{
+					capturaDatos.visible = true;
+					verificarDatos.visible =false;
+					comprobanteSolicitud.visible =false;
+					
+					paso1.alpha = 1;
+					paso2.alpha = 0.3;
+					paso3.alpha = 0.3;
+					
+					imgPaso1.visible = true;
+					imgPaso2.visible = true;
+					imgPaso3.visible = true;
+					
+				}
+				else if(OP == 2)
+				{
+					capturaDatos.visible = false;
+					verificarDatos.visible =true;
+					comprobanteSolicitud.visible =false;
+					
+					paso1.alpha = 1;
+					paso2.alpha = 1;
+					paso3.alpha = 0.3;
+					
+					imgPaso1.visible = true;
+					imgPaso2.visible = true;
+					imgPaso3.visible = true;
+				}
+				else if(OP == 3)
+				{
+					if(result.text != "0")
+					{
+						capturaDatos.visible = false;
+						verificarDatos.visible =false;
+						comprobanteSolicitud.visible =true;
+						
+						paso1.alpha = 1;
+						paso2.alpha = 1;
+						paso3.alpha = 1;
+						
+						imgPaso1.visible = true;
+						imgPaso2.visible = true;
+						imgPaso3.visible = true;
+					}
+					else if(result.text == "0")
+					{
+						btnFlujo(1);
+					}
+				}
+				else if(OP == 4)
+				{
+					if(result.text != "0")
+					{
+						var urlRequest:URLRequest = new URLRequest("https://fx.facturaxion.net/fx.html");
+						navigateToURL(urlRequest,"_self");
+						
+					}
+					else if(result.text == "0")
+					{
+						result.text = "";
+						lblResultMsg.text = ""; 
+						resultMsg.text = "";
+						msgSolicitud.visible = false;
+						btnFlujo(1);
+					}
+				}
+			}
+			
+			private var num:int = 26148247; 
+			
+			private const BACKGROUND_COLOR:Object = "haloBlue";
+			
+			private function formItem_focusIn(evt:FocusEvent):void
+			{
+				var item:FormItem = FormItem(evt.currentTarget.parent);
+				item.setStyle("backgroundAlpha", 0.2);
+				item.setStyle("backgroundColor", BACKGROUND_COLOR);
+			}
+			
+			private function formItem_focusOut(evt:FocusEvent):void
+			{
+				var item:FormItem = FormItem(evt.currentTarget.parent);
+				item.setStyle("backgroundColor", null);
+			}
+			
+			private function existUser():void
+			{
+				if (validUser.text == "0")
+				{
+					email.errorString = "";
+				}
+				else if (validUser.text > "0")
+				{
+					email.errorString = "La cuenta ingresada ya existe en el sistema, intente con otra opción";
+					email.text = "";
+					emailConfirm.text = "";
+				}
+			}
+			
+			private function existUserCode():void
+			{
+				if(chkUserCode.selected)
+				{
+					if (isUserCodeValid.text == "0")
+					{
+						userCode.errorString = "El Código de Usuario ingresado es incorrecto. Favor de verificar.";
+					}
+					else if (isUserCodeValid.text == "1")
+					{
+						userCode.errorString = "";
+					}
+					else if (isUserCodeValid.text == "2")
+					{
+						userCode.errorString = "El Código de Usuario ingresado ya está asignado a otra cuenta. Favor de verificar";
+					}
+					else if (isUserCodeValid.text == "3")
+					{
+						userCode.errorString = "El Código de Usuario ingresado ya está dado de baja. Favor de verificar.";
+					}
+				}
+			}
+			
+			private function setIdCBGiroNegocio():void
+			{	
+				idGiroNegocio.text = giroNegocio.selectedItem[1].toString();
+			}
+			
+			private function setIdCBNumEmpleados():void
+			{
+				idNumEmpleados.text = numEmpleados.selectedItem[1].toString();
+			}
+			
+			
+			private function navegar():void
+			{
+				//var urlRequest:URLRequest = new URLRequest("http://localhost:49224/r3Take/confirmaRegistroGratis.swf?userGuid="+UID.text);
+				var urlRequest:URLRequest = new URLRequest("https://fx.facturaxion.net/confirmaRegistroGratis.swf?userGuid="+UID.text);
+				navigateToURL(urlRequest,"_blank");
+			}
+			
+			private function isSelected():void{
+			
+				if(chkUserCode.selected)
+				{
+					formUserCode.visible=true;
+					
+				}else
+				{
+					formUserCode.visible=false;
+					userCode.text="";
+					userCodeHandler.text="";
+				}
+				
+			}
+			
+			private function addTextUSR():void
+			{
+				//userCode.text = userCode1.text + userCode2.text + userCode3.text + userCode4.text + userCode5.text + userCode6.text + userCode7.text + userCode8.text ;
+			}
+		]]>
+	</fx:Script>
+	
+	<mx:HSlider maximum="60" allowTrackClick="true" minimum="0" id="tra" visible="false" />
+	
+	<s:TextInput id="result" visible="false" />
+	<s:TextInput id="resultMsg" visible="false" valueCommit="viewMSG();" />
+	<s:TextInput id="validUser" visible="false" valueCommit="existUser();" />
+	<s:TextInput id="isUserCodeValid" visible="false" />
+	<!--<s:TextInput id="isUserCodeValidToSave" visible="false" valueCommit="passOrReject();"/>-->
+	<s:TextInput id="codeValid" visible="false" valueCommit="existUserCode();" />
+	
+	<s:TextInput id="validNextMAIL" visible="false" editable="false" width="20"/>
+	<s:TextInput id="validNextMAILC" visible="false" editable="false" width="20"/>
+	
+	<s:TextInput id="idGiroNegocio" visible="false" />
+	<s:TextInput id="idNumEmpleados" visible="false" />
+	
+	<s:VGroup width="100%" paddingBottom="5" gap="-1" paddingLeft="10" paddingRight="10" paddingTop="10" height="100%">
+		<s:Group width="100%">
+			<s:VGroup  gap="0" horizontalAlign="center" width="100%">
+				<s:HGroup width="100%" verticalAlign="middle" gap="0">
+					<s:HGroup width="100%"/>
+					<s:VGroup width="100%" horizontalAlign="center" verticalAlign="middle" gap="5">
+						<s:HGroup width="100%" horizontalAlign="center" verticalAlign="middle">
+							<mx:Image source="assets/logoFX.png"/>
+						</s:HGroup>
+						<s:HGroup width="100%" horizontalAlign="center" verticalAlign="middle" paddingBottom="20">
+							<mx:Image source="assets/registroG.png" creationCompleteEffect="{glowIcon}"/>
+						</s:HGroup>
+						<s:VGroup width="100%" gap="0">
+							<s:HGroup width="100%" horizontalAlign="center" verticalAlign="middle" gap="10" paddingBottom="0">
+								<s:VGroup horizontalAlign="center" verticalAlign="middle" id="paso1" alpha="1">
+									<s:HGroup paddingBottom="0" paddingTop="0" gap="10">
+										<mx:Image source="assets/accept-icon_16.png" width="16" height="16"  id="imgPaso1"/>
+										<s:Label text="Paso 1" color="#054a95" fontWeight="bold" fontSize="14"/>
+									</s:HGroup>
+									<s:VGroup gap="5" verticalAlign="middle" horizontalAlign="center" textAlign="center" paddingTop="3">
+										<s:Label text="Registro&#xd;" color="#000000"/>
+										<s:Label text="de datos&#xd;" color="#000000"/>
+										<mx:Image source="assets/bntTMX.png" height="24" />
+									</s:VGroup>
+								</s:VGroup>
+								<s:VGroup horizontalAlign="center" verticalAlign="middle" id="paso2" alpha=".3">
+									<s:HGroup paddingBottom="0" paddingTop="0" gap="10">
+										<mx:Image source="assets/accept-icon_16.png" width="16" height="16"  id="imgPaso2"/>
+										<s:Label text="Paso 2" color="#054a95" fontWeight="bold" fontSize="14"/>
+									</s:HGroup>
+									<s:VGroup gap="5" verticalAlign="middle" horizontalAlign="center" textAlign="center" paddingTop="3">
+										<s:Label text="Verifique&#xd;" color="#000000"/>
+										<s:Label text="sus datos&#xd;" color="#000000"/>
+										<mx:Image source="assets/bntTMX.png" height="24" />
+									</s:VGroup>
+								</s:VGroup>
+								<s:VGroup horizontalAlign="center" verticalAlign="middle" id="paso3" alpha=".3" gap="5">
+									<s:HGroup paddingBottom="0" paddingTop="0" gap="10">
+										<mx:Image source="assets/accept-icon_16.png" width="16" height="16"  id="imgPaso3"/>
+										<s:Label text="Paso 3" color="#054a95" fontWeight="bold" fontSize="14"/>
+									</s:HGroup>
+									
+									<s:VGroup gap="5" verticalAlign="middle" horizontalAlign="center" textAlign="center" paddingTop="3">
+										<s:Label text="Reciba su" color="#000000"/>
+										<s:Label text="comprobante" color="#000000"/>
+										<mx:Image source="assets/bntTMX.png" height="24" />
+									</s:VGroup>
+								</s:VGroup>
+							</s:HGroup>
+							<s:HGroup width="100%" paddingBottom="10">
+								<mx:HRule width="750"/>
+							</s:HGroup>
+						</s:VGroup>
+					</s:VGroup>
+					<s:HGroup width="100%"/>
+				</s:HGroup>
+				<s:HGroup width="100%" horizontalAlign="center" gap="1">
+					<s:HGroup width="100%" paddingLeft="5" paddingRight="5"/>
+					<s:Group width="100%">	
+						
+						<!--PANTALLA UNO-->
+						<s:Group id="capturaDatos" visible="true" width="100%">
+							
+							<s:VGroup  gap="0" horizontalAlign="center" width="100%">
+								<s:HGroup width="750" horizontalAlign="right" paddingBottom="5">
+									<s:Label text="Todos los campos marcados con * son obligatorios" color="#054a95" fontWeight="bold" fontSize="13"  fontStyle="italic"  x="186" y="0"/>
+								</s:HGroup>
+								<s:HGroup width="750" paddingBottom="5">
+									<s:Label text="Ingrese sus Datos de Contacto:" color="#054a95" fontWeight="bold" fontSize="14"/>
+								</s:HGroup>
+								<s:HGroup width="100%" horizontalAlign="center" paddingBottom="5" paddingTop="5" x="0" y="20">
+									
+									<mx:Form  width="750" horizontalGap="0" verticalGap="4" paddingTop="0" paddingLeft="75" paddingBottom="0" textAlign="center" paddingRight="70">
+										<mx:FormItem  label="* Nombre(s):" fontWeight="normal" textAlign="right" paddingTop="1" paddingBottom="3">
+											<s:TextInput id="nombre" name="Nombre(s)" width="310" tabIndex="1" maxChars="150" 
+														 focusIn="formItem_focusIn(event);"
+														 focusOut="formItem_focusOut(event);" fontWeight="normal" textAlign="left"/>
+										</mx:FormItem>
+										<mx:FormItem label="* Apellido Paterno:" fontWeight="normal" textAlign="right" paddingTop="1" paddingBottom="3">
+											<s:TextInput id="apePat" width="310" name="Apellido Paterno" tabIndex="2" maxChars="150" 
+														 focusIn="formItem_focusIn(event);"
+														 focusOut="formItem_focusOut(event);" fontWeight="normal" textAlign="left"/>
+										</mx:FormItem>
+										<mx:FormItem label="* Apellido Materno:" fontWeight="normal" textAlign="right" paddingTop="1" paddingBottom="3">
+											<s:TextInput id="apeMat" width="310" name="Apellido Materno" tabIndex="3" maxChars="150" 
+														 focusIn="formItem_focusIn(event);"
+														 focusOut="formItem_focusOut(event);" fontWeight="normal" textAlign="left"/>
+										</mx:FormItem>
+										<mx:FormItem label="* Correo electrónico de contacto:" fontWeight="normal" textAlign="right"  paddingTop="1" paddingBottom="2">
+											<s:TextInput id="email" width="310" tabIndex="4" name="Correo electrónico de contacto" change="" maxChars="150" 
+														 focusIn="formItem_focusIn(event);" 
+														 focusOut="formItem_focusOut(event);if(email.text.length > 4){Send(543);}" fontWeight="normal" textAlign="left"/>
+											<s:Label text="* Será su cuenta de acceso al servicio" color="#000000" fontWeight="normal"  fontStyle="italic"/>
+										</mx:FormItem>
+										<mx:FormItem label="* Confirmación de correo electrónico:" fontWeight="normal" textAlign="right" paddingTop="1" paddingBottom="3">
+											<s:TextInput id="emailConfirm" width="310" name="Confirmación de correo electrónico" tabIndex="5" change="" maxChars="150"
+														 focusIn="formItem_focusIn(event);"
+														 focusOut="formItem_focusOut(event);" fontWeight="normal" textAlign="left"/>
+										</mx:FormItem>
+										<mx:FormItem label="* Número de Teléfono:" fontWeight="normal" textAlign="right" paddingTop="1" paddingBottom="10" >
+											<s:TextInput id="telefono" name="Número de Teléfono" width="310" tabIndex="6" maxChars="10" restrict="0-9" 
+														 focusIn="formItem_focusIn(event);"
+														 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+											<mx:Label text="10 dígitos (Clave lada + Número) " x="200" y="134" fontSize="11" textAlign="right" color="#000000" />
+											
+										</mx:FormItem>
+										<mx:FormItem label="* Nombre de su negocio:" fontWeight="normal" textAlign="right" >
+											<s:TextInput id="nombreNegocio" name="Nombre de su negocio" width="310" tabIndex="7" maxChars="150" 
+														 focusIn="formItem_focusIn(event);"
+														 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="* Giro de su negocio:" fontWeight="normal" textAlign="right"  paddingTop="1" paddingBottom="3">
+											<s:ComboBox id="giroNegocio" fontWeight="normal" name="Giro de su negocio" tabIndex="8" width="310" creationComplete="Send(547);"
+														change="setIdCBGiroNegocio();"	    
+														focusIn="formItem_focusIn(event);"
+														focusOut="formItem_focusOut(event);" textAlign="left" fontSize="11"/>
+										</mx:FormItem>
+										<mx:FormItem label="* Número de empleados:" fontWeight="normal" textAlign="right" paddingTop="1" paddingBottom="3">
+											<s:ComboBox id="numEmpleados" name="Número de empleados" fontWeight="normal"  tabIndex="9" width="310" creationComplete="Send(548);" 
+														change="setIdCBNumEmpleados();"
+														focusIn="formItem_focusIn(event);" textAlign="left"
+														focusOut="formItem_focusOut(event);" fontSize="11"/>
+										</mx:FormItem>
+										<mx:FormItem label="Uso de WebService" fontWeight="normal" textAlign="right"  paddingTop="1" paddingBottom="2">
+											<s:CheckBox id="chkUserCode" focusIn="formItem_focusIn(event);" tabIndex="10"
+														 focusOut="formItem_focusOut(event);" fontWeight="normal" textAlign="left"
+														 click="isSelected();"/>
+											
+										</mx:FormItem>
+										<mx:FormItem id="formUserCode" visible="false" label="Código de Usuario:" fontWeight="normal" paddingTop="1" paddingBottom="2">
+											<s:HGroup width="310" gap="0" verticalAlign="middle">
+												
+																								
+												<!--<fc:MaskedTextInput id="userCode" inputMask="****|****|****|****|****|****|****|****|****|****" required="true" 
+																	autoAdvance="true" defaultCharacter=""
+																	width="310" name="Código de Usuario" maxChars="40" restrict="a-zA-Z0-9" 
+																	fontWeight="normal"  x="331" y="393"  height="22" 
+																	textAlign="left" tabIndex="11" 
+																	focusOut="if(userCode.text.length > 4){Send(648);}"/>-->
+												
+												<fc:MaskedTextInput id="userCode" inputMask="****|****|****|****|****|****|****|****|****|****" required="true" 
+																	autoAdvance="true" defaultCharacter=""
+																	width="310" name="Código de Usuario" maxChars="40" restrict="a-zA-Z0-9" 
+																	fontWeight="normal"  x="331" y="393"  height="22" 
+																	textAlign="left" tabIndex="11" 												
+																	
+																	valueCommit="if(userCode.text.length > 4){Send(648);}"/>
+												
+												<s:TextInput id="userCodeHandler" text="{userCode.text}" visible="false"/>
+											</s:HGroup>
+										</mx:FormItem>
+										
+										<s:HGroup gap="2" paddingLeft="68">
+											<mx:FormItem label="* Código de Confirmación:"  paddingTop="1" paddingBottom="3">
+												<s:TextInput id="checkInput" name="Código de Confirmación" width="70" maxChars="6" tabIndex="19"
+															 focusIn="formItem_focusIn(event);" 
+															 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+											</mx:FormItem>
+											<s:Group width="162" height="42" id="captcha" color="#000000" x="480" y="302" />
+											<mx:Button icon="@Embed('assets/3518-32.png')" click="remakeCaptcha()" height="24" x="625" y="302" toolTip="Obtener otro código" tabIndex="20"/>
+										</s:HGroup>
+									</mx:Form>
+								</s:HGroup>
+								
+								<s:HGroup width="100%" paddingBottom="5" paddingLeft="75" paddingRight="70" horizontalAlign="center" paddingTop="20">
+									<mx:Button icon="@Embed(source='assets/next-icon_32.png')" creationCompleteEffect="{glowButton}" label=" Ir al paso 2: Verifique sus Datos  " 
+											   click="validData1();" height="38" toolTip="Ir al paso 2: Verifique sus Datos"
+											   fontSize="12" tabIndex="21" width="300" x="296" y="574" id="btnNext1"/>
+								</s:HGroup>	
+								<s:HGroup width="100%" horizontalAlign="center" gap="0" verticalAlign="middle" paddingTop="20" paddingBottom="5">
+									<s:HGroup width="100%"/>
+									<s:VGroup width="100%" horizontalAlign="center" verticalAlign="middle" gap="0">
+										<s:HGroup gap="0" >
+											<mx:Image source="assets/fi_curvas_64.png"/>
+											<mx:Image source="assets/r3Take_64.png"/>
+										</s:HGroup>
+										<mx:Text text="Freight Ideas S.A. de C.V.&#xa;Avenida Fuerza Aérea Mexicana No. 520 Int. 1&#xa; Colonia Federal,  Delegación Venustiano Carranza&#xa;México, Distrito Federal  CP 15700" fontSize="9" textAlign="center" fontWeight="normal" color="#434343"/>
+									</s:VGroup>
+									<s:HGroup width="100%"/>
+								</s:HGroup>
+							</s:VGroup>
+							
+						</s:Group>
+						
+						<!--PANTALLA DOS-->
+						<s:Group id="verificarDatos" visible="false" width="100%">
+							<s:VGroup  gap="0" horizontalAlign="center" width="100%">
+								<s:HGroup width="100%" paddingBottom="10">
+									<s:Label text="Verifique la información del registro" color="#054a95" fontWeight="bold" fontSize="14" />
+								</s:HGroup>
+								<s:HGroup width="100%" paddingBottom="5" verticalAlign="middle" paddingLeft="30">
+									<mx:Label text="Datos de contacto:" color="#054a95" fontWeight="bold" fontSize="14" />
+								</s:HGroup>
+								<s:HGroup width="100%" paddingLeft="75">
+									<mx:Form verticalGap="0" paddingTop="5" paddingBottom="5">
+										<mx:FormItem label="Teléfono : " fontWeight="bold" textAlign="right">
+											<s:Label id="lbTelefono" text="{telefono.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Nombre(s):" fontWeight="bold" textAlign="right">
+											<s:Label id="lbNombre" text="{nombre.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Apellido Paterno:" fontWeight="bold" textAlign="right">
+											<s:Label id="lbapePat"  text="{apePat.text}"
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Apellido Materno:" fontWeight="bold" textAlign="right">
+											<s:Label id="lbapeMat" text="{apeMat.text}" 
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Correo electrónico:" fontWeight="bold" textAlign="right" >
+											<s:Label id="lbemail" text="{email.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Confirmación Correo electrónico:" fontWeight="bold" textAlign="right" >
+											<s:Label id="lbemailConfirm" text="{this.emailConfirm.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Nombre de su negocio:" fontWeight="bold" textAlign="right">
+											<s:Label id="lbnombreNegocio"  text="{nombreNegocio.text}"
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Giro de su negocio:" fontWeight="bold" textAlign="right" >
+											<s:Label id="lbgiroNegocio" text="{idGiroNegocio.text}" 
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Número de empleados:" fontWeight="bold" textAlign="right">
+											<s:Label id="lbnumEmpleados" text="{idNumEmpleados.text}" 
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+									</mx:Form>
+								</s:HGroup>
+								<s:HGroup width="100%" paddingBottom="10" paddingTop="10">
+									<s:Label text="Acepte los términos y condiciones de uso del servicio:" color="#054a95" x="16" y="461" fontWeight="bold" fontSize="14"/>
+								</s:HGroup>
+								<s:HGroup width="100%" paddingBottom="5" paddingLeft="75" paddingRight="70">
+									<mx:TextArea x="16" y="478" width="100%" height="70" htmlText="{text}"/>	
+								</s:HGroup>
+								<s:HGroup width="100%" paddingBottom="5" paddingLeft="75">
+									<s:CheckBox id="TyC" label="Acepto los Términos y Condiciones de uso del servicio." x="16" y="550"/>
+								</s:HGroup>
+								<s:HGroup width="100%" paddingBottom="5" paddingTop="20" horizontalAlign="center">
+									<mx:Button icon="@Embed(source='assets/back-icon_32.png')" 
+											   label="  Regresar  " toolTip="Regresar al paso 1: Captura de Datos"
+											   click="btnFlujo(1);" tabIndex="20" height="38" 
+											   fontSize="12" x="99" y="411" id="btnBack3" width="140"/>
+									<mx:Button icon="@Embed(source='assets/accept-icon_32.png')" 
+											   creationCompleteEffect="{glowButton}" label=" Registrar" 
+											   click="guardarRegistro();" height="38" 
+											   fontSize="12" x="258" y="411" id="btnNext3" width="140" tabIndex="21"/>
+								</s:HGroup>
+								<s:HGroup width="100%" horizontalAlign="center" gap="0" verticalAlign="middle" paddingTop="20" paddingBottom="5">
+									<s:HGroup width="100%"/>
+									<s:VGroup width="100%" horizontalAlign="center" verticalAlign="middle" gap="0">
+										<s:HGroup gap="0" >
+											<mx:Image source="assets/fi_curvas_64.png"/>
+											<mx:Image source="assets/r3Take_64.png"/>
+										</s:HGroup>
+										<mx:Text text="Freight Ideas S.A. de C.V.&#xa;Avenida Fuerza Aérea Mexicana No. 520 Int. 1&#xa; Colonia Federal,  Delegación Venustiano Carranza&#xa;México, Distrito Federal  CP 15700" fontSize="9" textAlign="center" fontWeight="normal" color="#434343"/>
+									</s:VGroup>
+									<s:HGroup width="100%"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:Group>
+						
+						<!--PANTALLA TRES-->
+						<s:Group id="comprobanteSolicitud" visible="false" width="100%">
+							<s:TextInput id="UID" visible="false"/>
+							
+							<s:VGroup  gap="0" horizontalAlign="center" width="100%">
+								<s:HGroup width="100%" paddingBottom="10">
+									<s:Label text="Comprobante de registro" color="#054a95" fontWeight="bold" fontSize="14" />
+								</s:HGroup>
+								<s:HGroup width="100%" paddingBottom="5" verticalAlign="middle" paddingLeft="30">
+									<mx:Label text="Datos de solicitud:" color="#054a95" fontWeight="bold" fontSize="14" />
+								</s:HGroup>
+								<s:HGroup width="100%" paddingLeft="75">
+									<mx:Form verticalGap="0" paddingTop="5" paddingBottom="5">
+										<mx:FormItem label="Teléfono de Facturación: " fontWeight="bold" textAlign="right">
+											<s:Label text="{telefono.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Nombre(s):" fontWeight="bold" textAlign="right">
+											<s:Label text="{nombre.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Apellido Paterno:" fontWeight="bold" textAlign="right">
+											<s:Label text="{apePat.text}"
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Apellido Materno:" fontWeight="bold" textAlign="right">
+											<s:Label text="{apeMat.text}" 
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Correo electrónico:" fontWeight="bold" textAlign="right" >
+											<s:Label text="{email.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Confirmación Correo electrónico:" fontWeight="bold" textAlign="right" >
+											<s:Label text="{this.emailConfirm.text}"  
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Nombre de su negocio:" fontWeight="bold" textAlign="right">
+											<s:Label text="{nombreNegocio.text}"
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Giro de su negocio:" fontWeight="bold" textAlign="right" >
+											<s:Label text="{idGiroNegocio.text}" 
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+										<mx:FormItem label="Número de empleados:" fontWeight="bold" textAlign="right">
+											<s:Label text="{idNumEmpleados.text}" 
+													 focusIn="formItem_focusIn(event);"
+													 focusOut="formItem_focusOut(event);" textAlign="left" fontWeight="normal"/>
+										</mx:FormItem>
+									</mx:Form>
+								</s:HGroup>
+								<s:HGroup width="100%" paddingBottom="5" paddingTop="20" horizontalAlign="center">
+									<mx:Button icon="@Embed(source='assets/3020-32.png')"  
+											   label="Imprimir" toolTip="Imprimir Datos Comprobante Solicitud"
+											   creationCompleteEffect="{glowButton}" 
+											   click="print(comprobanteSolicitud);" width="140" height="38" 
+											   fontSize="12" tabIndex="31" x="417" y="411" id="btnPrint"/>
+									<!--<mx:Button icon="@Embed(source='assets/accept-icon_32.png')" 
+											   label="  Finalizar  " toolTip="Finalizar Registro"
+											   click="btnFlujo(4);" tabIndex="20" height="38" 
+											   fontSize="12" x="99" y="411" id="btnFin" width="140"/>-->
+									
+									<mx:Button icon="@Embed(source='assets/accept-icon_32.png')" 
+											   label="  Finalizar  " toolTip="Finalizar Registro"
+											   click="navegar();" tabIndex="20" height="38" 
+											   fontSize="12" x="99" y="411" id="btnFin" width="140"/>
+								</s:HGroup>
+								<s:HGroup width="100%" horizontalAlign="center" gap="0" verticalAlign="middle" paddingTop="20" paddingBottom="5">
+									<s:HGroup width="100%"/>
+									<s:VGroup width="100%" horizontalAlign="center" verticalAlign="middle" gap="0">
+										<s:HGroup gap="0" >
+											<mx:Image source="assets/fi_curvas_64.png"/>
+											<mx:Image source="assets/r3Take_64.png"/>
+										</s:HGroup>
+										<mx:Text text="Freight Ideas S.A. de C.V.&#xa;Avenida Fuerza Aérea Mexicana No. 520 Int. 1&#xa; Colonia Federal,  Delegación Venustiano Carranza&#xa;México, Distrito Federal  CP 15700" fontSize="9" textAlign="center" fontWeight="normal" color="#434343"/>
+									</s:VGroup>
+									<s:HGroup width="100%"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:Group>
+						
+					</s:Group>
+					<s:HGroup width="100%"/>
+				</s:HGroup>
+			</s:VGroup>
+		</s:Group>
+	</s:VGroup>
+	<s:TitleWindow id="msgSolicitud" width="550" height="230"  backgroundColor="#FFFFFF" skinClass="twSkin"
+				   visible="false" title="Mensaje del Sistema" horizontalCenter="0" borderAlpha=".95" verticalCenter="0" >
+		<mx:Text id="lblResultMsg" color="#054a95" fontWeight="bold" fontSize="15"  textAlign="center" width="482" x="26" y="20"/>
+		<mx:Button x="210" y="140" icon="@Embed(source='assets/accept-icon_24.png')" creationCompleteEffect="{glowButton}" label=" Aceptar  " 
+				   click="btnFlujo(3);msgSolicitud.visible= false" height="38" fontSize="12" width="129"/>
+	</s:TitleWindow>
+</s:Application>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600" height="576" width="669"
+			   pageTitle="Liberación de Archivos">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Panel x="10" y="10" width="655" height="556" title="Liberación de Archivos" fontFamily="Arial" color="#0B5798" fontSize="14">
+		<s:VGroup x="10" y="10" width="639" height="501">
+			<s:Group width="625" height="26">
+			</s:Group>
+			<mx:HRule width="626"/>
+			<s:Group width="627" height="47">
+				<s:Label x="29" y="23" text="Liberar Archivo:" fontWeight="bold" color="#000000" fontSize="12"/>
+				<s:Label x="373" y="23" text="W" fontWeight="bold" color="#000000" fontSize="12"/>
+				<s:Label x="263.2" y="23.2" text="L" fontWeight="bold" color="#000000" fontSize="12"/>
+				<s:RadioButton x="242" y="18"/>
+				<s:RadioButton x="352" y="18"/>
+				<mx:Image x="507" y="-8" source="newIcons/R_64.png" visible="true"/>
+			</s:Group>
+			<mx:HRule width="626"/>
+			<s:Group width="632" height="390">
+				<s:Label x="30" y="73" text="Número de Patente:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:TextInput x="243" y="62" width="318"/>
+				<s:Label x="30" y="243" text="Conocimiento:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<mx:HRule x="0" y="169" width="622"/>
+				<mx:HRule x="0" y="376" width="627"/>
+				<s:Label x="30" y="25" text="Por favor ingrese los siguientes datos:" color="#000000" fontWeight="bold"/>
+				<mx:Button id="B0" width="116" height="24" label="Buscar"   icon="@Embed(source='newIcons/01.png')" x="286" y="118"/>
+				<s:ComboBox x="243" y="235" width="318"/>
+				<s:Label x="30" y="285" text="Manifiesto:" fontSize="12" color="#000000" fontWeight="bold"/>
+				<s:ComboBox x="243" y="277" width="318"/>
+				<s:Label x="30" y="192" text="Por favor seleccione los siguientes datos:" color="#000000" fontWeight="bold"/>
+				<mx:Button id="B" width="116" height="24" label="Liberar"   icon="@Embed(source='newIcons/accept_24.png')" x="286" y="328"/>
+			</s:Group>
+		</s:VGroup>
+	</s:Panel>
+</s:Application>

@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	initialize="inicializacion(event)">
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.events.StateChangeEvent;
+			
+			import spark.events.IndexChangeEvent;
+			
+			private function mostrarInformacion() : void
+			{
+				Send(828);
+			}
+							
+			private function agregarLicencia():void
+			{
+				if (txtDisponible.text == "0")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No pude agregar mas licencias.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if (txtDisponible.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Ejecute la consulta antes de agregar licencias.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+					
+				cleanCtrls();
+				chkNuevaLicencia.selected = true;
+				ttwLicencia.visible = true;
+			}
+			
+			private function editarLicencia() :void
+			{
+				if (txtIdLicencia.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una licencia.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				cleanCtrls();
+				chkNuevaLicencia.selected = false;
+				txtEdicion.text = "";
+				Send(836);
+			}
+			
+			private function eliminarLicencia():void
+			{
+				if (txtIdLicencia.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una licencia.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				Alert.yesLabel = "Si";
+				Alert.noLabel = "No";
+				Alert.show("¿Está seguro que desea eliminar la licencia ?","Aviso",Alert.YES|Alert.NO, null, eliminaLicencia, iconDel);
+			}
+			
+			private function eliminaLicencia(eventObj:CloseEvent):void 
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(834); //Elimina licencia
+				    mostrarInformacion();
+					txtIdLicencia.text = "";
+				}
+			}
+			
+			private function guardarLicencia():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(txtLicencia.text.search(patternBlank) != -1 )
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La licencia no debe llevar espacios en blanco.","Aviso",Alert.OK,null,null, iconAlert);
+					txtLicencia.errorString = "La licencia no debe llevar espacios en blanco.";
+					return;
+				}
+				
+				if (txtLicencia.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La licencia es un campo requerido, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtLicencia.errorString = "La licencia es requerida.";
+					return;
+				}
+				
+				if ((cmbEstado.selectedIndex < -1) || (cmbEstado.selectedIndex > 1))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El estado es un campo requerido, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbEstado.errorString = "El estado es requerido.";
+					return;
+				}
+				
+				if (chkNuevaLicencia.selected)
+				{
+					Send(835); //Guarda Licencia
+				}
+				else
+				{
+					Send(837); //Guarda Licencia
+				}
+				
+				ttwLicencia.visible = false;
+				cleanCtrls();
+				mostrarInformacion();			}
+			
+			private function cleanCtrls():void
+			{
+				txtLicencia.text = "";
+				txtLicencia.errorString = "";
+				cmbEstado.selectedIndex = 0;
+				cmbEstado_changeHandler(null);
+				txtLicencia.setFocus();
+			}
+			
+			private function selectIdLicencia():void
+			{
+				if (gvwLicencia.selectedItem != null)
+				{
+					txtIdLicencia.text = gvwLicencia.selectedItem["0"].toString();
+				}
+			}
+			
+			private function isLicenciaValid(): void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(txtLicencia.text.search(patternBlank) != -1 )
+				{
+					txtLicencia.errorString = "La licencia no debe llevar espacios en blanco";	
+					return;
+				}
+				
+                if(txtLicencia.text.length == 0)
+				{
+					txtLicencia.errorString = "La licencia es requerida";	
+					return;
+				}
+					
+				txtLicencia.errorString = "";
+				return;
+			}
+
+			protected function inicializacion(event:FlexEvent):void
+			{
+				chkNuevaLicencia.visible = false;
+				chkNuevaLicencia.selected = false;
+				ttwLicencia.visible = false;
+				txtIdLicencia.visible = false;
+				cmbEstado.selectedIndex = -1;
+				txtEstado.visible = false;
+				txtEdicion.visible = false;
+				
+				mostrarInformacion();
+			}
+
+			protected function cmbEstado_changeHandler(event:IndexChangeEvent):void
+			{
+				txtEstado.text = (cmbEstado.selectedIndex + 1).toString();
+			}
+
+			protected function txtEdicion_valueCommitHandler(event:FlexEvent):void
+			{
+				if (txtEdicion.text.length == 0)
+					return;
+				
+				if (txtEdicion.text == "0")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La licencia ya no existe en la base de datos.","Aviso",Alert.OK,null,null, iconAlert);
+					mostrarInformacion();
+					return;
+				}
+				
+				if (txtEdicion.text == "1")
+				{
+					txtLicencia.setFocus();
+					txtLicencia.errorString = "";
+					cmbEstado.selectedIndex = parseInt(txtEstado.text) - 1;
+					ttwLicencia.visible = true;
+				}
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Licencias de Andrómeda" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+				<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="5" paddingTop="5" paddingBottom="5" verticalAlign="bottom">
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+						<s:CheckBox id="chkNuevaLicencia" visible="true"/>
+						<s:TextInput id="txtIdLicencia" width="38" maxChars="50" visible="true"/>
+						<s:Label text="Total:  "  height="24" verticalAlign="middle" fontWeight="bold"/>
+						<s:TextInput id="txtTotal" width="100" maxChars="50" tabIndex="1" height="24" enabled="false" textAlign="right" x="499"/>
+						<s:Label text="En uso: "  height="24" verticalAlign="middle" fontWeight="bold"/>
+						<s:TextInput id="txtEnUso" width="100" maxChars="50" tabIndex="1" height="24" enabled="false" textAlign="right" x="678"/>
+						<s:Label text="Disponibles:  "  height="24" verticalAlign="middle" fontWeight="bold"/>
+						<s:TextInput x="885" y="43" id="txtDisponible" width="100" maxChars="50" tabIndex="1" height="24" enabled="false" textAlign="right"/>
+						<mx:Button icon="@Embed(source='newIcons/01.png')" label="Consultar" click="mostrarInformacion();" height="24" tabIndex="2" width="141" x="844"/>
+					</s:HGroup>
+				</s:HGroup>
+				
+				<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+					<mx:DataGrid id="gvwLicencia" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectIdLicencia();">
+						<mx:columns>
+							<mx:DataGridColumn headerText="idLicencia" dataField="0" visible="false"/>
+							<mx:DataGridColumn headerText="Licencia" dataField="1"  width="200"/>
+							<mx:DataGridColumn headerText="Fecha de registro" dataField="2" width="40"/>
+							<mx:DataGridColumn headerText="Estado" dataField="3" width="50"/>
+						</mx:columns>
+					</mx:DataGrid>
+				</s:HGroup>
+				
+				<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="bottom">
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+						<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="eliminarLicencia();" height="24" tabIndex="6" width="115" toolTip="Eliminar licencia"/>
+						<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="agregarLicencia();" height="24" tabIndex="4" width="115" toolTip="Agregar licencia"/>
+						<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="editarLicencia()" height="24" tabIndex="5" width="115" x="772"  toolTip="Editar licencia"/>
+					</s:HGroup>
+				</s:HGroup>
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>
+
+	<s:TitleWindow width="590" height="204" title="Agregar licencia" id="ttwLicencia" visible="true" close="ttwLicencia.visible=false;cleanCtrls();" horizontalCenter="0" verticalCenter="-23" borderVisible="true">
+		<s:Label text="*Licencia" x="15" y="24" fontWeight="bold"/>
+		<s:Label text="Todos los campos marcados con *, son obligatorios." x="15" y="111" fontWeight="bold"/>
+		<s:TextInput x="17" y="44" id="txtLicencia" focusOut="isLicenciaValid();" width="440" tabIndex="0" maxChars="50"/>
+		<s:DropDownList id="cmbEstado" x="464" y="44" selectedIndex="0" tabIndex="1" width="114" change="cmbEstado_changeHandler(event)">
+			<s:dataProvider>
+				<mx:ArrayList>
+					<fx:String>Activa</fx:String>
+					<fx:String>Inactiva</fx:String>
+				</mx:ArrayList>
+			</s:dataProvider>
+		</s:DropDownList>
+		<mx:Button x="464" y="111" icon="@Embed(source='newIcons/accept_24.png')" label="Guardar" click="guardarLicencia();" height="24" tabIndex="3" width="115" toolTip="Guardar licencia"/>
+		<mx:Button x="341" y="111" icon="@Embed(source='newIcons/delete_24.png')" label="Cancelar" click="ttwLicencia.visible=false;cleanCtrls();" height="24" tabIndex="2" width="115" toolTip="Cancelar"/>		<s:Label text="*Estado" x="469" y="24" fontWeight="bold"/>
+		<s:TextInput x="464" y="73" width="27" id="txtEstado"/>
+		<s:TextInput x="21" y="72" id="txtEdicion" width="23" valueCommit="txtEdicion_valueCommitHandler(event)"/>
+	</s:TitleWindow>
+
+</s:Application>

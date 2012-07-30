@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SuggestComboBox xmlns="com.cristalab.controls.*" xmlns:mx="http://www.adobe.com/2006/mxml"
+	 initialize="init ()">
+	<mx:Script>
+		<![CDATA[
+			import com.cristalab.controls.SuggestComboBox
+			import flash.net.SharedObject
+			/**Nombre que debe tener el SharedObject*/
+			public var soName:String = "savedData";
+			/**Nombre del del Array que contendrá
+			 las búsquedas que hemos realizado. De esta manera se podrán usar varios 
+			 componentes con un mismo SharedObject*/
+			public var soResource:String = "myResource";
+			private var so:SharedObject
+			//[Bindable]
+			private var dataArray:Array;
+			
+			private function init () : void
+			{
+				so = SharedObject.getLocal( soName );
+				if (so.data[soResource] == undefined)
+				{
+					so.data[soResource] = new Array ();
+				}
+				
+				dataArray = so.data[soResource]
+				this.dataProvider = dataArray;
+				so.flush();
+			}
+			
+			/**Esta función guardará el contenido actual de la caja de texto.
+			@return devuelve true, si el texto sse guardó, y false, si el texto
+			ya estaba o hubo una cadena vacía*/
+			public function saveCurrentText () : Boolean
+			{
+				if ( this.text !="")
+				{
+					for each (var item:Object in this.dataProvider.source)
+					{
+						trace (this.itemToLabel(item));
+						if  (this.itemToLabel(item) == this.text)
+						{
+							return false;
+						}
+					}
+					dataArray.push(this.text)
+					so.data[soResource] = dataArray;
+					so.flush();
+					return true;
+				}
+				return false;
+			}
+			
+			
+		]]>
+	</mx:Script>
+</SuggestComboBox>

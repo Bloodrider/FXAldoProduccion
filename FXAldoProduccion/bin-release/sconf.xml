@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services-config>
+    <services>     
+       <service id="fluorine-flashremoting-service" class="flex.messaging.services.RemotingService" messageTypes="flex.messaging.messages.RemotingMessage">
+           <destination id="fluorine">
+               <channels>
+                   <channel ref="my-fluorine"/>
+               </channels>
+               <properties>
+                   <source>*</source>
+               </properties>
+           </destination>           
+       </service>
+   </services>   	
+   <channels>
+        <channel-definition id="my-fluorine" class="mx.messaging.channels.AMFChannel">
+          	<!--<endpoint uri="http://21.21.104.103/facturaxion/gateway.aspx" class="flex.messaging.endpoints.AMFEndpoint"/>-->
+         
+          	<!--<endpoint uri="http://localhost:12846/facturaxionFX/gateway.aspx" class="flex.messaging.endpoints.AMFEndpoint"/>-->
+          	<!--<endpoint uri="https://fx.facturaxion.com/facturaxionPruebas/gateway.aspx" class="flex.messaging.endpoints.AMFEndpoint"/>-->
+	        <endpoint uri="https://fx.facturaxion.com/facturaxion/gateway.aspx" class="flex.messaging.endpoints.AMFEndpoint"/>
+	       	<!--<endpoint uri="https://fx.facturaxion.net/gateway.aspx" class="flex.messaging.endpoints.AMFEndpoint"/>-->
+   		</channel-definition> 
+   </channels>
+</services-config>

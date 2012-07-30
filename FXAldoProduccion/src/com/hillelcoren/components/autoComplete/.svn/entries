@@ -1,0 +1,22 @@
+8
+
+dir
+8
+https://flex-autocomplete.googlecode.com/svn/trunk/src/com/hillelcoren/components/autoComplete
+https://flex-autocomplete.googlecode.com/svn
+
+
+
+2009-03-10T15:12:32.769427Z
+8
+hillelcoren
+
+
+svn:special svn:externals svn:needs-lock
+
+interfaces
+dir
+
+classes
+dir
+

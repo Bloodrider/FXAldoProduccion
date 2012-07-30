@@ -1,0 +1,900 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('catClientes.swf');" pageTitle="Catálogo de Clientes">
+
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;	
+			import mx.controls.Alert;
+			import mx.events.*;
+			
+			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+			private var checkPWD:RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)[a-zA-Z0-9\S]{8,}$/;
+			
+			private var validFormatPM:String = "^[A-Za-zñÑ&]{3}[ |\-]{0,1}[0-9]{6}[ |\-]{0,1}[0-9A-Za-z]{3}$";									   
+			private var validFormatPF:String = "^[A-Za-zñÑ&]{4}[ |\-]{0,1}[0-9]{6}[ |\-]{0,1}[0-9A-Za-z]{3}$";
+			
+			private var expRfcPM:RegExp = new RegExp(validFormatPM,"g");
+			private var expRfcPF:RegExp = new RegExp(validFormatPF,"g");
+					
+			private function cpDir():void
+			{
+				if(cp.text.length == 5)
+				{
+					Send(159);//Carga datos de dirección si existe el CP.
+				}
+				else
+				{
+					cleanCombos();
+				}
+			}
+			
+			private function cleanCombos():void 
+			{
+				estado.dataProvider  = null;
+				ciudad.dataProvider  = null;
+				municipio.dataProvider  = null;
+				colonia.dataProvider  = null;
+				estado.errorString = "";
+				ciudad.errorString = "";
+				municipio.errorString = "";
+				colonia.errorString = "";
+				txtColonia.visible = false;
+				txtColonia.errorString = "";
+				lbOtraCol.visible = false;
+				txtColonia.text   = "";
+			}
+			
+			private function dataCombos():void 
+			{	
+				var valsColonia:Array = new Array();
+				
+				if (colonia.dataProvider.length > 0 )
+				{
+					valsColonia   = colonia.selectedItem.valueOf().toString().split(",");
+					
+					if(valsColonia[1].toString() == "Otra Colonia")
+					{
+						txtColonia.visible = true;
+						lbOtraCol.visible = true;
+						txtColonia.text   = "";
+					}
+					else
+					{
+						txtColonia.visible = false;
+						lbOtraCol.visible = false;
+					}
+				}
+			}
+			
+			private function dataCombosInsert():void 
+			{	
+				var valsPais:Array = new Array();
+				var valsEstado:Array = new Array();
+				var valsCiudad:Array = new Array();
+				var valsMunicipio:Array = new Array();
+				var valsColonia:Array = new Array();
+				
+			if (pais.dataProvider.source.length > 0 &&
+					estado.dataProvider.source.length > 0 &&
+					ciudad.dataProvider.source.length > 0 &&
+					municipio.dataProvider.source.length > 0)
+				{ 
+					valsPais	  = pais.selectedItem.valueOf().toString().split(",");
+					valsEstado    = estado.selectedItem.valueOf().toString().split(",");
+					valsCiudad    = ciudad.selectedItem.valueOf().toString().split(",");
+					valsMunicipio = municipio.selectedItem.valueOf().toString().split(",");
+					
+					txtPais.text      = valsPais[1].toString();
+					txtEstado.text    = valsEstado[1].toString();
+					txtCiudad.text    = valsCiudad[1].toString();
+					txtMunicipio.text = valsMunicipio[1].toString();
+			 	} 
+				if(colonia.selectedLabel != "Otra Colonia" && colonia.selectedLabel != "")
+				{
+					valsColonia   = colonia.selectedItem.valueOf().toString().split(",");
+					idColonia.text   = valsColonia[0].toString();
+					txtColonia.text   = valsColonia[1].toString();
+				}
+				else
+				{
+					valsColonia   = colonia.selectedItem.valueOf().toString().split(",");
+					idColonia.text   = valsColonia[0].toString();
+				}
+			}
+			
+			protected function handlerPais():void
+			{
+				if (pais.dataProvider != null)
+				{
+					var valsPais:Array = new Array();
+					valsPais = pais.selectedItem.valueOf().toString().split(",");
+					
+					if(valsPais[1] == "México")
+					{
+						//txtPais.text = valsPais.selectedItem.valueOf(1).toString();
+						txtPais.text = pais.selectedLabel.toString();
+						cp.enabled = true;
+						cp.text = "";
+						
+						estado.visible = true;
+						ciudad.visible = true;
+						municipio.visible = true;
+						colonia.visible = true;
+						
+						txtEstado.visible = false;
+						txtCiudad.visible = false;
+						txtMunicipio.visible = false;
+						txtColonia.visible = false;
+						txtColonia.x = 472;
+					}
+					else
+					{
+						txtPais.text = pais.selectedLabel.toString();
+						cp.text = "00000";
+						cp.enabled = false;
+						
+						estado.visible = false;
+						ciudad.visible = false;
+						municipio.visible = false;
+						colonia.visible = false;
+						lbOtraCol.visible = false;
+						
+						txtEstado.visible = true;
+						txtCiudad.visible = true;
+						txtMunicipio.visible = true;
+						txtColonia.visible = true;
+						
+						txtEstado.text = "";
+						txtCiudad.text = "";
+						txtMunicipio.text = "";
+						txtColonia.text = "";
+						
+						txtColonia.x = 254;
+					}
+				}
+			}
+			
+			private function checkMail(myCtrl:TextInput):void
+			{
+				if(expMail.test(myCtrl.text))			
+					myCtrl.errorString = "";
+					
+				else 
+				{				
+					myCtrl.errorString = "Correo Electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+				}			
+			}
+			
+			private function checkEnableCB(CB:mx.controls.ComboBox, TX:TextInput, CBM:mx.controls.ComboBox, TXM:TextInput):void
+			{
+				if (CB.dataProvider.length > 0)
+				{
+					CB.visible = true;
+					TX.visible = false;
+					
+					CBM.visible = true;
+					TXM.visible = false;
+					TXM.x = 472;
+				} 
+				else
+				{   
+					CB.visible = false;
+					TX.visible = true;
+					
+					CBM.visible = false;
+					TXM.visible = true;
+					TXM.x = 254;
+				}
+			}
+			
+			private function validaExisteCliente():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(RFC.text.search(patternBlank) != -1 )
+					RFC.errorString = "El RFC no debe llevar espacios en blanco";	
+					
+				else
+					RFC.errorString = "";	
+				
+				Send(587); //Verifica que no exista el Cliente
+			}
+			
+			private function validaUser(ttwOption:int):void
+			{
+				if (txtIdCliente.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un Cliente.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if (ttwOption == 1) //Muestra TTW para editar Cliente
+				{
+					if (txtValidado.text == "true")
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Los datos del cliente solo pueden ser editados por el propietario.","Aviso",Alert.OK,null,null, iconAlert);
+						return;
+					}
+					else if (txtValidado.text == "false")
+					{
+						cleanCtrlsAgregar();
+						Send(1349); //Trae Datos a Editar
+						
+						//Bloquear Controles para edición
+						inhabilitarCtrls();
+						
+						ttwClientes.title = "Editar Cliente";
+						cnvsEmp.visible = true; 
+						cnvsSUC.visible = false;
+						lbOtraCol.visible = false;
+						
+						ttwClientes.visible = true;
+						
+						cargaCombs();
+					}
+				}
+					
+				else if (ttwOption == 2) //Elimina Cliente
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Está seguro que desea quitar el Cliente de la Empresa?","Aviso",Alert.YES|Alert.NO, null, eliminarCliente, iconDel);
+				}
+			}
+			
+			private function validaEmpInsert():void
+			{
+				if (cmbSelectEmpresa.selectedIndex < 1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una empresa.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				cleanCtrlsAgregar();
+				
+				ttwClientes.title = "Agregar Cliente";
+				cnvsEmp.visible = true;
+				cnvsSUC.visible = false;
+				lbOtraCol.visible = false;
+				
+				ttwClientes.visible = true;
+				
+				habilitarCtrls();
+				setVal();
+			}
+			
+			private function eliminarCliente(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(586); //Elimina Cliente de Empresa
+					Send(1348); //Actualiza GridView Clientes
+					cleanCtrlsAud();
+				}
+			}
+			
+			private function validaCliente():void
+			{
+				txtIdCliente.text= "";
+				
+				if (cmbSelectEmpresa.selectedIndex > 0)
+					Send(1348); //Actualiza GridView Clientes
+
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una Empresa.","Aviso",Alert.OK,null,null, iconAlert);
+				}		
+			}
+			
+			private function selectIdCliente():void
+			{
+				if (gvwClientes.selectedItem != null)
+				{
+					txtIdClientesxEmpresa.text = gvwClientes.selectedItem["0"].toString();
+					txtIdCliente.text = gvwClientes.selectedItem["1"].toString();
+					txtValidado.text = gvwClientes.selectedItem["2"].toString();
+				}
+			} 
+			
+			private function existeCli():void
+			{
+				if(existeCliente.text == "1")
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("Ya existe registro de éste Contribuyente en el sistema. ¿Desea agregarlo al listado de clientes de su empresa?.","Aviso",Alert.YES|Alert.NO, null, agregarClixEmp, iconAlert);
+				}
+			}
+			
+			private function agregarClixEmp(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(588); // Inserta Clientes x Empresa
+
+					cleanCtrlsAgregar();
+					cleanCtrlsAud();
+					Send(1348); //Actualiza GridView Clientes
+					ttwClientes.visible = false; 
+				}
+				else if (eventObj.detail==Alert.NO) 
+				{
+					cleanCtrlsAgregar();
+					cleanCtrlsAud();
+					Send(1348); //Actualiza GridView Clientes
+					ttwClientes.visible = false; 
+				}
+			}
+			
+			private function inhabilitarCtrls():void
+			{
+				fisica.visible = false; 
+				moral.visible = false;
+				rfcFisica.visible = false;
+				rfcMoral.visible = false;
+				lblTipoPersona.visible = false; 
+				lblRFCPerFis.visible = false; 
+				lblRFCPerMor.visible = false;
+				
+				lblRFCEditRFC.visible = true;
+				RFC.visible = true;
+				
+				btnActualizaCli.visible = true;
+				btnGuardaCli.visible = false;
+				
+				validNextRFC.text = "1";
+			}
+			
+			private function habilitarCtrls():void
+			{
+				fisica.visible = true; 
+				moral.visible = true;
+				rfcFisica.visible = true;
+				rfcMoral.visible = true;
+				lblTipoPersona.visible = true; 
+				lblRFCPerFis.visible = true; 
+				lblRFCPerMor.visible = true;
+				
+				rfcMoral.enabled = true;
+				rfcFisica.enabled = false;
+				
+				moral.selected = true;
+				fisica.selected = false;
+				
+				lblRFCEditRFC.visible = false;
+				RFC.visible = false;
+				
+				btnActualizaCli.visible = false;
+				btnGuardaCli.visible = true;
+			}
+			
+			private function cleanCtrlsAgregar():void
+			{
+				//Reinicia Controles de Agregar Cliente (Sucursal)
+				nomSucursal.text = "";
+				correoSuc.text = ""; 
+				calle.text = ""; 
+				numExt.text = ""; 
+				numInt.text = "";
+				cp.text = "";
+				txtPais.text = ""; 
+				txtEstado.text = ""; 
+				txtCiudad.text = ""; 
+				txtMunicipio.text = ""; 
+				txtColonia.text = "";
+				txtTelefono.text = "";
+				
+				pais.selectedIndex = 0; 
+				estado.dataProvider = null;
+				ciudad.dataProvider = null;
+				municipio.dataProvider = null; 
+				colonia.dataProvider = null; 
+				
+				//Limpia Ctrls Agregar Cliente (Empresa)
+				moral.selected = true;  
+				fisica.selected = false; 
+
+				razonSocial.text = ""; 
+				correoEmp.text = ""; 
+				rfcFisica.text = ""; 
+				rfcMoral.text = ""; 
+				
+				//Limpia Ctrls de control
+				existeCliente.text = ""; 
+				validNextRFC.text = ""; 
+				RFC.text = ""; 
+				txtpersonaFisMor.text = ""; 
+			}
+			
+			private function cleanCtrls():void
+			{
+				//Limpia Controles de pantalla principal
+				gvwClientes.dataProvider = null; 
+				txtCliente.text = "";
+				
+				cmbSelectEmpresa.selectedIndex = 0;
+				cleanCtrlsAud();
+			}
+			
+			private function cleanCtrlsAud():void
+			{
+				// Limpia controles de control
+				txtIdCliente.text = ""; 
+				txtIdClientesxEmpresa.text = ""; 
+				txtValidado.text = ""; 
+			}
+			
+			private function setVal():void
+			{
+				if(moral.selected == true)
+				{
+					validNextRFC.text = "";
+					RFC.text = "";
+					rfcMoral.enabled = true;
+					rfcFisica.enabled = false;
+					rfcMoral.text = "";
+					rfcFisica.text = "";
+					txtpersonaFisMor.text = "1"; //Persona Moral
+					rfcFisica.errorString = "";
+					rfcMoral.errorString = "";
+				}
+				else if	(fisica.selected == true)
+				{
+					validNextRFC.text = "";
+					RFC.text = "";
+					rfcMoral.enabled = false;
+					rfcFisica.enabled = true;
+					rfcMoral.text = "";
+					rfcFisica.text = "";
+					txtpersonaFisMor.text = "2"; //Persona Fisica
+					rfcFisica.errorString = "";
+					rfcMoral.errorString = "";
+				}
+			}
+			
+			private function checkRFCPF(myCtrl:TextInput):void
+			{
+				if(expRfcPF.test(myCtrl.text) || (myCtrl.text.length == 0))
+				{
+					myCtrl.errorString = "";
+					validNextRFC.text = "1";
+				}
+				else
+				{				
+					myCtrl.errorString = "RFC Persona Física Incorrecto\n\n" +
+						"Formato “AAAAaammddHHD”, en donde: \n" +
+						"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+						"              Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+						"aammdd = Fecha de nacimiento, numérico (año,mes,día). \n" +
+						"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"Los caracteres alfabéticos deben ser mayúsculas.";
+					validNextRFC.text = "0";
+				}	
+			}
+			
+			private function checkRFCPM(myCtrl:TextInput):void
+			{
+				if(expRfcPM.test(myCtrl.text) || (myCtrl.text.length == 0))
+				{
+					myCtrl.errorString = "";
+					validNextRFC.text = "1";
+				}
+				else
+				{				
+					myCtrl.errorString = "RFC Persona Moral Incorrecto\n\n" +
+						"Formato “AAAaammddHHD”, en donde: \n" +
+						"AAA = Siglas del contribuyente, alfanumérico. \n" +
+						"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+						"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+						"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"Los caracteres alfabéticos deben ser mayúsculas.";
+					validNextRFC.text = "0";
+				}			
+			}
+			
+			private function validaEmpresa():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(RFC.text.search(patternBlank) != -1 )
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El RFC no debe llevar espacios en blanco.","Aviso",Alert.OK,null,null, iconAlert);
+					
+					if (fisica.selected = true)
+					{
+						rfcFisica.setFocus();
+						rfcFisica.errorString = "El RFC no debe llevar espacios en blanco.";
+						return;
+					}
+					else if (moral.selected = true)
+					{
+						rfcMoral.setFocus();
+						rfcMoral.errorString = "El RFC no debe llevar espacios en blanco.";
+						return;
+					}
+				}
+				
+				if(existeCliente.text == "1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Cliente ya ha sido dado de alta en el sistema.","Aviso",Alert.OK,null,null, iconAlert);
+					RFC.errorString = "El Cliente ya ha sido dado de alta en el sistema.";
+					return;
+				}
+				
+				if(validNextRFC.text == "0")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato del RFC es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					
+					
+					if (fisica.selected == true)
+					{
+						rfcFisica.errorString = "El formato del RFC Fisica es incorrecto.";
+						return;
+					}
+					else if (moral.selected == true)
+					{
+						rfcMoral.errorString = "El formato del RFC Moral es incorrecto.";
+						return;
+					}
+				}
+				
+				if(RFC.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El RFC es un campo obligatorio.","Aviso",Alert.OK,null,null, iconAlert);
+					
+					if (fisica.selected == true)
+					{
+						rfcFisica.errorString = "El formato del RFC Fisica es incorrecto.";
+						return;
+					}
+					else if (moral.selected == true)
+					{
+						rfcMoral.errorString = "El formato del RFC Moral es incorrecto.";
+						return;
+					}
+				}
+				
+				if(razonSocial.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Nombre o Razón Social es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					razonSocial.errorString = "El Nombre o Razón Social es un campo obligatorio.";
+					return;
+				}
+				
+				if(correoEmp.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Correo Electrónico de la Empresa es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					correoEmp.errorString = "El correo electrónico es un campo obligatorio.";
+					return;
+				}
+				
+				if(!expMail.test(correoEmp.text))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato de Correo Electrónico es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					correoEmp.errorString = "Correo Electrónico Incorrecto.\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+					return;
+				}
+				
+				
+				cnvsSUC.visible = true;
+				cnvsEmp.visible = false;
+			}
+			
+			private function atrasCli():void
+			{
+				cnvsSUC.visible = false;
+				cnvsEmp.visible = true;
+			}
+			
+			private function guardarCliente(op:int):void
+			{
+				if (correoSuc.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Correo Electrónico de la Sucursal es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					correoSuc.errorString = "El Correo Electrónico es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if (!expMail.test(correoSuc.text))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato del Correo Electrónico de la Sucursal es incorrecto, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					correoSuc.errorString = "Correo Electrónico Incorrecto.\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+					return;
+				}
+				
+				if(calle.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Calle es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					calle.errorString = "La Calle es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if(numExt.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Número Exterior es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					numExt.errorString = "El Número Exterior es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if(cp.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Código Postal es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					cp.errorString = "El Código Postal es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if(cp.text.length < 5)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Código Postal debe ser de cinco digitos como mínimo.","Aviso",Alert.OK,null,null, iconAlert);
+					cp.errorString = "El Código Postal es incorrecto, favor de verificar.";
+					return;
+				}
+				
+				if (pais.selectedIndex != 1)
+				{
+					if (txtEstado.visible == true)
+					{
+						if(txtEstado.text.length == 0)
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Estado es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+							txtEstado.errorString = "Estado es un campo obligatorio, favor de ingresarlo.";
+							return;
+						}
+					}
+					
+					if (txtCiudad.visible == true)
+					{
+						if(txtCiudad.text.length == 0)
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Ciudad es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+							txtCiudad.errorString = "Ciudad es un campo obligatorio, favor de ingresarlo.";
+							return;
+						}
+					}
+					
+					if (txtMunicipio.visible == true)
+					{
+						if(txtMunicipio.text.length == 0)
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Municipio es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+							txtMunicipio.errorString = "Municipio es un campo obligatorio, favor de ingresarlo.";
+							return;
+						}
+					}	  
+				}
+				
+				if (txtColonia.visible == true)
+				{
+					if(txtColonia.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Otra Colonia es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtColonia.errorString = "Otra Colonia es un campo obligatorio, favor de ingresarlo.";
+						return;
+					}
+				}
+
+				if (txtValidado.text == "true")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Los datos del cliente solo pueden ser editados por el propietario.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				dataCombosInsert();
+				
+				//Validar si el txt de existe cliente tiene como valor  = 1
+				if (op == 1)
+					Send(1346); //Guarda cliente
+				else 
+					Send(1347); //Actualiza Cliente
+					
+				Send(1348); //Actualiza GridView Clientes
+				ttwClientes.visible = false;
+				cleanCtrlsAud();
+			}
+			
+			private function cargaCombs():void
+			{
+				Send(159); //Trae combos de CP
+				
+				estado.selectedLabel == txtEstado.text;
+				ciudad.selectedLabel == txtCiudad.text;
+				municipio.selectedLabel == txtMunicipio.text;
+				colonia.selectedLabel == txtColonia.text;
+			}
+			
+			private function validaTXTColonia():void
+			{
+				if (txtColonia.visible == true)
+				{
+					if (txtColonia.text.length > 0)
+						txtColonia.errorString = "";
+					
+					else 
+						txtColonia.errorString = "Otra Colonia es un campo obligatorio, favor de ingresarlo.";
+				}
+			}
+
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Clientes" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="15" paddingBottom="5">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+					<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0">
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="*Seleccione Empresa" fontWeight="bold" verticalAlign="middle"/>
+							<s:ComboBox creationComplete="Send(584);" id="cmbSelectEmpresa" width="325" tabIndex="1" height="24" x="185"/>
+							<s:Label text="Filtrar por RFC" x="652" verticalAlign="middle"/>
+							<s:TextInput x="369" y="43" id="txtCliente" width="125" maxChars="50" tabIndex="2" typographicCase="uppercase" height="24"/>
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="validaCliente();" height="24" tabIndex="3" width="100" x="829"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrls();" height="24" tabIndex="4" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0">
+						<mx:DataGrid id="gvwClientes" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectIdCliente();" >
+							<mx:columns>
+								<mx:DataGridColumn headerText="idClientexEmpresa" 		dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="idCliente" 				dataField="1" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="valido" 					dataField="2" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="RFC del Cliente" 		dataField="3" width="40"/>
+								<mx:DataGridColumn headerText="Nombre" 					dataField="4" width="50"/>
+								<mx:DataGridColumn headerText="Descripción" 			dataField="5" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="E-Mail" 					dataField="6" width="50"/>
+								<mx:DataGridColumn headerText="Teléfono" 				dataField="7" width="50"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+						<s:TextInput id="txtIdCliente" width="38" maxChars="50" visible="false" enabled="false"/>
+						<s:TextInput id="txtIdClientesxEmpresa" width="38" maxChars="50" visible="false" enabled="false"/>
+						<s:TextInput id="txtValidado" width="38" maxChars="50" visible="false" enabled="false"/>
+						
+						<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="validaUser(2);" height="24" tabIndex="7" width="100" toolTip="Eliminar Cliente de Empresa"/>
+						<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="validaEmpInsert();" height="24" tabIndex="5" width="100" x="673" toolTip="Agregar Cliente a Empresa"/>
+						<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="validaUser(1);" height="24" tabIndex="6" width="100" x="804" toolTip="Editar Cliente"/>
+					</s:HGroup>
+				</s:VGroup>
+				
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>
+	
+	<s:TitleWindow width="822" height="332" title="Agregar Cliente" id="ttwClientes" visible="false" close="ttwClientes.visible=false;cleanCtrlsAgregar();" horizontalCenter="0" verticalCenter="41">
+		<s:Group width="100%" height="100%" id="cnvsSUC" showEffect="showEffect" visible="false">
+			
+			<s:Label x="281" y="84" text="* Calle" fontWeight="bold"/>
+			<s:Label x="36" y="37" text="Nombre Sucursal"/>
+			<s:Label x="519.2" y="84" text="*Número Ext" fontWeight="bold"/>
+			<s:Label x="637.7" y="84" text="Número Int"/>
+			<s:Label x="36" y="84" text="*Correo Electrónico Sucursal" fontWeight="bold"/>		
+			<s:Label x="184" y="131" text="*Código Postal" fontWeight="bold"/>
+			<s:Label x="36" y="131" text="País"/>
+			<s:Label x="319" y="131" text="Estado"/>
+			<s:Label x="522.2" y="132" text="Ciudad"/>
+			<s:Label x="36" y="177.5" text="Delegación/Municipio"/>
+			<s:Label x="254" y="177.5" text="Colonia"/>
+			<s:Label x="36" y="10" text="*Taza de Impuesto" fontWeight="bold" visible="false"/>
+			<s:Label x="472" y="177.5" text="*Otra Colonia" id="lbOtraCol" visible="false" fontWeight="bold"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="41" y="259" fontWeight="bold"/>
+			
+			<s:TextInput x="36" y="50"  id="nomSucursal" name="Nombre de Sucursal" width="392" height="24" maxChars="350" tabIndex="20"/>
+			
+			<s:TextInput x="36" y="97" id="correoSuc" name="Correo Electrónico de la Sucursal" 
+						 width="227" height="24" typographicCase="lowercase" change="if(correoSuc.text.length != 0) checkMail(correoSuc);"  tabIndex="21"/>
+			
+			<s:TextInput x="281" y="97"  id="calle" name="Calle" width="220" height="24" maxChars="350"  tabIndex="22" focusOut="if(calle.text.length > 0) calle.errorString='';"/>
+			<s:TextInput x="519.2" y="97" id="numExt" name="Número Exterior" width="100" height="24" maxChars="50"  tabIndex="23" focusOut="if(numExt.text.length > 0) numExt.errorString='';"/>
+			<s:TextInput x="637.7" y="97" id="numInt" name="Número Interior" width="75" height="24" maxChars="50"  tabIndex="24"/>	
+			
+			<s:TextInput id="cp" name="Código Postal" change="cpDir();" x="184" y="144"  width="117" restrict="0-9" maxChars="5" height="24"  tabIndex="26" valueCommit="if(cp.text.length > 4) cargaCombs();" focusOut="if(cp.text.length == 5) cp.errorString='';"/>
+			
+			<mx:ComboBox x="36" y="144" id="pais" name="Pais" width="130" height="24" change="handlerPais();" creationComplete="Send(598);"  tabIndex="25"/>
+			
+			<mx:ComboBox x="319" y="144" id="estado" name="Estado" width="180" height="24"
+						 valueCommit="checkEnableCB(estado, txtEstado, colonia, txtColonia);" tabIndex="27"/>
+			
+			<mx:ComboBox x="517.2" y="144" id="ciudad" name="Ciudad" width="196" height="24"
+						 valueCommit="checkEnableCB(ciudad, txtCiudad, colonia, txtColonia);" tabIndex="28"/>
+			
+			<mx:ComboBox x="36" y="191" id="municipio" name="Municipio" width="200" height="24"
+						 valueCommit="checkEnableCB(municipio, txtMunicipio, colonia, txtColonia);" tabIndex="29"/>
+			
+			<mx:ComboBox x="254" y="191" id="colonia" name="Colonia" width="200" height="24" change="dataCombos();" tabIndex="30" focusOut="validaTXTColonia();"/>
+			
+			<s:TextInput x="36" y="144" width="130" id="txtPais" name="Pais" visible="false" height="24" maxChars="250"/>
+			<s:TextInput x="319" y="144" width="180" id="txtEstado" name="Estado" visible="false" height="24" maxChars="250" focusOut="if(txtEstado.text.length > 0) txtEstado.errorString='';"/>
+			<s:TextInput x="517.2" y="144" width="196" id="txtCiudad" name="Ciudad" visible="false" height="24" maxChars="250" focusOut="if(txtCiudad.text.length > 0) txtCiudad.errorString='';"/>
+			<s:TextInput x="36" y="191" width="200" id="txtMunicipio" name="Municipio" visible="false" height="24" maxChars="250" focusOut="if(txtMunicipio.text.length > 0) txtMunicipio.errorString='';"/>
+			<s:TextInput x="472" y="191" width="240" id="txtColonia" name="Colonia" visible="false" height="24" maxChars="250"  tabIndex="31" focusOut="if (txtColonia.text.length > 0) txtColonia.errorString='';"/>
+			<s:TextInput id="idColonia" x="472" y="225" editable="false" visible="false" width="20" enabled="false"/>
+						
+			<mx:Button id="btnGuardaCli" x="546" y="258" icon="@Embed(source='newIcons/add_24.png')" label="Guardar" click="guardarCliente(1);" height="24" tabIndex="41" width="115" toolTip="Guardar Cliente" visible="true"/>
+			<mx:Button id="btnActualizaCli" x="546" y="258" icon="@Embed(source='newIcons/add_24.png')" label="Actualizar" click="guardarCliente(2);" height="24" tabIndex="42" width="115" toolTip="Actualizar Cliente" visible="false"/>
+			<mx:Button x="422" y="258" icon="@Embed(source='newIcons/back_24.png')" label="Atrás" click="atrasCli();" height="24" tabIndex="40" width="115" toolTip="Atrás"/>
+			<mx:Button x="670" y="257" icon="@Embed(source='newIcons/delete_24.png')" label="Cancelar" click="ttwClientes.visible=false;cleanCtrlsAgregar();" height="24" tabIndex="43" width="115" toolTip="Cancelar"/>
+		</s:Group>
+		
+		<s:Group width="100%" height="100%" id="cnvsEmp" showEffect="showEffect" visible="true">
+			<s:Label x="99" y="136" text="*Nombre o Razón Social" fontWeight="bold"/>
+			<s:Label x="374" y="136" text="*Correo Electrónico Empresa" fontWeight="bold"/>
+			<s:Label x="173" y="87" text="*Tipo de persona" fontWeight="bold" id="lblTipoPersona"/>
+			<s:Label x="299" y="89" text="*RFC persona Fisica" fontWeight="bold" id="lblRFCPerFis"/>
+			<s:Label x="458" y="89" text="*RFC persona Moral" fontWeight="bold" id="lblRFCPerMor"/>
+			<s:Label x="139" y="108" text="RFC:  " fontWeight="bold" id="lblRFCEditRFC" visible="false"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="41" y="259" fontWeight="bold"/>
+			
+			<s:TextInput x="95" y="149" id="razonSocial" name="Nombre o Razón Social" height="24" width="267" maxChars="350" tabIndex="14" focusOut="if(razonSocial.text.length > 0) razonSocial.errorString='';"/>
+			
+			<s:TextInput x="370" y="149" id="correoEmp" name="Correo electrónico de la Empresa" height="24" width="199" maxChars="150"
+						 typographicCase="lowercase" change="if(correoEmp.text.length != 0) checkMail(correoEmp);" tabIndex="15"/>
+			<s:Label x="582" y="136" text="Teléfono"/>
+			<s:TextInput x="578" y="149" id="txtTelefono" height="24" width="114" maxChars="50" tabIndex="16" restrict="0-9"/>
+			
+			<s:RadioButton x="159" y="104" id="fisica" label="Física" groupName="tipoPersona" click="setVal();" tabIndex="10" focusOut="setVal();"/>
+			<s:RadioButton x="226" y="104" id="moral"  label="Moral"  groupName="tipoPersona" click="setVal();" selected="true" tabIndex="11" focusOut="setVal();"/>
+			
+			<s:TextInput id="existeCliente" valueCommit="existeCli();" editable="false" visible="false" width="20" enabled="false"/>
+			<s:TextInput id="validNextRFC" visible="false" width="20" x="47" y="0" enabled="false"/>
+			<s:TextInput id="RFC" visible="false" width="150" x="173" y="101" height="24" enabled="false" typographicCase="uppercase"/>
+			<s:TextInput x="229" y="-1" width="24" id="txtpersonaFisMor" name="persona" visible="false" enabled="false" height="24" maxChars="250"/>
+			
+			<s:TextInput x="299" y="102" id="rfcFisica" name="RFC Persona Fisica" width="150" maxChars="13" 
+						 change="if(rfcFisica.text!=&quot;&quot;)checkRFCPF(rfcFisica);" 
+						 valueCommit="RFC.text = rfcFisica.text;" enabled="false"  restrict="A-Za-z0-9Ñ&amp;"
+						 focusOut="validaExisteCliente();" typographicCase="uppercase" height="24" tabIndex="12"/>
+			
+			<s:TextInput x="458" y="102" id="rfcMoral" name="RFC Persona Moral" width="150" maxChars="12" 
+						 change="if(rfcMoral.text!=&quot;&quot;)checkRFCPM(rfcMoral);" 
+						 valueCommit="RFC.text = rfcMoral.text;" restrict="A-Za-z0-9Ñ&amp;"
+						 focusOut="validaExisteCliente();" typographicCase="uppercase" height="24" tabIndex="13"/>
+			
+			<mx:Button x="650" y="247" icon="@Embed(source='newIcons/fordward_24.png')" label="Siguiente" click="validaEmpresa();" height="24" tabIndex="16" width="115" toolTip="Siguiente"/>
+			<mx:Image x="51" y="15" source="assets/3830-64.png" width="89" height="69"/>
+		</s:Group>
+		
+	</s:TitleWindow>	
+</s:Application>

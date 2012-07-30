@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:rs="com.rubenswieringa.book.*"
+			   creationComplete="initApp();"
+			   minWidth="816" minHeight="510" backgroundColor="#000000"
+			   pageTitle="Información de Facturaxion">
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+	
+	<fx:Script source="com/code/Main.as" />
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:HTTPService id="xmlLoader" resultFormat="e4x" result="resultHandler(event);"/>
+	</fx:Declarations>
+	
+	<mx:UIComponent id="mainContainer" width="816" height="510" horizontalCenter="0" verticalCenter="0"/>
+	<s:Group id="containerPages" visible="false" width="816" height="510" horizontalCenter="0" verticalCenter="0" clipAndEnableScrolling="false" >
+		<mx:Canvas right="-20" top="-24">
+			<mx:Button id="closeBtn" label="X" fontFamily="Arial" fontSize="12" color="#000000" width="24" height="24" paddingLeft="0" paddingRight="0" paddingTop="0" paddingBottom="0" cornerRadius="12" buttonMode="true" click="clickHandler(event)"/>
+		</mx:Canvas>
+		<rs:Book id="book" width="816" height="510" openAt="1" autoFlipDuration="1000" easing="0.7" regionSize="150" sideFlip="true" hardCover="false" hover="true" snap="false" flipOnClick="true">
+			<rs:Page backgroundAlpha="1.0" lock="true"/>
+			<rs:Page backgroundAlpha="1.0" lock="true">
+				<mx:UIComponent id="page_0"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_1"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_2"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_3"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_4"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_5"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_6"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_7"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_8"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_9"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_10"/>
+			</rs:Page>
+			<rs:Page backgroundAlpha="1.0" backgroundColor="#FFFFFF">
+				<mx:UIComponent id="page_11"/>
+			</rs:Page>
+			<!--Página en blanco-->
+			<rs:Page backgroundColor="#FFFFFF" backgroundAlpha="1.0" lock="true"/>
+			<rs:Page backgroundColor="#FFFFFF" backgroundAlpha="1.0" lock="true"/>
+		</rs:Book>
+	</s:Group>
+	
+	<mx:UIComponent id="preloaderContainer" horizontalCenter="0" verticalCenter="0"/>
+	
+</s:Application>

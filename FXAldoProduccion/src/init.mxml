@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="90%" height="90%"
+	backgroundColor="#FFFFFF"
+	xmlns:ns1="com.google.code.flexiframe.*"  
+	skinClass="skinR3" 
+	dragEnter="dragEnterHandler(event);" 
+	dragDrop="dragDropHandler(event);"
+	xmlns:local="*"
+	creationComplete="setTimer(); Send(279); getPaso(); Get(93);"
+	applicationComplete="validateUser('init.swf');" pageTitle="Facturaxion">
+	
+	<fx:Style source="fx.css" />
+	<fx:Script source="r3Take.as" />
+	<fx:Script>
+	<![CDATA[
+		import flash.events.TimerEvent;
+		import flash.utils.Timer;
+		
+		import mx.core.Application;
+		import mx.managers.PopUpManager;
+		
+		
+		private function getPaso():void{
+			
+			if (mx.core.Application.application.loaderInfo != null) {
+				var url:String = mx.core.Application.application.loaderInfo.url;
+				var qm:int = url.lastIndexOf("?");
+				if (qm != -1) {
+					var query:String = url.substr(qm + 1);
+					var params:Array = query.split("&");
+					for (var i:int = 0; i < params.length; i++) {
+						var param:String = params[i];
+						var nameValue:Array = param.split("=");
+						if (nameValue.length == 2) {
+							idPaso.text = nameValue[1];
+						}
+					}
+				}
+			} 			
+		}
+		
+		private function setTimer():void
+        {
+	        setTime();
+	        var t:Timer = new Timer(1000);
+	        t.addEventListener(TimerEvent.TIMER, setTime);
+	        t.start();
+        }
+      
+		
+      private function setTime(e:TimerEvent = null):void
+      {
+        var date:Date = new Date();
+        var h:String = date.hours.toString().length == 1 ? '0' + date.hours.toString() : date.hours.toString();
+        var m:String = date.minutes.toString().length == 1 ? '0' + date.minutes.toString() : date.minutes.toString();
+        var s:String = date.seconds.toString().length == 1 ? '0' + date.seconds.toString() : date.seconds.toString();
+        checkTime.text = h + ':' + m + '.' + s;
+      }
+			
+	
+		
+		import flash.utils.Timer;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		
+		private var acBanners:ArrayCollection;
+		private var valsBanners:Array = new Array();
+		private var a:int;
+		private var numeroBanner:int = 0;
+		
+		/* Metodos para carga de banners */
+		private function loadBanner():void
+		{			
+			setInterval(getBanners, 6000);
+		}
+		
+		private function getBanners():void
+		{
+			acBanners = new ArrayCollection(ArrayUtil.toArray(banners.dataProvider.source));
+			var acNumBanners:int = acBanners.length;				
+			
+			if(numeroBanner < acNumBanners)
+			{
+				valsBanners = acBanners[a][0].toString().replace("http://fx.facturaxion.net/repositorio/banners/","").split(".");			
+				if(valsBanners[1].toString() == "swf")
+				{
+					swfBanner.source = acBanners[numeroBanner][0].toString();
+					swfBanner.toolTip = acBanners[numeroBanner][1].toString();
+					imageBanner.visible = false;
+					swfBanner.visible = true;
+					swfBannerClick.visible = true;
+				}else
+				{
+					imageBanner.source = acBanners[numeroBanner][0].toString();
+					imageBanner.toolTip = acBanners[numeroBanner][1].toString();
+					swfBanner.visible = false;
+					imageBanner.visible = true;
+					swfBannerClick.visible = false;
+				}	
+			}
+			if(numeroBanner == acNumBanners - 1)
+			{
+				numeroBanner = 0;
+			}	
+			numeroBanner = numeroBanner + 1;
+		}
+		
+		
+		private function navegatePageSWF()
+		{
+			var urlRequest:URLRequest = new URLRequest(swfBanner.toolTip);
+			navigateToURL(urlRequest,"_blank");
+		}
+		
+		private function navegatePageImage()
+		{
+			var urlRequest:URLRequest = new URLRequest(imageBanner.toolTip);
+			navigateToURL(urlRequest,"_blank");
+		}
+		/* Terminan metodos para carga de banners */
+		
+		
+		private function Estatus(event:Event):void
+		{
+			if(event.currentTarget.id == "window")
+			{    
+				this.idPaso.text = event.currentTarget.text;
+				return;
+			}
+		}
+		
+		protected var tlWindow:wizardConfig;
+		
+		private function viewWizardConfig():void
+		{
+			if(idPaso.text > "0" && idPaso.text < "6")
+			{
+				tlWindow = PopUpManager.createPopUp(this, wizardConfig, true) as wizardConfig;
+				PopUpManager.centerPopUp(tlWindow);        
+				
+				wizardConfig(tlWindow).window.addEventListener("valueCommit", Estatus);
+				
+				wizardConfig(tlWindow).window.text = idPaso.text;
+			}
+		}
+		
+		private function enabledControls():void
+		{
+			//idRol 19 = Prepago
+			//rol 22 = FacturaT > Administrador
+			//rol 24 = Prepago Especial > Administrador
+			//rol 26 = Distribuidor
+			//rol 32 = Timbrado > Proveedor Autorizado
+
+			if(idRol.text == "19" || idRol.text == "22" || idRol.text == "24" || idRol.text == "26" || idRol.text == "32")
+			{
+				Send(640);
+				creditosLabel.visible = true;
+				creditosValue.visible = true;
+			}
+		}
+		
+    ]]>
+	</fx:Script>
+	<mx:Canvas width="100%" height="100%" id="globalCanvas" y="0" x="0">
+	
+		<mx:SWFLoader height="100%" width="100%" id="medusa" source="assets/medusa.swf"/>
+			
+		<mx:Canvas width="300" height="191" id="globalInit" borderColor="#FFFFFF" borderStyle="solid" cornerRadius="5" verticalScrollPolicy="off" horizontalScrollPolicy="off"  y="120" x="14" backgroundColor="#020202" backgroundAlpha=".5">
+			<s:Label x="25" y="70" text="Nombre" color="#FFFFFF" fontWeight="bold"/>
+			<s:Label x="30" y="38" text="Cuenta" color="#FFFFFF" fontWeight="bold"/>
+			<s:Label x="42" y="101" text="eMail" color="#FFFFFF" fontWeight="bold"/>
+			<s:Label x="20" y="131" text="Empresa" color="#FFFFFF" fontWeight="bold"/>
+			<s:Label x="45" y="8" text="Datos del usuario" color="#FFFFFF" fontWeight="normal" fontSize="18"/>
+			<mx:Image x="5" y="1" source="assets/2727-32.png"/>
+			<s:Label x="79" y="39" id="cuenta" width="209" color="#FFFFFF" height="24"/>
+			<s:Label x="79" y="70" id="nombreCompleto" width="209" color="#FFFFFF" height="24"/>
+			<s:Label x="79" y="101" id="mail" width="209" color="#FFFFFF" height="24"/>
+			<s:Label x="79" y="131" id="EmpresaText" width="209" creationComplete="Get(8);" color="#FFFFFF" height="26"/>			
+			<s:Label x="14" y="161" id="creditosLabel" text="        Créditos disponibles" color="#FFFFFF" fontWeight="bold" height="40" width="61" visible="false"/>
+			<s:Label x="79" y="161" id="creditosValue" width="209" color="#FFFFFF" height="24" visible="false"/>
+		</mx:Canvas>
+		
+		<mx:Text id= "wos" text="WOS v.1 r343&#xa;( c ) 2009-2010  r3Take Systems" bottom="10" fontWeight="bold" visible="false" color="#FFFFFF" textAlign="right" left="0" width="174"/>
+		
+		<mx:Canvas x="14" y="64" width="300" height="50" borderColor="#FFFFFF" borderStyle="solid" cornerRadius="5" verticalScrollPolicy="off" horizontalScrollPolicy="off"  backgroundColor="#020202" backgroundAlpha=".5">
+			<mx:Label x="10" y="67" id="fecha" color="#FFFFFF" />
+			<mx:Label x="90" y="5.55" id="checkTime" color="#FFFFFF" fontWeight="normal" fontSize="32" textAlign="right" height="37"/>
+		</mx:Canvas>
+			
+			<mx:DataGrid x="0" y="0" width="1" height="1" id="banners" visible="false" creationComplete="Get(292);">
+				<mx:columns>
+					<mx:DataGridColumn  headerText="" dataField="0"/>
+					<mx:DataGridColumn  headerText="" dataField="1"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:SWFLoader width="120" height="500" id="swfBanner" right="10" top="4"/>
+			<mx:Label width="120" height="500" id="swfBannerClick" click="navegatePageSWF();"  right="10" top="4"/>
+			<mx:Image width="120" height="500" id="imageBanner" click="navegatePageImage();" right="10" top="4"/>
+			<s:TextInput id="fillDataGrid" visible="false" x="0" y="0" width="0" height="0" valueCommit="getBanners();loadBanner();"/>
+		
+		
+		<s:TextInput id="idRol" x="0" y="0" width="1" height="1" visible="false" enabled="false" valueCommit="enabledControls();"/>
+		<s:TextInput id="xPosition" x="0" y="0" width="1" height="1" visible="false" enabled="false"/>
+		<s:TextInput id="yPosition" x="0" y="0" width="1" height="1" visible="false" enabled="false"/>
+		
+		<s:TextInput id="nameImage" x="0" y="0" width="1" height="1" visible="false" enabled="false"/>
+		
+		<s:TextInput id="numImages" x="0" y="0" width="0" height="0" visible="false" enabled="false"/>
+		<s:TextInput id="empresaInit" x="0" y="0" width="0" height="0" visible="false" enabled="false"/>
+		<s:TextInput id="creditos" x="0" y="0" width="0" height="0" visible="false" enabled="false" />
+		<s:TextInput id="xSize" x="0" y="0" width="0" height="0" visible="false" enabled="true"/>
+		<s:TextInput id="ySize" x="0" y="0" width="0" height="0" visible="false" enabled="true"/>
+		
+		<s:TextInput id="idPaso" x="0" y="0" width="0" height="0" visible="false" enabled="false"/>
+	
+	</mx:Canvas>	
+		
+	
+	
+	
+</s:Application>
+

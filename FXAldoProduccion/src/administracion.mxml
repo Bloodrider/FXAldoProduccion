@@ -1,0 +1,776 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" 
+			   backgroundColor="#FFFFFF" creationComplete="Send(809);"
+			   pageTitle="Administración de Empresas"
+			   applicationComplete="validateUser('administracion.swf');">
+	<fx:Script>
+		<![CDATA[			
+			import flash.events.*;
+			
+			import mx.controls.*;
+			import mx.core.IFlexDisplayObject;
+			import mx.events.*;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.components.TitleWindow;
+			
+			private var num:int = 26148247; 
+			
+			[Bindable]
+			[Embed("assets/corporativo-16.png")]
+			public var uno:Class;
+			
+			[Bindable]
+			[Embed("assets/empresa-16.png")]
+			public var dos:Class;
+
+			[Bindable]
+			[Embed("assets/sucursal-16.png")]
+			public var tres:Class;
+			
+			[Bindable]
+			[Embed("assets/certificados-16.png")]
+			public var cuatro:Class;
+			
+			private function changeEvt(event:Event):void 
+			{
+				label.text = event.currentTarget.selectedItem.@label; 
+				value.text = event.currentTarget.selectedItem.@value;
+				level.text = event.currentTarget.selectedItem.@level;
+				icon.text = event.currentTarget.selectedItem.@icon;
+				idElementTree.text = event.currentTarget.selectedItem.@value;
+				idEmpresaTree.text = event.currentTarget.selectedItem.@idEmpresa;
+				
+				idRegistro.text = "";
+				esMatriz.text = "";
+				var rol:int = parseInt(txtIdRol.text);
+				
+				if(level.text == "1")
+				{					
+					textTitle.text = "EMPRESAS";
+					Send(605);					
+					imageTitle.source = "assets/corporativo-80.png";
+
+					corporativo.visible = true;
+					empresa.visible = false;
+					sucursal.visible = false;
+					certificados.visible = false;
+					series.visible = false;
+					
+					if(rol == 15)
+					{
+						eliminar.enabled = false;
+						crear.enabled = false;
+					}
+					else
+					{
+						eliminar.enabled = true;
+						crear.enabled = true;
+					}
+					editar.enabled = true;
+				}
+				
+				else if(level.text == "2")
+				{
+					textTitle.text = "SUCURSALES";
+					Send(606);
+					imageTitle.source = "assets/empresa-80.png";
+
+					corporativo.visible = false;
+					empresa.visible = true;
+					sucursal.visible = false;
+					certificados.visible = false;
+					series.visible = false;
+					
+					if(rol == 15)
+					{
+						eliminar.enabled = false;
+						crear.enabled = false;
+					}
+					else
+					{
+						eliminar.enabled = true;
+						crear.enabled = true;
+					}
+					editar.enabled = true;
+				}
+				
+				else if(level.text == "3")
+				{
+					textTitle.text = "SUCURSAL";
+					Send(607);
+					imageTitle.source = "assets/sucursal-80.png";
+
+					corporativo.visible = false;
+					empresa.visible = false;
+					sucursal.visible = true;
+					certificados.visible = false;
+					series.visible = false;
+					idSucursal.text = event.currentTarget.selectedItem.@value;
+					
+					if(rol == 15)
+					{
+						eliminar.enabled = false;
+						crear.enabled = false;
+					}
+					else
+					{
+						eliminar.enabled = true;
+						crear.enabled = true;
+					}
+					editar.enabled = true;
+				}
+				
+				else if(level.text == "4")
+				{
+					eliminar.enabled = true;
+					crear.enabled = true;
+					
+					if(value.text == "1")
+					{
+						textTitle.text = "CERTIFICADOS";
+						Send(608);
+						imageTitle.source = "assets/certificados-80.png";
+						
+						corporativo.visible = false;
+						empresa.visible = false;
+						sucursal.visible = false;
+						certificados.visible = true;
+						series.visible = false;
+						editar.enabled = false;
+					}
+					else
+					{
+						textTitle.text = "FOLIOS";
+						Send(609);
+						imageTitle.source = "assets/folios-80.png";
+						
+						corporativo.visible = false;
+						empresa.visible = false;
+						sucursal.visible = false;
+						certificados.visible = false;
+						series.visible = true;
+						editar.enabled = true;
+					}
+				}
+			}
+			
+			private function itemOpenEvt(event:TreeEvent):void 
+			{
+				label.text = event.item.@label; 
+				value.text = event.item.@value;
+				level.text = event.item.@level;
+				icon.text = event.item.@icon;				
+				idRegistro.text = "";
+				esMatriz.text = "";
+				
+				if(level.text == "2")
+				{
+					idEmpresaTree.text = event.item.@value;
+				}
+				
+				if(level.text == "3")
+				{
+					idSucursal.text = event.item.@value;
+				}
+			}
+
+			private function tree_iconFunc(item:Object):Class
+			{
+				var type:String = item.@icon.toString();
+				var iconClass:Class;
+				switch (type) 
+				{
+					case "uno":
+						iconClass = uno;
+						break;
+					case "dos":
+						iconClass = dos;
+						break;
+					case "tres":
+						iconClass = tres;
+						break;
+					case "cuatro":
+						iconClass = cuatro;
+						break;
+				}
+				return iconClass;
+			}
+
+			private function expandTree(evt:MouseEvent):void 
+			{
+				administracionTREE.selectedIndex = 1;
+
+				if (administracionTREE.selectedItem && administracionTREE.dataDescriptor.isBranch(administracionTREE.selectedItem)) 
+				{
+					administracionTREE.expandChildrenOf(administracionTREE.selectedItem, true);
+				}
+			}
+			
+			private function collapseTree(evt:MouseEvent):void 
+			{
+				administracionTREE.selectedIndex = 0;
+				if (administracionTREE.selectedItem && administracionTREE.dataDescriptor.isBranch(administracionTREE.selectedItem)) 
+				{
+					administracionTREE.expandChildrenOf(administracionTREE.selectedItem, false);
+				}
+			}
+
+			private function clic(operacion:int):void
+			{
+				var labelMSG:String = "";
+				var rol:int = parseInt(txtIdRol.text); 
+				
+				if(idRegistro.text.length == 0)
+				{
+					if(operacion == 2)
+					{
+						labelMSG = "editar";
+					}
+					else if(operacion == 3)
+					{
+						labelMSG = "borrar";	
+					}
+					if(operacion == 2 || operacion == 3)
+					{
+						
+						Alert.okLabel = "Aceptar";
+						Alert.show("Debe seleccionar un registro a "+labelMSG+".","Aviso",Alert.OK,null,null, iconAlert);
+						return;
+					}
+				}
+				
+				if(operacion == 1)
+				{
+					if(parseInt(level.text) == 1)
+					{ 					
+						window.text = "2";
+					}
+					else if(parseInt(level.text) == 2 || parseInt(level.text) == 3)
+					{   
+						window.text = "3";
+					}
+					else if(parseInt(level.text) == 4)
+					{
+						if(value.text == "1")
+						{
+							window.text = "4";
+						}
+						else if(value.text == "2")
+						{
+							window.text = "5";
+						}
+					} 
+				}
+				
+				else if(operacion == 2)
+				{
+					if(parseInt(level.text) == 1)
+					{
+						windowUPD.text = "2";
+					}
+					else if(parseInt(level.text) == 2 || parseInt(level.text) == 3)
+					{
+						if(rol == 15)
+							windowUPD.text = "6";
+						
+						else
+							windowUPD.text = "3";
+					}
+					else if(parseInt(level.text) == 4)
+					{
+						windowUPD.text = "5";
+					}
+				}
+				
+				else if(operacion == 3)
+				{
+					eliminarF(parseInt(level.text.toString()));
+				}
+			}
+			
+			[Embed(source="assets/2519-32.png")] 		[Bindable] public var iconQuestion:Class;
+			
+			private function eliminarF(nivel:int):void
+			{
+				switch(nivel)
+				{ 					
+					case 1:  
+					{    
+						if(idRegistro.text.length == 0)
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Para eliminar es necesario primero elegir la Empresa a borrar, favor de seleccionarla.","Aviso",Alert.OK,null,null, iconAlert);
+							return;
+						}
+						Alert.yesLabel = "Sí";
+						Alert.noLabel = "No";
+						Alert.show("¿Al eliminar esta Empresa, se borrarán las Sucursales, Certificados y Folios asociados, desea continuar?", "Aviso", Alert.OK | Alert.CANCEL, this, eliminarEmpresaAceptado, iconQuestion, Alert.OK);
+						break;
+					}
+					case 2:  
+					{						
+						if(idRegistro.text.length == 0)
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Para eliminar es necesario primero elegir la Sucursal a borrar, favor de seleccionarla.","Aviso",Alert.OK,null,null, iconAlert);
+							return;
+						}
+						if(esMatriz.text == "NO")
+						{
+							Alert.yesLabel = "Sí";
+							Alert.noLabel = "No";
+							Alert.show("¿Al eliminar esta Sucursal, se borrarán los Certificados y Folios asociados, desea continuar?", "Aviso", Alert.OK | Alert.CANCEL, this, eliminarSucursalAceptado, iconQuestion, Alert.OK);
+						}
+						else
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("No puede elimiar la Sucursal Matriz.","Aviso",Alert.OK,null,null, iconAlert);
+						}
+						break;
+					}  
+					case 3:  
+					{
+						if(idRegistro.text.length == 0)
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Para eliminar es necesario primero elegir la Sucursal a borrar, favor de seleccionarla.","Aviso",Alert.OK,null,null, iconAlert);
+							return;
+						}
+						if(esMatriz.text == "NO")
+						{
+							Alert.yesLabel = "Sí";
+							Alert.noLabel = "No";
+							Alert.show("¿Al eliminar esta Sucursal, se borrarán los Certificados y Folios asociados, desea continuar?", "Aviso", Alert.OK | Alert.CANCEL, this, eliminarSucursalAceptado, iconQuestion, Alert.OK);
+						}
+						else
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("No puede elimiar la Sucursal Matriz.","Aviso",Alert.OK,null,null, iconAlert);
+						}						
+						break;
+					} 
+					case 4:  
+					{
+						if(value.text == "1")
+						{
+							if(idRegistro.text.length == 0)
+							{
+								Alert.okLabel = "Aceptar";
+								Alert.show("Para eliminar es necesario primero elegir el Certificado a borrar, favor de seleccionarla.","Aviso",Alert.OK,null,null, iconAlert);
+								return;
+							}
+							Alert.yesLabel = "Sí";
+							Alert.noLabel = "No";
+							Alert.show("¿Esta seguro de querer eliminar este Certificado?", "Aviso", Alert.OK | Alert.CANCEL, this, eliminarCertificadoAceptado, iconQuestion, Alert.OK);
+							break;
+						}
+						else
+						{
+							if(idRegistro.text.length == 0)
+							{
+								Alert.okLabel = "Aceptar";
+								Alert.show("Para eliminar es necesario primero elegir el Serie a borrar, favor de seleccionarla.","Aviso",Alert.OK,null,null, iconAlert);
+								return;
+							}
+							Alert.yesLabel = "Sí";
+							Alert.noLabel = "No";
+							Alert.show("¿Esta seguro de querer eliminar esta Serie?", "Aviso", Alert.OK | Alert.CANCEL, this, eliminarFolioAceptado, iconQuestion, Alert.OK);
+							break;
+						}							
+						break;   
+					}
+				}
+			}
+			
+			private function eliminarEmpresaAceptado(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.OK) 
+				{
+					Send(610);
+					Get(599);
+					Send(605);
+					idRegistro.text = "";
+					esMatriz.text = "";
+				}
+			}
+			
+			private function eliminarSucursalAceptado(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.OK) 
+				{
+					Send(611);
+					Send(606);
+					Get(599);
+					Send(607);
+					idRegistro.text = ""; 
+					esMatriz.text = "";
+				}
+			}
+			
+			private function eliminarCertificadoAceptado(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.OK) 
+				{
+					Send(612);
+					Get(599);
+					Send(608);
+					idRegistro.text = "";
+					esMatriz.text = "";
+				}
+			}
+			
+			private function eliminarFolioAceptado(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.OK) 
+				{
+					Send(613);
+					Send(609);
+					Get(599);
+					idRegistro.text = "";
+					esMatriz.text = "";
+				}
+			}
+			
+			protected var tlWindow:wizardConfig;
+			protected var tlWindowUPD:wizardConfigUPD;
+			
+			private function Estatus(event:Event):void
+			{
+				if(event.currentTarget.id == "idRegistro")
+				{	
+					this.value.text = event.currentTarget.text;
+					this.idRegistro.text = event.currentTarget.text;
+					return;
+				}
+				if(event.currentTarget.id == "window")
+				{	
+					this.window.text = event.currentTarget.text;
+					return;
+				}
+				if(event.currentTarget.id == "windowUPD")
+				{	
+					this.windowUPD.text = event.currentTarget.text;
+					return;
+				}
+				if(event.currentTarget.id == "paso")
+				{	
+					this.paso.text = event.currentTarget.text;
+					return;
+				}
+			}
+			
+			private function charger(op:int):void
+			{
+				if(op == 1)
+				{
+					if(Number(window.text) > 0 && Number(window.text) < 7)
+					{
+						tlWindow = PopUpManager.createPopUp(this, wizardConfig, true) as wizardConfig;
+						PopUpManager.centerPopUp(tlWindow);		
+
+						wizardConfig(tlWindow).idSucursal.text = idSucursal.text;
+						wizardConfig(tlWindow).idEmpresa.text = idEmpresaTree.text;
+						wizardConfig(tlWindow).idRegistro.text = idRegistro.text;
+						wizardConfig(tlWindow).window.text = window.text;
+						
+						wizardConfig(tlWindow).paso.addEventListener("valueCommit", Estatus);
+						wizardConfig(tlWindow).window.addEventListener("valueCommit", Estatus);
+					}
+					else if (window.text == "finalizar")
+					{						
+						Get(599);
+						
+						if(paso.text == "2")
+						{
+							Send(605);
+						}
+						else if(paso.text == "3")
+						{
+							if(level.text == "2")
+							{
+								Send(606);	
+							}
+							else if(level.text == "3")
+							{
+								Send(607);
+							}
+						}
+						else if(paso.text == "4")
+						{
+							Send(608);	
+						}
+						else if(paso.text == "5" || paso.text == "6" )
+						{
+							Send(609);
+						}
+						
+						PopUpManager.removePopUp(tlWindow);
+						idRegistro.text = "";
+						esMatriz.text = "";
+						window.text="";
+					}
+					else if (window.text == "cerrar")
+					{		
+						PopUpManager.removePopUp(tlWindow);
+						idRegistro.text = "";
+						window.text="";
+					}
+					else if (window.text == "cancelar")
+					{
+						PopUpManager.removePopUp(tlWindow);
+						window.text="";
+					}
+					else if (window.text == "recargar")
+					{
+						PopUpManager.removePopUp(tlWindow);
+						Send(739);//Preguntar si hay más sucursales sin configurar
+					}
+				}
+				else(op == 2)//Pantllas de Edición.
+				{
+					if(Number(windowUPD.text) > 0 && Number(windowUPD.text) < 7)
+					{
+						tlWindowUPD = PopUpManager.createPopUp(this, wizardConfigUPD, true) as wizardConfigUPD;
+						PopUpManager.centerPopUp(tlWindowUPD);		
+						
+						wizardConfigUPD(tlWindowUPD).idRegistro.text = idRegistro.text;
+						wizardConfigUPD(tlWindowUPD).windowUPD.text = windowUPD.text;
+						
+						wizardConfigUPD(tlWindowUPD).paso.addEventListener("valueCommit", Estatus);
+						wizardConfigUPD(tlWindowUPD).windowUPD.addEventListener("valueCommit", Estatus);
+						wizardConfigUPD(tlWindowUPD).idRegistro.addEventListener("valueCommit", Estatus);
+					}
+					else if (windowUPD.text == "finalizar")
+					{
+						Get(599);
+												
+						if(paso.text == "2")
+						{
+							Send(605);
+						}
+						else if(paso.text == "3")
+						{
+							if(level.text == "2")
+							{
+								Send(606);
+								Send(607);
+							}
+							else if(level.text == "3")
+							{
+								Send(606);
+								Send(607);
+							}
+						}
+						else if(paso.text == "4")
+						{
+							Send(608);	
+						}
+						else if(paso.text == "5" || paso.text == "6" )
+						{
+							Send(609);
+						}
+						
+						PopUpManager.removePopUp(tlWindowUPD);
+						windowUPD.text="";
+					}
+					else if (windowUPD.text == "cancelar")
+					{
+						PopUpManager.removePopUp(tlWindowUPD);
+						windowUPD.text="";
+					}
+				}
+			}
+			
+			private function verificaRol():void
+			{
+				if(parseInt(txtIdRol.text) == 15)
+				{
+					eliminar.enabled = false;
+					crear.enabled = false;
+				}
+				else
+				{
+					eliminar.enabled = true;
+					crear.enabled = true;
+				}
+				editar.enabled = true;
+			}
+			
+			private function configCuenta():void
+			{
+				if(sinCorp.text == "1")
+				{
+					window.text="1";
+				}
+				else
+				{
+					window.text="";
+				}
+			}
+			
+			private function enabledSinCorp():void
+			{
+				if(sinCorp.text == "1")
+				{
+					crear.enabled = false;						
+					editar.enabled = false;
+					eliminar.enabled = false;
+					textTitle.text = "Sin configuración";
+					imageTitle.source = "assets/Setting-icon-48.png";
+					configurar.visible=true;
+				}
+				else if(sinCorp.text == "0")
+				{
+					crear.enabled = true;						
+					editar.enabled = true;
+					eliminar.enabled = true;
+					textTitle.text = "EMPRESAS";
+					imageTitle.source = "assets/corporativo-80.png";
+					configurar.visible=false;
+				}
+			}
+		]]>
+	</fx:Script>
+	<fx:Script source="r3Take.as" />
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center">	<!--E8ECF0-->
+		<s:NavigatorContent width="100%" height="100%" fontWeight="normal" backgroundColor="#FFFFFF">				
+				<mx:HDividedBox x="0" y="0" width="100%" height="100%" paddingTop="0" paddingBottom="0" fontSize="11" paddingLeft="0" paddingRight="0" horizontalGap="8">
+					
+					<s:VGroup x="0" y="0" width="270" height="100%" horizontalAlign="center">
+						<s:VGroup height="100%" paddingLeft="10" paddingRight="0" paddingTop="10" paddingBottom="10" width="100%">
+							<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom">
+								<!--<mx:Button id="expandir" label="Expandir" height="24" click="expandTree(event);" tabIndex="1" width="100" icon="@Embed(source='assets/colaps.png')"/>-->
+								<mx:Button id="collapse" label="Colapsar" height="24" click="collapseTree(event);" tabIndex="1" width="100" icon="@Embed(source='assets/collapse.png')"/>
+							</s:HGroup>
+							
+							<mx:Tree width="100%" height="100%" borderVisible="true" showRoot="false" id="administracionTREE" labelField="@label" iconFunction="tree_iconFunc" iconField="@icon" 
+									 itemOpen="itemOpenEvt(event);" change="changeEvt(event);">
+							</mx:Tree>
+						</s:VGroup>
+					</s:VGroup>	
+					
+					<s:VGroup width="100%" height="100%" paddingBottom="10" paddingRight="10" paddingTop="10" verticalAlign="bottom">							
+						<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingLeft="10" paddingRight="10">
+							<mx:Image id="imageTitle" source="assets/num/blank.png"/>
+							<s:HGroup width="100%" height="80" horizontalAlign="center" verticalAlign="middle">
+								
+								<s:Label fontSize="30" fontWeight="bold"  verticalAlign="middle" textAlign="center" id="textTitle" color="#4A4A4A"/>
+							</s:HGroup>
+						</s:HGroup>
+						<s:HGroup width="100%" horizontalAlign="center" verticalAlign="middle" height="100%" paddingRight="10">
+							<s:Group width="100%" height="100%">
+								<s:Group width="100%" height="100%" id="corporativo" visible="true">
+									<mx:DataGrid id="corporativoDG" variableRowHeight="true" 
+												 click="if(corporativoDG.selectedIndex > -1){
+												 idRegistro.text= corporativoDG.selectedItem['0'].toString();}" 
+												 wordWrap="true" height="100%" dropShadowVisible="false" resizableColumns="true" 
+												 verticalScrollPolicy="auto" horizontalScrollPolicy="on" width="100%" x="6" y="-2">											
+										<mx:columns>
+											<mx:DataGridColumn headerText="idEmpresa" width="0" dataField="0" visible="false"/>
+											<mx:DataGridColumn headerText="RFC" width="120" dataField="1"/>
+											<mx:DataGridColumn headerText="Empresa" width="220" dataField="2"/>
+											<mx:DataGridColumn headerText="Correo Electrónico" width="220" dataField="3"/>
+										</mx:columns>
+									</mx:DataGrid>								
+								</s:Group>
+								<s:Group width="100%" height="100%" id="empresa" visible="false">
+									<mx:DataGrid id="empresaDG" variableRowHeight="true" wordWrap="true" 
+												 click="if(empresaDG.selectedIndex > -1){idRegistro.text=empresaDG.selectedItem['0'].toString();idSucursal.text=empresaDG.selectedItem['0'].toString();esMatriz.text = empresaDG.selectedItem['11'].toString();}" 
+												 height="100%" dropShadowVisible="false" resizableColumns="true" verticalScrollPolicy="auto"  horizontalScrollPolicy="on" width="100%">
+										<mx:columns>
+												<mx:DataGridColumn headerText="idSucursal" width="100" dataField="0" />
+												<mx:DataGridColumn headerText="Nombre" width="120" dataField="1"/>
+												<mx:DataGridColumn headerText="País" width="60" dataField="2"/>
+												<mx:DataGridColumn headerText="CP." width="50" dataField="3"/>
+												<mx:DataGridColumn headerText="Estado" width="80" dataField="4"/>
+												<mx:DataGridColumn headerText="Ciudad" width="100" dataField="5"/>
+												<mx:DataGridColumn headerText="Municipio" width="100" dataField="6"/>
+												<mx:DataGridColumn headerText="Colonia" width="100" dataField="7"/>
+												<mx:DataGridColumn headerText="Calle" width="120" dataField="8"/>
+												<mx:DataGridColumn headerText="No. Ext" width="50" dataField="9"/>
+												<mx:DataGridColumn headerText="No. Int" width="50" dataField="10"/>
+												<mx:DataGridColumn headerText="Es matriz" width="60" dataField="11"/>
+										</mx:columns>
+									</mx:DataGrid>
+								</s:Group>
+								<s:Group width="100%" height="100%" id="sucursal" visible="false">
+									<mx:DataGrid id="sucursalDG" variableRowHeight="true" wordWrap="true" 
+												 click="if(sucursalDG.selectedIndex > -1){idRegistro.text=sucursalDG.selectedItem['0'].toString();idSucursal.text=sucursalDG.selectedItem['0'].toString();esMatriz.text = sucursalDG.selectedItem['11'].toString();}" 
+												 height="100%" dropShadowVisible="false" resizableColumns="true" verticalScrollPolicy="auto" horizontalScrollPolicy="on" width="100%">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idSucursal" width="100" dataField="0" />
+											<mx:DataGridColumn headerText="Nombre" width="120" dataField="1"/>
+											<mx:DataGridColumn headerText="País" width="60" dataField="2"/>
+											<mx:DataGridColumn headerText="CP." width="50" dataField="3"/>
+											<mx:DataGridColumn headerText="Estado" width="80" dataField="4"/>
+											<mx:DataGridColumn headerText="Ciudad" width="100" dataField="5"/>
+											<mx:DataGridColumn headerText="Municipio" width="100" dataField="6"/>
+											<mx:DataGridColumn headerText="Colonia" width="100" dataField="7"/>
+											<mx:DataGridColumn headerText="Calle" width="120" dataField="8"/>
+											<mx:DataGridColumn headerText="No. Ext" width="50" dataField="9"/>
+											<mx:DataGridColumn headerText="No. Int" width="50" dataField="10"/>
+											<mx:DataGridColumn headerText="Es matriz" width="60" dataField="11"/>
+										</mx:columns>
+									</mx:DataGrid>
+								</s:Group>
+								<s:Group width="100%" height="100%" id="certificados" visible="false">
+									<mx:DataGrid id="certificadoDG" variableRowHeight="true" wordWrap="true" 
+												 click="if(certificadoDG.selectedIndex > -1){idRegistro.text=certificadoDG.selectedItem['0'].toString();}" 
+												 height="100%" dropShadowVisible="false" resizableColumns="true" verticalScrollPolicy="auto"  horizontalScrollPolicy="on" width="100%">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idCertificado" width="0" dataField="0" visible="false"/>
+											<mx:DataGridColumn headerText="Número Certificado" width="200" dataField="1"/>
+											<mx:DataGridColumn headerText="Válido desde" width="80" dataField="2"/>
+											<mx:DataGridColumn headerText="Válido hasta" width="80" dataField="3"/>
+										</mx:columns>
+									</mx:DataGrid>
+								</s:Group>						
+								<s:Group width="100%" height="100%" id="series" visible="false">
+									<mx:DataGrid id="serieDG" variableRowHeight="true" wordWrap="true" 
+												 click="if(serieDG.selectedIndex > -1){idRegistro.text=serieDG.selectedItem['0'].toString();}" 
+												 height="100%" dropShadowVisible="false" resizableColumns="true" verticalScrollPolicy="auto" horizontalScrollPolicy="on" width="100%">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idFolio" width="0" dataField="0" visible="false"/>
+											<mx:DataGridColumn headerText="Serie" width="200" dataField="1"/>
+											<mx:DataGridColumn headerText="Folio Inicial" width="80" dataField="2"/>
+											<mx:DataGridColumn headerText="Folio Final" width="80" dataField="3"/>
+											<mx:DataGridColumn headerText="Folio Actual" width="80" dataField="4"/>
+											<mx:DataGridColumn headerText="Número de Aprobación" width="80" dataField="5" visible="false"/>
+											<mx:DataGridColumn headerText="Año de Aprobación" width="80" dataField="6" visible="false"/>
+										</mx:columns>
+									</mx:DataGrid>
+								</s:Group>								
+							</s:Group>
+						</s:HGroup>
+						<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingRight="10">
+							
+							<s:TextInput id="sinCorp" width="100" visible="false" editable="false" enabled="false" valueCommit="enabledSinCorp();" x="333"/>
+							<s:TextInput id="txtIdRol" width="26" visible="false" editable="false" enabled="false" valueCommit="verificaRol();" x="333"/>
+							<s:TextInput id="label" width="18" visible="false" editable="false" enabled="false" x="365"/> 
+							<s:TextInput id="value" width="18" visible="false" editable="false" enabled="false" x="389"/>
+							<s:TextInput id="icon" width="20" visible="false" editable="false" enabled="false" x="413"/> 
+							<s:TextInput id="paso" width="13" visible="false" editable="false" enabled="false" x="439"/>
+							<s:TextInput id="idSucursal" width="21" visible="false" editable="false" enabled="false" x="458"/>
+							
+							<s:TextInput id="esMatriz" width="23" visible="false" editable="false" enabled="false" x="485"/>
+							<s:TextInput id="idRegistro" width="17" visible="false" editable="false" enabled="false" x="514"/> 
+							<s:TextInput id="idEmpresaTree" width="17" visible="false" editable="false" enabled="false" text="1" x="537"/>
+							<s:TextInput id="window" valueCommit="charger(1);" width="18" visible="false" editable="false" enabled="false" x="560"/>
+							<s:TextInput id="windowUPD" valueCommit="charger(2);" width="17" visible="false" editable="false" enabled="false" x="584"/>
+							<s:TextInput id="level" width="15" visible="false" text="1" x="607" editable="false" enabled="false"/>
+							<s:TextInput id="idElementTree" width="14" visible="false" text="1" x="628" editable="false" enabled="false"/>
+							
+							<mx:Button id="configurar" label="Configurar Cuenta" height="30" click="configCuenta();" icon="@Embed(source='assets/config-icon_24.png')" visible="false"/>
+							<mx:Button id="crear" label="Agregar" height="30" click="clic(1);" width="100" icon="@Embed(source='assets/add-icon_24.png')"/>								
+							<mx:Button id="editar" label="Editar" height="30" click="clic(2);" width="100" icon="@Embed(source='assets/upd-24.png')"/>
+							<mx:Button id="eliminar" label="Eliminar" height="30" click="clic(3);" width="100" icon="@Embed(source='assets/delete-icon_24.png')"/>							
+						</s:HGroup>
+					</s:VGroup>
+				</mx:HDividedBox>				
+			</s:NavigatorContent>
+	</s:VGroup>
+</s:Application>

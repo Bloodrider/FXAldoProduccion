@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="100%" height="100%" 
+			   pageTitle="Transferencia de Créditos"
+			   applicationComplete="validateUser('transCreditos.swf');"
+>
+<fx:Style>
+	@namespace s "library://ns.adobe.com/flex/spark";
+	
+	.headerStyle{
+		font-weight:bold;
+		text-align:center;
+		vertical-align:middle;
+	}
+</fx:Style>
+<fx:Script source="validateIsEmpty.as" />
+<fx:Script source="r3Take.as" />
+<fx:Script>
+	<![CDATA[
+		import com.ExcelExports;
+		import com.as3xls.xls.ExcelFile;
+		import com.as3xls.xls.Sheet;
+		
+		import flash.events.KeyboardEvent;
+		
+		import mx.core.IFlexDisplayObject;
+		import mx.core.INavigatorContent;
+		import mx.events.CloseEvent;
+		import mx.events.FlexEvent;
+		import mx.managers.PopUpManager;
+		
+		import spark.events.IndexChangeEvent;  
+		
+		private function operCreditos():void
+		{
+			if(transferir.text.length > 0)
+			{
+				if(transferir.text != "")
+				{
+					if(tipoTransaccion.selectedItem[0].toString() > "0")
+					{
+						if(creditos.text != "0")
+						{
+							var calOper:Number;
+							calOper = Number(creditos.text) - Number(transferir.text);
+							if(calOper >= 0)
+							{
+								disponibles.text = calOper.toString();	
+							}
+							else
+							{
+								Alert.okLabel = "Aceptar";
+								Alert.show("Operación invalida, porque la cantidad de créditos no es suficiente.", "Aviso", Alert.OK, null, msgAcept, iconAlert);
+								disponibles.text = creditos.text;
+							}
+						}
+						else if(creditos.text == "0")
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("No puede realizar esta transacción, porque no tiene créditos disponibles.", "Aviso", Alert.OK, null, msgAcept, iconAlert);
+							disponibles.text = creditos.text;
+						}
+					}
+					else
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("No se puede calcular esta operación, porque aún no ha seleccionado el tipo de transacción.", "Aviso", Alert.OK, null, msgAcept, iconAlert);
+					}
+				}
+			}
+			else if(transferir.text.length == 0)
+			{
+				disponibles.text = creditos.text;
+			}
+		}
+		
+		private function msgAcept(eventObj:CloseEvent):void
+		{
+			if (eventObj.detail==Alert.OK) 
+			{
+				transferir.text = "";
+			}
+		}
+		
+		private function bkCantidad():void
+		{			
+			if(transferir.text.length < 1)
+			{
+				disponibles.text = creditos.text;
+			}
+		}
+		
+		private function getOperCreditos():void
+		{
+			var valsOper:Array = new Array();
+			
+			if (tipoTransaccion.dataProvider.length > 0 )
+			{
+				valsOper   = tipoTransaccion.selectedItem.valueOf().toString().split(",");
+				
+				if(valsOper[1].toString() == "CFDI")
+				{
+					Send(651);
+					tipoOper.text = "CFDI"; 
+				}
+				else if(valsOper[1].toString() == "Timbres")
+				{
+					Send(652);
+					tipoOper.text = "Timbres";
+				}
+			}
+			transferir.text = "";			
+		}
+		
+		private function valYear():void
+		{
+			var date:Date = new Date();
+			anio.value = date.getFullYear();
+		}
+		
+		private function exportXLS():void          
+		{
+			if(GVWCreditos.dataProvider != null)
+			{
+				com.ExcelExports.fromGrid(this.GVWCreditos,"Transacciones.xls", new Object());
+			}
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No hay Registros para Exportar", "Aviso", Alert.OK, null, null, iconAlert);
+				return;
+			}
+		}
+		
+		private function onButton(btn:BorderContainer):void
+		{
+			btn.setStyle("backgroundAlpha",1.0);
+			btn.setStyle("borderVisible",true);
+			btn.setStyle("borderColor",0xcedbef);
+			btn.setStyle("backgroundColor",0xcedbef);										
+		}
+		
+		private function offButton(btn:BorderContainer):void
+		{
+			btn.setStyle("backgroundAlpha",0.0);
+			btn.setStyle("borderVisible",false);
+			btn.setStyle("borderColor",0x0);
+			btn.setStyle("backgroundColor",0x0);
+		}
+		
+		private function charger(oper:int):void 
+		{				
+			convertToMDI(tW1);
+			tW1.visible = true;
+			Send(650);// Obtiene Tipo de transferencias y Emisores.
+			if(oper == 1)
+			{
+				add1.visible = true;
+				upd1.visible = false;
+			}
+			else if(oper == 2)
+			{
+				add1.visible = false;
+				upd1.visible = true;
+			}
+		}
+		
+		private function convertToMDI(titleW:IFlexDisplayObject):void
+		{
+			PopUpManager.addPopUp(titleW, content, true);
+		}
+		
+		private function deleteRow(myDG:mx.controls.DataGrid, stepToDelete:int, stepToReload:int):void
+		{		
+			if(myDG.dataProvider != null)
+			{
+				if(myDG.selectedIndex > -1)
+				{
+					idTW.text = myDG.selectedItem[0].toString();//Obtenemos el ID del Registro a Borrar.
+					Alert.yesLabel="Si";
+					Alert.noLabel="No";
+					Alert.show("¿Esta seguro que desea eliminar el registro?","Aviso",
+						Alert.YES|Alert.NO, this, 
+						function(eventObj:CloseEvent):void
+						{
+							if (eventObj.detail==Alert.YES)
+							{
+								Send(stepToDelete);//Borrar registro.
+								Send(stepToReload);//Acutualizar registros del Grid View.
+							}
+						}, iconDel, Alert.OK);
+				}
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se ha seleccionado ningún Registro de Datos para a Eliminar en el Grid de " + myDG.name.toString(),"Aviso", Alert.OK,null,null,iconAlert)
+				}
+			}
+			else if(myDG.dataProvider == null)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No hay datos en el Grid de " + myDG.name.toString(),"Aviso", Alert.OK,null,null,iconAlert)
+			}
+		}
+		
+		private function copyCtrl(myObject:spark.components.Group, 
+												 myObjectCopy:spark.components.Group):void
+		{
+			var elements:int = 0;
+			var className:String;
+			var currentCtlC:Object;
+			var currentCtl:Object;
+			elements = myObjectCopy.numElements;
+			
+			for(var i:int=0; i < elements; i++)
+			{
+				currentCtlC = myObjectCopy.getElementAt(i);
+				currentCtl  = myObject.getElementAt(i);
+				
+				className = currentCtl.className.toString();
+				
+				if(className == "TextInput")
+				{
+					TextInput(currentCtlC).text = TextInput(currentCtl).text;
+				}
+				if(className == "TextArea")
+				{
+					TextArea(currentCtlC).text = TextArea(currentCtl).text;
+				}
+				if(className == "DateField")
+				{
+					DateField(currentCtlC).text = DateField(currentCtl).text;
+				}
+				if(className == "NumericStepper")
+				{
+					NumericStepper(currentCtlC).value = NumericStepper(currentCtl).value;
+				}
+				if(className == "ComboBox")
+				{
+					spark.components.ComboBox(currentCtlC).dataProvider = spark.components.ComboBox(currentCtl).dataProvider;
+					spark.components.ComboBox(currentCtlC).selectedItem = spark.components.ComboBox(currentCtl).selectedItem;
+					spark.components.ComboBox(currentCtlC).selectedIndex = spark.components.ComboBox(currentCtl).selectedIndex;
+					spark.components.ComboBox(currentCtlC).textInput.text = spark.components.ComboBox(currentCtl).textInput.text;
+				} 
+			}
+		}
+		
+		private function validData(oper:int):void
+		{
+			var valid:String;
+			var validControls:Array = new Array();
+			
+			if(tipoTransaccion.selectedIndex > 0)
+			{
+				tipoTransaccion.errorString = "";
+				
+		 		validControls.push(this.transferir); 
+				
+				valid = validar(validControls);
+				
+				if(valid == "1")
+				{
+					if(emisor.selectedIndex > -1)
+					{
+						emisor.errorString = "";
+						
+						if(oper == 1)
+						{
+							copyCtrl(contentCtl, ctrlCopy);
+							
+							AddUpdSaveTW(0, 665, '666#650');
+						}
+						else if (oper == 2)
+						{
+							copyCtrl(contentCtl, ctrlCopy);
+							
+							AddUpdSaveTW(1, 665, '666#650');	
+						}
+					}
+					else
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show(emisor.name + ", es un campo Obligatorio.", "Aviso", Alert.OK, null, null, iconAlert);
+						emisor.errorString = "*Campo requerido";
+					}
+				}
+			}
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show(tipoTransaccion.name + ", es un campo Obligatorio.", "Aviso", Alert.OK, null, null, iconAlert);
+				tipoTransaccion.errorString = "*Campo requerido";
+			}
+		}
+		
+		private function AddUpdSaveTW(OP:int, 
+									  stepToInsUpd:int,
+									  stepToReload:String):void
+		{
+			
+			var actions:Array = new Array();
+			var i:int;
+			
+			if (OP == 0)//Limpiamos controles para Nuevo Registro.
+			{
+				Send(stepToInsUpd);//Insertamos los Datos Capturados.
+			}
+			else if (OP == 1)//Limpiamos controles y cerrmos el TW.
+			{
+				Send(stepToInsUpd);//Modificamos los Datos Capturados.
+			}
+			
+			actions = stepToReload.split("#");
+			
+			for(i = 0; i < actions.length; i++)
+			{
+				Send(Number(actions[i]));//Ejecutamos la acciones.
+			}
+		}
+		
+		private function closeTW(myTW:TitleWindow, myObject:spark.components.Group):void
+		{
+			PopUpManager.removePopUp(tW1);
+			cleanTW(myObject);
+		}
+		
+		private function cleanTW(myObject:spark.components.Group):void
+		{
+			var elements:int = 0;
+			var className:String;
+			var currentCtl:Object;
+			elements = myObject.numElements;
+			
+			for(var i:int=0; i < elements; i++)
+			{
+				currentCtl = myObject.getElementAt(i);
+				className = currentCtl.className.toString();
+				
+				if(className == "TextInput")
+				{
+					TextInput(currentCtl).text = "";
+					TextInput(currentCtl).errorString = "";
+				}
+				if(className == "TextArea")
+				{
+					TextArea(currentCtl).text = "";
+					TextArea(currentCtl).errorString = "";
+				}
+				if(className == "DateField")
+				{
+					DateField(currentCtl).text = "";
+					DateField(currentCtl).errorString = "";
+				}
+				if(className == "NumericStepper")
+				{
+					NumericStepper(currentCtl).value = 0;
+					NumericStepper(currentCtl).errorString = "";
+				}
+				if(className == "DropDownList")
+				{
+					DropDownList(currentCtl).errorString = "";
+					DropDownList(currentCtl).selectedIndex = -1;
+					DropDownList(currentCtl).selectedItem = null;
+					DropDownList(currentCtl).dataProvider = null;
+				}
+				if(className == "ComboBox")
+				{
+					spark.components.ComboBox(currentCtl).dataProvider = null;
+					spark.components.ComboBox(currentCtl).selectedItem = null;
+					spark.components.ComboBox(currentCtl).selectedIndex = -1;
+					spark.components.ComboBox(currentCtl).textInput.text = "";
+					spark.components.ComboBox(currentCtl).errorString = "";
+				}
+			}
+		}
+
+		private function emisorHandler(event:FlexEvent):void
+		{
+			if(emisor.dataProvider != null)
+			{
+				if(emisor.dataProvider.length > 0)
+				{
+					rfc.text = emisor.selectedItem[2].toString();
+					idEmpresa.text = emisor.selectedItem[0].toString();
+				}
+				else if(emisor.dataProvider.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se encontraron coincidencias para este Beneficiario o no cuenta con esta funcionalidad.", "Aviso", Alert.OK, null, null, iconAlert);
+					emisor.dataProvider = null;
+					emisor.textInput.text = "";
+				}
+			}
+		}
+		
+		private function viewMSG(TW:TitleWindow, Object:spark.components.Group):void
+		{
+			if(valid.text == "1")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show(msgValid.text, "Aviso", Alert.OK, null, null, iconOk);
+				closeTW(TW, Object);
+			}
+			else if(valid.text == "0")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show(msgValid.text, "Aviso", Alert.OK, null, null, iconAlert);
+				cleanTW(Object);
+			}
+		}
+		
+		
+
+		protected function btn010_clickHandler(event:MouseEvent):void
+		{
+			if(mes.selectedIndex > 0 || searchRFC.text.length > 0)
+			{
+				searchRFC.text='';
+				Send(675);
+				Send(666);
+			}
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No hay ningun filtro aplicado.", "Aviso", Alert.OK, null, null, iconAlert);
+			}
+		}
+
+		protected function handlerFilter(event:MouseEvent):void
+		{
+			if(mes.selectedIndex > 0)
+			{
+				Send(674);	
+			}
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Seleccione el mes a filtrar.", "Aviso", Alert.OK, null, null, iconAlert);
+			}
+		}
+
+	]]>
+</fx:Script>
+	<s:Group id="ctrlCopy" x="0" y="0" visible="false">	
+		<s:ComboBox id="tipoTransaccionC" />
+		<s:TextInput id="disponiblesC" />
+		<s:TextInput id="creditosC"/>
+		<s:ComboBox id="emisorC" />
+		<s:TextInput id="transferirC" />
+		<s:TextInput id="observacionesC"/>
+	</s:Group>
+	<s:Group width="100%" height="100%" x="-2" y="4">
+		<s:VGroup visible="true" x="0" y="0" gap="0" width="100%" height="100%" horizontalAlign="center" paddingTop="5">
+			<s:VGroup width="100%" height="100%" gap="0">
+				
+				<s:BorderContainer width="100%" dropShadowVisible="true" borderVisible="false" backgroundAlpha="0.0" height="82" >
+					<s:HGroup width="100%" horizontalAlign="right" verticalAlign="middle" paddingLeft="15" paddingRight="10" x="0" y="0" paddingTop="0" >
+						<s:HGroup width="100%" verticalAlign="middle" paddingLeft="10" gap="0" >
+							<mx:Image source="assets/transfer-icon_64.png" />
+							<mx:Label text="Asignación de Créditos"  fontWeight="bold" fontSize="15" color="#006BBD" />
+							<s:TextInput id="idRegistro" visible="false" enabled="false" width="0"/>
+							<s:TextInput id="idTW" visible="false" enabled="false" width="0"/>
+							<s:TextInput id="tipoOper" visible="false" enabled="false" width="0"/>
+							<s:TextInput id="buscaEmisor" visible="false" valueCommit="if(buscaEmisor.text.length > 3){Send(659);}" width="0"/>
+							<s:TextInput id="rfc" width="0" visible="false"/>
+							<s:TextInput id="idEmpresa" width="0" visible="false"/>
+							<s:TextInput id="msgValid" width="0" visible="false" />
+							<s:TextInput id="valid" width="0" visible="false" valueCommit="viewMSG(tW1, contentCtl);"/>
+							<s:TextInput id="monto" text="0.00" width="0" visible="false" />
+							
+						</s:HGroup>
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="1">
+							<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="1">
+								<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top">
+									<s:BorderContainer click="charger(1);" dropShadowVisible="false" borderVisible="false" height="55" 
+													   cornerRadius="3" backgroundAlpha="0" id="btn004" rollOver="onButton(btn004);" rollOut="offButton(btn004);">
+										<s:HGroup width="100%" horizontalAlign="center" paddingLeft="4" paddingRight="4" verticalAlign="middle" height="52">
+											<mx:Image source="assets/database_48.png"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+							</s:HGroup>
+							<s:Label text="Transferencias" color="#666666" fontWeight="bold" fontSize="13"/>
+						</s:VGroup>
+						<mx:VRule height="70"/>
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="1">
+							<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="1">
+								<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top">
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55" width="200" cornerRadius="3" id="btn007" rollOver="onButton(btn007);" rollOut="offButton(btn007);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" paddingRight="4" paddingLeft="4" gap="7">
+											<s:VGroup gap="0">
+												<s:Label text="Mes" fontSize="11"/>
+												<s:ComboBox id="mes" x="218" y="27" width="100" 
+															creationComplete="Send(675);"/>
+											</s:VGroup>
+											<s:VGroup gap="0">
+												<s:Label text="Año" fontSize="11"/>
+												<s:NumericStepper x="148" y="88" id="anio" width="70" name="Año" minimum="2011" maximum="2100" stepSize="1" creationComplete="valYear();" height="26" />
+											</s:VGroup>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+								<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top">
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55" width="140" cornerRadius="3" id="btn008" rollOver="onButton(btn008);" rollOut="offButton(btn008);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">						
+											<s:VGroup gap="0">
+												<s:Label text="RFC" fontSize="11"/>
+												<s:TextInput id="searchRFC" width="120"/>
+											</s:VGroup>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+							</s:HGroup>
+							<s:Label text="Filtros" color="#666666" fontWeight="bold" fontSize="13"/>
+						</s:VGroup>
+						<mx:VRule height="70"/>
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top">				
+							<s:HGroup>
+								<s:BorderContainer backgroundAlpha="0" click="handlerFilter(event);" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="70" id="btn009" rollOver="onButton(btn009);" rollOut="offButton(btn009);">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+										<mx:Image source="assets/filter_ok_48.png"/>
+									</s:HGroup>
+								</s:BorderContainer>
+							</s:HGroup>
+							<s:Label text="Filtrar" color="#666666" fontWeight="bold" fontSize="13"/>
+						</s:VGroup>
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top">				
+							<s:HGroup>
+								<s:BorderContainer backgroundAlpha="0" click="btn010_clickHandler(event)" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="70" id="btn010" rollOver="onButton(btn010);" rollOut="offButton(btn010);">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+										<mx:Image source="assets/filter_cncl_48.png"/>
+									</s:HGroup>
+								</s:BorderContainer>
+							</s:HGroup>
+							<s:Label text="Quitar Filtros" color="#666666" fontWeight="bold" fontSize="13"/>
+						</s:VGroup>
+						<mx:VRule height="70"/>
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top">				
+							<s:HGroup>
+								<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55" width="130" click="exportXLS();" cornerRadius="3" id="btn011" rollOver="onButton(btn011);" rollOut="offButton(btn011);">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" paddingRight="4" paddingLeft="4">
+										<s:VGroup horizontalAlign="center" gap="0">
+											<mx:Label text="Exportar"/>
+											<mx:Label text="a Excel"/>
+										</s:VGroup>
+										<mx:Button id="btnGenXLS" icon="@Embed(source='assets/Excel-Icon48.png')" height="32" width="60"/>
+									</s:HGroup>
+								</s:BorderContainer>
+							</s:HGroup>
+						</s:VGroup>
+					</s:HGroup>
+				</s:BorderContainer>
+				
+				<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+					<mx:Canvas id="content" width="100%" height="100%">
+						<mx:DataGrid id="GVWCreditos" variableRowHeight="true" wordWrap="true" headerStyleName="headerStyle"
+									 dropShadowVisible="false" sortableColumns="false" resizableColumns="false" 
+									 horizontalScrollPolicy="on" width="100%" height="100%" 
+									 name="Historial de Créditos" borderColor="#000000" creationComplete="Send(666);" rowHeight="40">
+							<mx:columns>
+								<mx:DataGridColumn headerText="Operación" 			dataField="0" width="75" textAlign="center"/>
+								<mx:DataGridColumn headerText="idOperación"	 		dataField="1" visible="false"/>
+								<mx:DataGridColumn headerText="Tipo de Operación"	dataField="2" width="80" />
+								<mx:DataGridColumn headerText="Descripción"			dataField="3" width="255" />
+								<mx:DataGridColumn headerText="Fecha de Operación"	dataField="4" width="80" textAlign="center"/>								
+								<mx:DataGridColumn headerText="Disponibles" 		dataField="6" width="90" textAlign="center"/>
+								<mx:DataGridColumn headerText="Egreso"				dataField="7" width="60" textAlign="center"/>
+								<mx:DataGridColumn headerText="Ingreso" 			dataField="8" width="60" textAlign="center"/>
+								<mx:DataGridColumn headerText="Saldo" 				dataField="9" width="60" textAlign="center"/>
+								<mx:DataGridColumn headerText="Receptor de Créditos" dataField="5" />
+							</mx:columns>
+						</mx:DataGrid>
+						<s:TitleWindow id="tW1" width="600" height="280" visible="false" 
+									   horizontalCenter="0" verticalCenter="0" 
+									   close="closeTW(tW1,contentCtl);"  title="Transferir Créditos">
+							<s:VGroup width="100%" height="100%" paddingBottom="10" paddingLeft="5" paddingRight="5" paddingTop="10">
+								<s:HGroup width="100%" height="100%" horizontalAlign="center" paddingLeft="10">
+									<s:Group id="contentCtl" x="0" y="0" width="100%" height="100%">
+										<s:ComboBox x="10" y="87" id="tipoTransaccion" creationComplete="tipoTransaccion.textInput.editable=false;"
+													change="getOperCreditos();" name="Tipo de Transferencia" width="164" tabIndex="1"/>
+										<s:TextInput id="creditos" valueCommit="disponibles.text = creditos.text" name="Créditos Disponibles" x="10" y="40" width="130" editable="false" visible="false"/>
+										
+										<s:TextInput id="disponibles" name="Créditos Disponibles" x="198" y="88" width="190" editable="false" color="#054A95" fontWeight="bold" fontSize="12" tabIndex="2"/>
+										<s:ComboBox x="10" y="149" id="emisor" toolTip="para buscar el beneficiario debera digitar los primeros 4 caracteres del RFC."
+													itemRenderer="empresasRender" name="El Beneficiario" width="308" 
+													keyDown="buscaEmisor.text = emisor.textInput.text;"
+													valueCommit="emisorHandler(event)" tabIndex="4"/>
+										
+										<s:TextInput id="transferir" name="Cantidad a Transferir" x="412" y="88" width="152" restrict="0-9" 
+													 change="operCreditos();" tabIndex="3"
+													  /><!--focusOut="if(transferir.text.length > 0){operCreditos();}"-->
+											
+										<s:TextInput id="observaciones" name="Observaciones" x="336" y="149" width="228" tabIndex="5"/>
+										
+										<s:HGroup width="100%" verticalAlign="middle" paddingLeft="10" horizontalCenter="0" top="0">
+											<mx:Image source="assets/database_48.png" x="10" y="10"/>
+											<mx:Label text="Transferencias de Créditos" fontWeight="bold" fontSize="13" color="#006BBD" x="52" y="17"/>
+										</s:HGroup>
+										
+										
+										<mx:Label x="11" y="67" text="* Tipo de transferencia" fontWeight="bold"/>
+										<mx:Label x="198" y="68" text="Créditos disponibles" fontWeight="normal"/>
+										<mx:Label x="336" y="129" text="Observaciones" fontWeight="normal"/>
+										<mx:Label x="11" y="129" text="* Beneficiario" fontWeight="bold"/>
+										<mx:Label x="412" y="68" text="* Cantidad a transferir" fontWeight="bold"/>
+									</s:Group>
+								</s:HGroup>
+								<s:HGroup x="0" y="0" width="100%" verticalAlign="middle" gap="14" paddingLeft="10" paddingRight="10" horizontalAlign="right">
+									<s:HGroup width="100%" paddingLeft="5" verticalAlign="middle" >
+										<mx:Label x="11" y="129" text="Los Campos marcados con * son obligatorios" fontWeight="normal" fontSize="12" fontStyle="italic"/>
+									</s:HGroup>
+									<s:TextInput width="20" id="txclvCabms" name="Clave CABMS" visible="false"/>
+									<s:HGroup verticalAlign="middle" horizontalAlign="right">
+										<s:Group>
+											<mx:Button id="add1" click="validData(1);" visible="false" width="100" label="Transferir" icon="@Embed(source='assets/accept-icon_16.png')"  paddingTop="4" paddingBottom="4" tabIndex="6"/>	
+											<mx:Button id="upd1" click="validData(2);" visible="false" width="100" label="Modificar"  icon="@Embed(source='assets/accept_16.png')"  paddingTop="4" paddingBottom="4" tabIndex="6"/>
+										</s:Group>
+									</s:HGroup>
+									<mx:Button id="del1" click="closeTW(tW1,contentCtl);" label="Cancelar" icon="@Embed(source='assets/delete-icon_16.png')" paddingTop="4" paddingBottom="4" width="100" tabIndex="7"/>
+								</s:HGroup>
+							</s:VGroup>
+						</s:TitleWindow>
+					</mx:Canvas>
+				</s:HGroup>
+			</s:VGroup>
+		</s:VGroup>
+	</s:Group>
+</s:Application>

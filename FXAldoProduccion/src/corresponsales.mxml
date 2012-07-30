@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="100%" height="100%" 
+			   pageTitle="Catálogo de Corresponsales">
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		
+		.headerStyle
+		{
+			font-weight:bold;
+			text-align:center;
+			vertical-align:middle;
+		}
+	</fx:Style>
+	<fx:Script source="r3Take.as" />
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;
+			
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+			private var checkPWD:RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)[a-zA-Z0-9\S]{8,}$/;
+			
+			private function selectIdCorresp():void
+			{ 
+				if (gwvCorresponsales.selectedIndex >= 0)
+				{
+					txtIdCorresponsal.text = gwvCorresponsales.selectedItem["0"].toString();
+				}
+			}
+			
+			private function checkMail(myCtrl:TextInput):void
+			{
+				if(expMail.test(myCtrl.text))			
+					myCtrl.errorString = "";
+					
+				else 
+				{				
+					myCtrl.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+				}			
+			}
+			
+			private function filtro():void
+			{
+				if(cmbSelectSucursal.selectedIndex > 0)
+				{
+					Send(933); //Realiza Filtro
+					txtIdCorresponsal.text = "";
+				}
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una Sucursal para trabajar.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbSelectSucursal.errorString = "Seleccione una Sucursal para trabajar";
+				}
+			}
+
+			private function validaMostrarTTWCorresp(op:int):void
+			{
+				//op = 1 > Agregar Corresponsal
+				//op = 2 > Editar Corresponsal
+				//op = 3 > Eliminar Corresponsal
+				
+				if(op == 1)//Agregar Corresponsal
+				{
+					if(cmbSelectSucursal.selectedIndex > 0)
+					{
+						cleanCtrlsTTWCorresp();
+						ttwCorresp.title = "Agregar Corresponsal"; 
+						lblTitulo.text = "Agregar Corresponsal";
+						txtConfirmPass.text = "";
+						txtPass.text = "";
+						txtCuenta.enabled = true;  
+						txtConfirmPass.enabled = true; 
+						txtPass.enabled = true;
+						btnGuardar.visible = true;
+						btnActualizar.visible = false;
+						ttwCorresp.visible = true;
+					}
+					else
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Seleccione la Sucursal que será asociada a su corresponsal.","Aviso",Alert.OK,null,null, iconAlert);
+						return;
+					}
+				}
+				
+				if((op == 2) || (op == 3))
+				{
+					var mensaje:String;
+					if(op == 2)
+						mensaje = "Seleccione el Corresponsal a editar";
+					else if(op == 3)
+						mensaje = "Seleccione el Corresponsal a eliminar";
+					
+					if(txtIdCorresponsal.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show(mensaje,"Aviso",Alert.OK,null,null, iconAlert);
+						return;
+					}
+					
+					if(op == 2) //Editar Corresponsal 
+					{
+						cleanCtrlsTTWCorresp();
+						Send(944);//Trae datos a editar
+						ttwCorresp.title = "Editar Corresponsal"; 
+						lblTitulo.text = "Editar Corresponsal";
+						txtConfirmPass.text = "****";
+						txtPass.text = "****";
+						txtCuenta.enabled = false;  
+						txtConfirmPass.enabled = false; 
+						txtPass.enabled = false;
+						btnGuardar.visible = false;
+						btnActualizar.visible = true;
+						ttwCorresp.visible = true;
+					}
+					
+					if(op == 3) //Eliminar Corresponsal
+					{
+						Alert.yesLabel = "Si";
+						Alert.noLabel = "No";
+						Alert.show("¿Está seguro que desea eliminar el Corresponsal de está Sucursal?","Aviso",Alert.YES|Alert.NO, null, eliminarCorresp, iconDel);
+					}
+				}
+			}
+			
+			private function eliminarCorresp(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(946); //Elimina Corresponsal
+					Send(933); //Carga Grid Corresponsales
+					cleanCtrlsTTWCorresp();
+					txtIdCorresponsal.text = "";
+				}
+			}
+			
+			private function guardarCorresponsal(op:int):void
+			{
+				//op = 1 > Guardar Corresponsal
+				//op = 2 > Actualiar Corresponsal
+				
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(txtCuenta.text.search(patternBlank) != -1 )
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta de acceso al sistema no debe llevar espacios en blanco.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La cuenta de acceso no debe llevar espacios en blanco.";
+					return;
+				}
+				
+				if(txtCuenta.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta de acceso al sistema es un campo requerido, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La Cuenta de acceso al sistema es requerida.";
+					return;
+				}
+				
+				if(txtCuenta.text.length < 5)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta de acceso al sistema debe contener como mínimo 5 caractéres.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCuenta.errorString = "La Cuenta de acceso al sistema debe contener mínimo 5 caractéres.";
+					return;
+				}
+				
+				if(txtNombre.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Nombre es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtNombre.errorString = "El Nombre es requerido.";
+					return;
+				}
+				if(txtApPatern.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Apellido Paterno es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtApPatern.errorString = "El Apellido Paterno es requerido.";
+					return;
+				}	
+				
+				if(txtMail.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El E-mail es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMail.errorString = "El E-mail es requerido.";
+					return;					
+				}
+				
+				if(!expMail.test(txtMail.text))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato de Correo Electrónico es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMail.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+					return;
+				}
+				
+				if(txtIdCvePais.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Inserte un País válido.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbPais.errorString = "País inválido";
+					return;
+				}
+				
+				if(op == 1)
+				{
+					if(txtPass.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La contraseña es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtPass.errorString = "La contraseña es un campo requerido.";
+						return;
+					}
+					
+					if(txtConfirmPass.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La confirmación de contraseña es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtConfirmPass.errorString = "La confirmación de contraseña es un campo requerido.";
+						return;
+					}
+					
+					if(txtPass.text != txtConfirmPass.text)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Las dos contraseñas deben de ser iguales, favor de corregirlas.","Aviso",Alert.OK,null,null, iconAlert);
+						txtConfirmPass.errorString = "Las dos contraseñas deben de ser iguales.";
+						return;
+					}
+					
+					if (txtPass.text.length > 0)
+					{
+						if(!checkPWD.test(txtPass.text))
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("La contraseña no contiene con los requisitos mínimos de seguridad.","Aviso",Alert.OK,null,null, iconAlert);
+							
+							txtPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+								"“al menos 8 Caracteres”\n" + 
+								"“debe incluir al menos una Mayúscula”\n" + 
+								"“debe incluir al menos un Número”\n" + 
+								"“y debe incluir al menos un Caracter Especial”";
+							return;
+						}
+					}
+					
+					if (txtConfirmPass.text.length > 0)
+					{
+						if(!checkPWD.test(txtConfirmPass.text))
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("La contraseña no contiene con los requisitos mínimos de seguridad.","Aviso",Alert.OK,null,null, iconAlert);
+							
+							txtConfirmPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+								"“al menos 8 Caracteres”\n" + 
+								"“debe incluir al menos una Mayúscula”\n" + 
+								"“debe incluir al menos un Número”\n" + 
+								"“y debe incluir al menos un Caracter Especial”";
+							return;
+						}
+					}	
+
+					if(parseInt(existeUser.text) == 0)
+					{
+						Send(943); //Guarda Corresponsal
+						Send(956); //Envia correo electronico a corresponsal 
+						Send(933); //Carga Grid Corresponsales
+						
+						ttwCorresp.visible = false;
+						txtIdCorresponsal.text = "";
+					}
+					
+					else if(existeUser.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("La Cuenta es inválida, ingresela de nuevo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtCuenta.errorString = "Ingrese de nuevo la cuenta.";
+						return;
+					}
+						
+					else if(parseInt(existeUser.text) >= 1)
+					{
+						existUser();
+					}
+				}
+					
+				else if(op == 2)
+				{
+					Send(945); //Actualizar Usuario
+					Send(933); //Carga Grid Corresponsales
+					
+					ttwCorresp.visible = false;
+					txtIdCorresponsal.text = "";
+				}				
+			}
+			
+			private function isUserValid():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				existeUser.text == "";
+				if(txtCuenta.text.search(patternBlank) != -1 )
+				{
+					txtCuenta.errorString = "La Cuenta no debe llevar espacios en blanco";	
+					return;
+				}
+					
+				else if(txtCuenta.text.length == 0)
+				{
+					txtCuenta.errorString = "La Cuenta es requerida";	
+					return;
+				}
+					
+				else
+					txtCuenta.errorString = "";	
+				
+				Send(930); //Verifica que no exista el Usuario
+			}
+			
+			private function existUser():void
+			{
+				if(parseInt(existeUser.text) >= 1)
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("Ya existe registro de éste Usuario en el sistema. Intente coon otra cuenta de Usuario.","Aviso",Alert.OK, null, null, iconAlert);
+					txtCuenta.errorString = "Ya existe registro de éste Usuario en el sistema. Intente con otra cuenta.";
+				}
+			}
+			
+			private function checkPass(chkCtrl:TextInput):void
+			{            
+				if(checkPWD.test(chkCtrl.text))
+				{
+					chkCtrl.errorString = "";
+				}
+				else
+				{    
+					chkCtrl.errorString  =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Mayúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un Caracter Especial”";
+					return;     
+				}
+				
+				if(txtConfirmPass.text.length > 0 && txtPass.text.length > 0)
+				{
+					if(txtPass.text == txtConfirmPass.text)
+					{
+						txtPass.errorString = "";
+						txtConfirmPass.errorString = "";
+					}
+					else
+					{				
+						txtPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+						txtConfirmPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+					}	
+				}	
+			}
+			
+			private function cleanCtrlsTTWCorresp():void
+			{					
+				txtMail.text = "";
+				txtNombre.text = "";
+				txtConfirmPass.text = "";
+				txtPass.text = "";
+				txtApMatern.text = "";
+				txtApPatern.text = "";
+				txtCuenta.text = "";
+				txtIdCvePais.text = "";
+				existeUser.text = "";
+				cmbPais.selectedIndex = 0;
+				CHKcert.selected = false;
+			}
+			
+			private function buscaPais():void
+			{
+				if(txtIdCvePais.text.length == 2)
+				{
+					cmbPais.itemToLabel(txtIdCvePais.text);
+					//cmbPais.itemToLabel(txtIdCvePais.text).indexOf(txtIdCvePais.text,2);
+				}
+			}
+			
+			private function buscaCvePais():void
+			{
+				txtIdCvePais.text = "";
+				if(cmbPais.selectedIndex > 0)
+					txtIdCvePais.text = cmbPais.selectedItem[2].toString();
+			}
+		]]>
+	</fx:Script>
+	<s:BorderContainer width="100%" height="100%" backgroundImage="@Embed(source='assets/gray20_o.png')" backgroundImageFillMode="repeat" left="10" top="10" bottom="10" right="10" borderVisible="false" >
+		<s:VGroup width="100%" height="100%" horizontalAlign="left" verticalAlign="top" >
+			<s:HGroup width="100%" horizontalAlign="left" verticalAlign="middle" paddingLeft="10">
+				<mx:Image source="assets/115_68.png" />
+				<s:Label text="Corresponsales" fontWeight="bold"/>
+				
+				<s:HGroup width="100%" horizontalAlign="right" verticalAlign="middle" paddingRight="15">
+					<s:VGroup width="100%" horizontalAlign="right" verticalAlign="bottom">
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10">
+							<s:Label text="*Sucursal:  "  height="24" verticalAlign="middle" fontWeight="bold"/>
+							<s:ComboBox creationComplete="Send(905);" id="cmbSelectSucursal" width="290" height="24" focusOut="if(cmbSelectSucursal.selectedIndex > 0) cmbSelectSucursal.errorString=''"/>
+						</s:HGroup>
+						<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingRight="10">
+							<s:Label text="Cuenta:"  height="24" verticalAlign="middle"/>
+							<s:TextInput id="txtFiltroAccount" width="100" tabIndex="1" height="24" x="257"/>
+							<s:Label text="Nombre:"  height="24" verticalAlign="middle"/>
+							<s:TextInput id="txtFiltroName" width="100" tabIndex="1" height="24" x="443"/>
+							<s:Label text="Mail:"  height="24" verticalAlign="middle"/>
+							<s:TextInput id="txtFiltroMail" width="100" tabIndex="1" height="24" x="606"/>
+							<s:Label text="Pais:"  height="24" verticalAlign="middle"/>
+							<s:TextInput id="txtFiltroPais" width="100" tabIndex="1" height="24" x="772"/>
+						</s:HGroup>
+					</s:VGroup>
+					<s:VGroup horizontalAlign="center" verticalAlign="middle" paddingRight="4" paddingLeft="4" paddingTop="4" width="127" x="842">
+						<s:BorderContainer click="filtro();" dropShadowVisible="true" height="64" tabIndex="2" 
+										   cornerRadius="3" id="btn002"  borderVisible="false" 
+										   backgroundColor="#F1F1F1" borderColor="#F1F1F1" width="130">
+							<s:Group width="100%" height="100%">
+								<s:Label text="Buscar Corresponsal" color="#4C4C4C" fontWeight="bold" fontSize="12" x="7" y="6"/>
+								<mx:Image source="assets/86_48.png"  width="51" height="44" x="40" y="18"/>
+							</s:Group>
+						</s:BorderContainer>
+					</s:VGroup>
+				</s:HGroup>
+			</s:HGroup>
+			
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" verticalAlign="middle" >
+				<mx:DataGrid id="gwvCorresponsales" wordWrap="true" variableRowHeight="true" click="selectIdCorresp();" liveScrolling="true" height="100%" width="100%">
+					<mx:columns>
+						<mx:DataGridColumn headerText="idCorresponsal" 			dataField="0" width="50" visible="false"/>
+						<mx:DataGridColumn headerText="Cuenta de Usuario" 		dataField="1" width="40"/>
+						<mx:DataGridColumn headerText="Nombre" 					dataField="2" width="50"/>
+						<mx:DataGridColumn headerText="Apellido Paterno" 		dataField="3" width="50"/>
+						<mx:DataGridColumn headerText="Apellido Materno" 		dataField="4" width="50"/>
+						<mx:DataGridColumn headerText="Email" 					dataField="5" width="50"/>
+						<mx:DataGridColumn headerText="País" 					dataField="6" width="50"/>
+						<mx:DataGridColumn headerText="Estatus" 				dataField="7" width="50"/>	
+					</mx:columns>
+				</mx:DataGrid>
+			</s:VGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="left" verticalAlign="middle">
+				<s:HGroup width="100%" height="100%" horizontalAlign="right" verticalAlign="top" paddingRight="5">
+					<s:TextInput id="txtIdCorresponsal" width="38" maxChars="50" visible="false" enabled="false" editable="false"/>
+					<mx:Button icon="@Embed(source='assets/del-24.png')" label="Eliminar" click="validaMostrarTTWCorresp(3);" height="24" tabIndex="6" width="100" toolTip="Eliminar Usuario" x="865"/>
+					<mx:Button icon="@Embed(source='assets/edit-24.png')" label="Editar" click="validaMostrarTTWCorresp(2);" height="24" tabIndex="5" width="100" toolTip="Editar E-Mail" x="956"/>
+					<mx:Button icon="@Embed(source='assets/add_24.png')" label="Agregar" click="validaMostrarTTWCorresp(1);" height="24" tabIndex="4" width="100" toolTip="Agregar Usuario" x="1047"/>
+				</s:HGroup>
+			</s:HGroup>	
+			
+		</s:VGroup>
+		
+		<s:TitleWindow width="628" height="329" title="" id="ttwCorresp" visible="false" close="ttwCorresp.visible=false;cleanCtrlsTTWCorresp();txtIdCorresponsal.text = ''" horizontalCenter="0" verticalCenter="39">
+			<s:Group width="626" height="100%">
+				<s:Label text="*Cuenta de acceso" x="34" y="81"/>
+				<s:Label id="lblTitulo" text="" x="114" y="41"/>
+				<s:Label text="*E-mail" x="34" y="130"/>
+				<s:Label text="*Contraseña" x="35" y="184"/>
+				<s:Label text="*Nombre" x="179" y="80"/>
+				<s:Label text="*Confirmación Contraseña" x="180" y="184"/>
+				<s:Label text="*Apellido Paterno" x="311" y="80"/>
+				<s:Label text="Apellido Materno" x="443" y="80"/>
+				<s:Label text="Todos los campos marcados con *, son obligatorios." x="37" y="259" fontWeight="bold"/>
+				<s:Label x="181" y="129" text="*Clave"/>
+				<s:Label x="243" y="128" text="*País"/>
+				
+				<s:TextInput x="34" y="143" id="txtMail" change="if(txtMail.text.length != 0) checkMail(txtMail);" width="135" tabIndex="44"/>
+				<s:TextInput x="179" y="93" id="txtNombre" width="120" tabIndex="41" focusOut="if(txtNombre.text.length > 0) txtNombre.errorString='';"/>
+				<s:TextInput x="180" y="197" id="txtConfirmPass" change="if(txtPass.text.length != 0) checkPass(txtPass)" width="153" displayAsPassword="true" tabIndex="49"/>
+				<s:TextInput x="35" y="197" id="txtPass" change="if(txtPass.text.length != 0) checkPass(txtPass)" width="135" displayAsPassword="true" tabIndex="48"/>
+				<s:TextInput x="443" y="93" id="txtApMatern" width="120" tabIndex="43"/>
+				<s:TextInput x="311" y="93" id="txtApPatern" width="120" tabIndex="42" focusOut="if(txtApPatern.text.length > 0) txtApPatern.errorString='';"/>
+				<s:TextInput x="34" y="94" id="txtCuenta" focusOut="isUserValid();" width="135" tabIndex="40" maxChars="100" change="existeUser.text=''"/>
+				<s:TextInput x="181" y="142" width="50" name="Clave de País" id="txtIdCvePais" change="buscaPais();" restrict="A-Za-z" typographicCase="uppercase" maxChars="20" tabIndex="45" enabled="false"/>
+				<s:ComboBox x="243" y="141" width="188" name="País" id="cmbPais" creationComplete="Send(942);" change="buscaCvePais();" tabIndex="46" focusOut="if(cmbPais.selectedIndex > 0) cmbPais.errorString=''"/>
+				
+				<mx:Button id="btnGuardar" x="470" y="221" icon="@Embed(source='assets/accept-icon_24.png')" label="Guardar" click="guardarCorresponsal(1);" height="24"  width="94" toolTip="Guardar Usuario" visible="false"/>
+				<mx:Button id="btnActualizar" x="470" y="221" icon="@Embed(source='assets/accept-icon_24.png')" label="Actualizar" click="guardarCorresponsal(2);" height="24" width="93" toolTip="Actualizar Usuario" visible="false"/>
+				<s:TextInput id="existeUser" width="38" maxChars="50" enabled="false" editable="false" visible="false" valueCommit="existUser();"/>
+				<mx:Image source="assets/86_68.png"  x="30" y="7"/>
+				<s:CheckBox x="447" y="141" label="Certificado" id="CHKcert" tabIndex="47" selected="false"/>
+			</s:Group>	
+		</s:TitleWindow>
+		
+	</s:BorderContainer>
+</s:Application>

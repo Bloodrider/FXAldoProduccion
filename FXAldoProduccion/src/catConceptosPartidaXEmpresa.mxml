@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('catConceptosPartidaXEmpresa.swf');" pageTitle="Catálogo de Partidas por Empresa">
+
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;	
+			import mx.controls.Alert;
+			import mx.events.*;
+			
+			private function selectConceptosxEmpresa():void
+			{
+				if (gvwConceptosxEmp.selectedItem != null)
+					txtIdConcepto.text = gvwConceptosxEmp.selectedItem["0"].toString();
+			} 
+			
+			private function validaEmpresa():void
+			{
+				if (cmbSelectEmpresa.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una empresa.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				Send(693);//carga Data Grid Conceptos x Empresa
+			}
+			
+			private function selectConcepto():void
+			{
+				if(txtIdConcepto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione el Concepto de Partida a eliminar.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+			
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Desea eliminar el Concepto de Partida de la empresa?","Aviso",Alert.YES|Alert.NO, null, eliminarConcepto, iconAlert);
+			}
+			
+			private function eliminarConcepto(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(694); //Elimina Concepto de Partida
+					Send(693); //Actualiza GridView Conceptos x Empresa
+				}	
+			}
+
+			private function guardarConcepto():void
+			{
+				if(txtConcepto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Concepto es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtConcepto.errorString = "Concepto es un campo obligatorio.";
+					return;
+				}
+				
+				Send(695); //Inserta Concepto x Empresa
+				Send(693); //Actualiza GridView Conceptos
+				ttwAgregarConcepto.visible = false;
+			}
+			
+			private function cleanCtrls():void
+			{
+				gvwConceptosxEmp.dataProvider = null;
+				cmbSelectEmpresa.selectedIndex = 0;
+				txtIdConcepto.text = "";
+			}
+			
+			private function muestraTTWConcepto():void
+			{
+				if (cmbSelectEmpresa.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para poder agregar Conceptos de Partida seleccione una empresa.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				txtConcepto.text = "";
+				ttwAgregarConcepto.visible = true;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Conceptos Facturizate" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="15" paddingBottom="5">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">	
+					<s:HGroup width="100%" horizontalAlign="left" verticalAlign="middle">
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingRight="10" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="CONCEPTOS DE PARTIDA" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="*Seleccione Empresa" fontWeight="bold" verticalAlign="middle"/>
+							<s:ComboBox creationComplete="Send(584);" id="cmbSelectEmpresa" width="325" tabIndex="1" height="24" x="185"/>
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="validaEmpresa();" height="24" tabIndex="3" width="100"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrls();" height="24" tabIndex="4" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<mx:DataGrid id="gvwConceptosxEmp" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectConceptosxEmpresa();" >
+							<mx:columns>
+								<mx:DataGridColumn headerText="idConceptosxEmp" 			dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="idEmpresa" 					dataField="1" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Concepto" 		dataField="2" width="50" visible="true"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+						<s:TextInput id="txtIdConcepto" width="38" maxChars="50" visible="false" enabled="false"/>
+						
+						<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="selectConcepto();" height="24" tabIndex="7" width="100" toolTip="Eliminar Concepto"/>
+						<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="muestraTTWConcepto();" height="24" tabIndex="5" width="100" x="673" toolTip="Agregar Concepto"/>
+					</s:HGroup>
+				</s:VGroup>
+				
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>
+	
+	<s:TitleWindow width="454" height="176" title="Agregar Concepto Facturizate" id="ttwAgregarConcepto" visible="false" close="ttwAgregarConcepto.visible=false;" horizontalCenter="0" verticalCenter="-37">
+		<s:Group width="100%" height="100%">
+			
+			<s:Label x="37" y="36" text="* Concepto" fontWeight="bold"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="37" y="113" fontWeight="bold"/>
+			
+			<s:TextInput x="37" y="50"  id="txtConcepto" width="250" height="24" maxChars="50" tabIndex="20"  focusOut="if(txtConcepto.text.length > 0) txtConcepto.errorString='';"/>
+			
+			<mx:Button id="btnGuardaConcepto" x="305" y="50" icon="@Embed(source='newIcons/add_24.png')" label="Guardar" click="guardarConcepto();" height="24" tabIndex="41" width="115" toolTip="Guardar Concepto de Partida"/>
+	
+		</s:Group>
+	</s:TitleWindow>	
+</s:Application>

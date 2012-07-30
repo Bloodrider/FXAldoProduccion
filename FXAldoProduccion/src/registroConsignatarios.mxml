@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   minWidth="955" minHeight="600" xmlns:file="com.flashdev.file.*" 
+			   xmlns:utils="com.r3Take.utils.*"
+			   pageTitle="Registro Consignatarios">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Panel y="0" width="1043" height="680" title="Registro de Consignatarias" fontSize="14" color="#0B5798" horizontalCenter="0">
+		<s:Group x="12" y="10" width="1017" height="547" contentBackgroundColor="#FFFFFF">
+			<s:Group x="0" y="-2" width="1017" height="72">
+			</s:Group>
+			<s:Group x="-1" y="96" width="1017" height="137" contentBackgroundAlpha="1.0" contentBackgroundColor="#FFFFFF">
+				<s:TextInput x="130" y="10" width="546"/>
+				<s:Label x="40" y="16" text="*Razón Social:" fontSize="12" width="83" color="#000000" textAlign="right"/>
+				<s:Label x="693" y="16" text="*RFC:" width="51" fontSize="12" color="#000000"/>
+				<s:TextInput x="735" y="10" maxChars="13" width="141"/>
+				<s:Label x="44" y="47" text="*Calle:" color="#000000" width="44" fontSize="12"/>
+				<s:TextInput x="130" y="41" width="182"/>
+				<s:Label x="320" y="46" text="*No. Ext:" width="59" color="#000000" fontSize="12"/>
+				<s:TextInput x="378" y="40" width="71"/>
+				<s:Label x="464" y="46" text="No. Int:" width="55" color="#000000" fontSize="12"/>
+				<s:TextInput x="517" y="40" width="71"/>
+				<s:Label x="602" y="46" text="*Colonia:" width="59" color="#000000" fontSize="12"/>
+				<s:TextInput x="666" y="40" width="210"/>
+				<s:Label x="44" y="81" text="*Cód. Postal:" color="#000000" width="105" fontSize="12"/>
+				<s:TextInput x="130" y="74" width="75"/>
+				<s:Label x="223" y="81" text="*Deleg./Mpio:" width="95" color="#000000" fontSize="12"/>
+				<s:ComboBox x="301" y="73" width="167"/>
+				<s:Label x="483" y="80" text="*Estado:" width="65" color="#000000" fontSize="12"/>
+				<s:ComboBox x="538" y="72" width="149"/>
+				<s:Label x="698" y="77" text="*País:" fontSize="12" color="#000000" width="41"/>
+				<s:ComboBox x="735" y="70" width="141"/>
+				<s:Label x="45" y="110" text="*Teléfono:" fontSize="12" color="#000000"/>
+				<s:TextInput x="131" y="103" width="29"/>
+				<s:TextInput x="164" y="103" width="107"/>
+				<s:Label x="280" y="110" text="Extensión:" fontSize="12" color="#000000" width="61"/>
+				<s:TextInput x="338" y="103" width="73"/>
+				<s:Label x="423" y="110" text="Fax:" fontSize="12" color="#000000"/>
+				<s:TextInput x="454" y="103" width="38"/>
+				<s:TextInput x="497" y="103" width="116"/>
+				<mx:Image x="895" y="10" source="newIcons/corporativo-80.png"/>
+			</s:Group>
+			<s:Label x="10" y="76" text="Datos Generales de la Empresa" width="337" fontFamily="Courier New" color="#000000"/>
+			<s:Label x="11" y="239" text="Datos del Representante Legal" width="337" fontFamily="Courier New" color="#000000"/>
+			<s:Group x="-1" y="259" width="1017" height="134">
+				<s:Label x="46" y="16" text="*RFC:" fontFamily="Arial" fontSize="12" color="#000000"/>
+				<s:TextInput x="125" y="10" width="135"/>
+				<s:Label x="267" y="18" text="*Nombre(s):" fontFamily="Arial" fontSize="12" color="#000000"/>
+				<s:TextInput x="338" y="10" width="143"/>
+				<s:Label x="489" y="17" text="*Ap. Paterno:" fontFamily="Arial" fontSize="12" color="#000000"/>
+				<s:TextInput x="565" y="10" width="120"/>
+				<s:Label x="694" y="18" text="*Ap. Materno:" fontFamily="Arial" fontSize="12" color="#000000"/>
+				<s:TextInput x="772" y="10" width="104"/>
+				<s:Label x="44" y="46" text="*Calle:" color="#000000" width="44" fontSize="12"/>
+				<s:TextInput x="130" y="40" width="182"/>
+				<s:Label x="320" y="45" text="*No. Ext:" width="59" color="#000000" fontSize="12"/>
+				<s:TextInput x="378" y="39" width="71"/>
+				<s:Label x="464" y="45" text="No. Int:" width="55" color="#000000" fontSize="12"/>
+				<s:TextInput x="517" y="39" width="71"/>
+				<s:Label x="602" y="45" text="*Colonia:" width="59" color="#000000" fontSize="12"/>
+				<s:TextInput x="666" y="39" width="210"/>
+				<s:Label x="44" y="79" text="*Cód. Postal:" color="#000000" width="105" fontSize="12"/>
+				<s:TextInput x="130" y="72" width="75"/>
+				<s:Label x="223" y="79" text="*Deleg./Mpio:" width="95" color="#000000" fontSize="12"/>
+				<s:ComboBox x="301" y="71" width="167"/>
+				<s:Label x="483" y="78" text="*Estado:" width="65" color="#000000" fontSize="12"/>
+				<s:ComboBox x="538" y="70" width="149"/>
+				<s:Label x="698" y="75" text="*País:" fontSize="12" color="#000000" width="41"/>
+				<s:ComboBox x="735" y="68" width="141"/>
+				<s:Label x="44" y="108" text="*Teléfono:" fontSize="12" color="#000000"/>
+				<s:TextInput x="130" y="101" width="29"/>
+				<s:TextInput x="163" y="101" width="107"/>
+				<s:Label x="279" y="108" text="Extensión:" fontSize="12" color="#000000" width="61"/>
+				<s:TextInput x="337" y="101" width="73"/>
+				<s:Label x="422" y="108" text="Fax:" fontSize="12" color="#000000"/>
+				<s:TextInput x="453" y="101" width="38"/>
+				<s:TextInput x="496" y="101" width="116"/>
+				<s:Label x="624" y="105" text="*Email:" fontSize="12" color="#000000"/>
+				<s:TextInput x="672" y="100" width="204"/>
+				<mx:Image x="899" y="10" source="assets/3830-64.png"/>
+			</s:Group>
+			<mx:HRule x="0" y="256" width="1017"/>
+			<s:Label x="10" y="401" text="Documentos" fontSize="14" color="#000000" width="254" fontFamily="Courier New"/>
+			<s:Group x="0" y="421" width="1017" height="109">
+				<mx:HRule x="0" y="-1" width="1016"/>
+				<s:Label x="44" y="10" text="Acta Consitutiva:" fontFamily="Arial" fontSize="12" color="#000000"/>
+				<s:Label x="39" y="42" text="Poder del Representante legal:" fontFamily="Arial" fontSize="12" color="#000000"/>
+				<s:Label x="41" y="72" text="Copia de Identificación del Representante Legal:" fontFamily="Arial" fontSize="12" color="#000000"/>
+				<s:TextInput x="356" y="5"/>
+				<s:TextInput x="356" y="35"/>
+				<s:TextInput x="356" y="66"/>
+				<mx:Button id="ubicaActaConstitutiva" width="24" height="24" label=""   icon="@Embed(source='assets/search_24.png')" x="504" y="5"/>
+				<mx:Button id="ubicaActaConstitutiva2" width="24" height="24" label=""   icon="@Embed(source='newIcons/delete_24.png')" x="530" y="5"/>
+				<mx:Button id="ubicaActaConstitutiva0" width="24" height="24" label=""   icon="@Embed(source='assets/search_24.png')" x="504" y="35"/>
+				<mx:Button id="ubicaActaConstitutiva1" width="24" height="24" label=""   icon="@Embed(source='assets/search_24.png')" x="504" y="66"/>
+				<mx:Button id="ubicaActaConstitutiva3" width="24" height="24" label=""   icon="@Embed(source='newIcons/delete_24.png')" x="530" y="35"/>
+				<mx:Button id="ubicaActaConstitutiva4" width="24" height="24" label=""   icon="@Embed(source='newIcons/delete_24.png')" x="530" y="65"/>
+				<mx:Button id="ubicaActaConstitutiva5" width="116" height="24" label="Registrar"   icon="@Embed(source='newIcons/accept_24.png')" x="758" y="62"/>
+				
+			</s:Group>
+		</s:Group>
+		<mx:HRule x="12" y="104" width="1017"/>
+	</s:Panel>
+</s:Application>

@@ -1,0 +1,1470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:ns1="com.r3Take.utils.*"	
+			        xmlns:flexiframe="com.google.code.flexiframe.*"    
+			    width="100%" height="100%" currentState="default" creationComplete="Send(795);Send(808);"
+			   xmlns:components="flexsamples.components.*"   >
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		
+		.headerStyle{
+			font-weight:bold;
+			text-align:center;
+			vertical-align:middle;
+		}
+	</fx:Style>
+	
+	<fx:Script source="validateIsEmpty.as" />
+	<fx:Script source="r3Take.as" />
+	<fx:Style source="styles/CollapsibleAccordionStyle.css"/>
+	<fx:Script>
+		<![CDATA[
+			import com.ExcelExports;
+			//import com.devaldi.controls.flexpaper.*;
+			
+			import flash.net.URLRequest;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Canvas;
+			import mx.core.DragSource;
+			import mx.core.IFlexDisplayObject;
+			import mx.effects.easing.Bounce;
+			import mx.events.CloseEvent;
+			import mx.events.DataGridEvent;
+			import mx.events.DragEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.managers.DragManager;
+			import mx.managers.PopUpManager;
+			
+			import qs.controls.DragTileJCL;
+			
+			[Embed(source="assets/plop.mp3")]
+			public var soundClass:Class;
+			
+			public var dragTileExplication:String="<html><font color='#000000' size='10'>1. Arrastre el elemento de la Tabla de Datos hacia los espacios en blanco correspondientes a las áreas Administrativas de la Empresa Receptora que se encuentra en la parte inferior de esta pantalla.<br>2. Si desea enviar el CFD / CFDI a los correos electrónicos de dos Áreas Administrativas al mismo tiempo basta con mantener apretado la tecla <b>SHIFT</b> y arrastrar el ícono del XML a la segunda Área Administrativa destino.<br>3. Se pueden mover los íconos entre Áreas Administrativas arrastrándo los respectivos íconos entre las áreas en blanco de la parte inferior. <br>4. Para mayor detalle dirigirse al ícono de <b>'?'</b> de la parte superior derecha de esta ventana para ver un video del uso de esta pantalla.</font> </html>";
+			
+			//private var str:String ="<?xml version='1.0' encoding='UTF-8'?><cfdi:Comprobante xsi:schemaLocation='http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv3.xsd' version='3.0' serie='A' folio='1' fecha='2011-04-13T22:02:00' sello='lNhDuRjsDk4Qt4K0FCCoqTVcjxCdf7sdYCCphbGoiO7M0nRPnWrSZEf3hkzIV9mQVO/SLMIrPUa8gVUS71FjIbZRtzGeWW8SvayB12n5Tt+0ta1eQEl1MJtLtnN6yvD7QBiVj2U2lr89UmSlguvvT02TmeOGo7+Li35bq4FRah4=' formaDePago='Pago en una sola exhibicion' noCertificado='20001000000100000814' certificado='MIIFBDCCA+ygAwIBAgIUMjAwMDEwMDAwMDAxMDAwMDA4MTQwDQYJKoZIhvcNAQEFBQAwggFvMRgwFgYDVQQDDA9BLkMuIGRlIHBydWViYXMxLzAtBgNVBAoMJlNlcnZpY2lvIGRlIEFkbWluaXN0cmFjacOzbiBUcmlidXRhcmlhMTgwNgYDVQQLDC9BZG1pbmlzdHJhY2nDs24gZGUgU2VndXJpZGFkIGRlIGxhIEluZm9ybWFjacOzbjEpMCcGCSqGSIb3DQEJARYaYXNpc25ldEBwcnVlYmFzLnNhdC5nb2IubXgxJjAkBgNVBAkMHUF2LiBIaWRhbGdvIDc3LCBDb2wuIEd1ZXJyZXJvMQ4wDAYDVQQRDAUwNjMwMDELMAkGA1UEBhMCTVgxGTAXBgNVBAgMEERpc3RyaXRvIEZlZGVyYWwxEjAQBgNVBAcMCUNveW9hY8OhbjEVMBMGA1UELRMMU0FUOTcwNzAxTk4zMTIwMAYJKoZIhvcNAQkCDCNSZXNwb25zYWJsZTogSMOpY3RvciBPcm5lbGFzIEFyY2lnYTAeFw0xMDA2MzAyMzIxNDhaFw0xMjA2MjkyMzIxNDhaMIGdMRYwFAYDVQQDEw1DQVNBIEhPR0FSIEFDMRYwFAYDVQQpEw1DQVNBIEhPR0FSIEFDMRYwFAYDVQQKEw1DQVNBIEhPR0FSIEFDMSUwIwYDVQQtExxDSE8xMDA2MjM3UjQgLyBBVUNFNTUwODA4MjQ0MR4wHAYDVQQFExUgLyBBVUNFNTUwODA4TVNQQ1NNMDkxDDAKBgNVBAsTA1NBVDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA3NQREB1I2EE+jcTcl7lwhDZZbprAp6clK4KdkDbh1ER5NnwV7DH0Ui2jJG3JsCvE7fREPmu4UOQN5hM0OOF6f4fuFz8HL7KxwcxpCsWxQWJ+5j3SaQXtXWEwvSApUnbijjP8cutpkFGjai9enDrpcSdAlkJzADZtcqpqv3i5QOkCAwEAAaOB6jCB5zAMBgNVHRMBAf8EAjAAMAsGA1UdDwQEAwIGwDAdBgNVHQ4EFgQUaT9Lvt38Gnx2o/bO34Tjp6RavTkwLgYDVR0fBCcwJTAjoCGgH4YdaHR0cDovL3BraS5zYXQuZ29iLm14L3NhdC5jcmwwMwYIKwYBBQUHAQEEJzAlMCMGCCsGAQUFBzABhhdodHRwOi8vb2NzcC5zYXQuZ29iLm14LzAfBgNVHSMEGDAWgBTrWX0EIppTjZ5xGqBYlin1OeCgxTAQBgNVHSAECTAHMAUGAyoDBDATBgNVHSUEDDAKBggrBgEFBQcDAjANBgkqhkiG9w0BAQUFAAOCAQEAkqeJX9mMIXB48Uk3yEjYWtvGcDwggjtVHfW8HbPO4sRKK1lN5VSrEzNHLUrgWs94QyHJ3Elau9altydwJnTcODKnZIvC2zOLh4SKc10eQBLM3joXSOSRiJGOUDqRrAljL56WTBcnOIqhKn4HBUUMqtf9SvUIm4FpUgVeBFKF4JPSDPsb5q29cnbaCq/nkRU0IA+U8qrjmqoLQ7h+Z6C7ykdHM3a3/xw2/NlVqRgYeiv+Jg1FRSpU5pNstR3QBS7yFyZ/ULa7iW+KFV4wL5gFuRouedTAyffov68yDqypv10cRLDr5p3/B30mfBYP0Gyg7UogXjAxcQP+VMqfnwGvWg==' subTotal='15550.00' TipoCambio='1' Moneda='Peso' total='18038.00' metodoDePago='Efectivo' tipoDeComprobante='ingreso' xmlns:cfdi='http://www.sat.gob.mx/cfd/3' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'><cfdi:Emisor nombre='YAHOO S.A. DE C.V.' rfc='CHO1006237R4'><cfdi:DomicilioFiscal calle='Caoba' noExterior='340' colonia='Los Mangos I' localidad='Mazatlán' municipio='Mazatlán' estado='Sinaloa' pais='México' codigoPostal='82128'/><cfdi:ExpedidoEn calle='Caoba' noExterior='340' colonia='Los Mangos I' localidad='Mazatlán' municipio='Mazatlán' estado='Sinaloa' pais='México' codigoPostal='82128'/></cfdi:Emisor><cfdi:Receptor nombre='SAMS S. A. DE C. V.' rfc='CON100623S70'><cfdi:Domicilio calle='OKLAHOMA' noExterior='94' colonia='Napoles' localidad='Distrito Federal' municipio='Benito Juárez' estado='Distrito Federal' pais='México' codigoPostal='03810'/></cfdi:Receptor><cfdi:Conceptos><cfdi:Concepto cantidad='1.00' unidad='s/u' descripcion='Pagina WEB' valorUnitario='15550.000000' importe='15550.000000'/></cfdi:Conceptos><cfdi:Impuestos totalImpuestosRetenidos='0.00' totalImpuestosTrasladados='2488.00'><cfdi:Traslados><cfdi:Traslado importe='2488.00' impuesto='IVA' tasa='16.00'/></cfdi:Traslados></cfdi:Impuestos><cfdi:Complemento xsi:schemaLocation=''><tfd:TimbreFiscalDigital version='1.0' UUID='b85d3ac1-629e-4dad-b928-a482ab9a4320' FechaTimbrado='2011-04-13T22:02:10' selloCFD='lNhDuRjsDk4Qt4K0FCCoqTVcjxCdf7sdYCCphbGoiO7M0nRPnWrSZEf3hkzIV9mQVO/SLMIrPUa8gVUS71FjIbZRtzGeWW8SvayB12n5Tt+0ta1eQEl1MJtLtnN6yvD7QBiVj2U2lr89UmSlguvvT02TmeOGo7+Li35bq4FRah4=' noCertificadoSAT='00001000000102993929' selloSAT='lh8Ep0g8oagiVfcfxHvz6uMtRuMf5hPqS6Blv6ki9rFfa6Bpto1RN4CEYB4kiz9CoKUe3KBd7xEcUUsh0/4BYhH65gxaK2R4QuvYy0asKOhWFFeN/KPhc5sw0FsJzeKSyoUrPJjVtovmhVoIV8vZ8ZOdLOR7AbiOIF+5skYWA0M=' xsi:schemaLocation='http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/TimbreFiscalDigital/TimbreFiscalDigital.xsd' xmlns:tfd='http://www.sat.gob.mx/TimbreFiscalDigital'/></cfdi:Complemento></cfdi:Comprobante>";
+			private function getXMLFormatted():void {
+				if(xmlCFDI.text!="-1"){
+					var pattern:RegExp = /"/gi;
+					var strXML:String = xmlCFDI.text;
+					strXML = strXML.replace(pattern,"'")
+					strXML = strXML.replace("?<?xml","<?xml")
+					var xml:XML = new XML(strXML);
+					xmlFormatted.text = xml.toXMLString();
+					
+				}
+				xmlCFDI.text="-1";
+				
+			}
+
+			private function onButton(btn:BorderContainer):void
+			{
+				btn.setStyle("backgroundAlpha",1.0);
+				btn.setStyle("borderVisible",true);
+				btn.setStyle("borderColor",0xcedbef);
+				btn.setStyle("backgroundColor",0xcedbef);
+			}
+			
+			private function offButton(btn:BorderContainer):void
+			{
+				btn.setStyle("backgroundAlpha",0.0);
+				btn.setStyle("borderVisible",false);
+				btn.setStyle("borderColor",0x0);
+				btn.setStyle("backgroundColor",0x0);
+			}
+			
+			
+					
+			public function goToScreen(screenFrom:Group,screenTo:Group){
+				screenFrom.visible=false;
+				screenTo.visible = true;
+				
+				
+				if(screenFrom.id=="contentUpload"&&screenTo.id=="contentRFC"){
+					var index:int =  receptorInfo.text.lastIndexOf( "Sin datos disponibles");
+					if(index==-1){
+						goTo2From1.enabled=true;
+						
+					}
+				}
+				
+					
+			}	
+			
+			
+			private function checkRFC():void{
+				
+				var errorMsg:String = "";
+				var validFormatRFC:String= "";
+				
+				
+				if(rbPerFis.selected){
+					validFormatRFC = "^[A-Za-zñÑ&]{4}[0-9]{6}[0-9A-Za-z]{3}$";
+					errorMsg="RFC Persona Física Incorrecto!!\n\n"+
+						"Formato “AAAAaammddHHD”, en donde: \n" +
+						"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+						"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+						"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+						"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+						"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+						"Los caracteres alfabéticos deben ser mayúsculas.";;
+					
+				}else  if(rbPerMor.selected){
+					validFormatRFC = "^[A-Za-zñÑ&]{3}[0-9]{6}[0-9A-Za-z]{3}$";
+					errorMsg= "RFC Persona Moral Incorrecto!!\n\n"+
+						"Formato “AAAaammddHHD”, en donde: \n" +
+						"AAA = Siglas del contribuyente, alfanumérico. \n" +
+						"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+						"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+						"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+						"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+						"Los caracteres alfabéticos deben ser mayúsculas.";;
+				}
+							
+				var expRFC:RegExp = new RegExp(validFormatRFC,"g");
+				if(expRFC.test(RFCReceptor.text)){				
+										
+					RFCReceptor.errorString = "";
+					
+				}	else {
+				
+					RFCReceptor.errorString = errorMsg;
+				}
+			
+			}
+					
+			private function convertToMDI(titleW:IFlexDisplayObject):void
+			{
+				PopUpManager.addPopUp(titleW, contentCTLS, true);
+			}
+			
+			private function verTW(isInsUpd:int, myTW:TitleWindow, btnIns:mx.controls.Button, btnUpd:mx.controls.Button, opLoadData:int):void 
+			{				
+				convertToMDI(myTW);
+				myTW.visible = true;
+				Send(opLoadData);// Obtiene datos a cargar
+				if(isInsUpd == 1)
+				{
+					btnIns.visible = true;
+					btnUpd.visible = false;
+				}
+				else if(isInsUpd == 2)
+				{
+					btnIns.visible = false;
+					btnUpd.visible = true;
+				}
+			}
+			/* 
+			private function closeTW(myTW:TitleWindow, myObject:spark.components.Group):void
+			{
+				PopUpManager.removePopUp(myTW);
+				cleanTW(myObject);
+			} */
+			
+			private function cleanTW(myObject:Object):void
+			{
+				
+				
+				var elements:int = 0;
+				var className:String;
+				var currentCtl:Object;
+				elements = myObject.numElements;
+				
+				for(var i:int=0; i < elements; i++)
+				{
+					currentCtl = myObject.getElementAt(i);
+					className = currentCtl.className.toString();
+					
+					if(className == "TextInput"){
+						spark.components.TextInput(currentCtl).text = "";
+						spark.components.TextInput(currentCtl).errorString = "";
+					}else if(className == "TextArea"){
+						TextArea(currentCtl).text = "";
+						TextArea(currentCtl).errorString = "";
+					}else if(className == "DateField"){
+						DateField(currentCtl).text = "";
+						DateField(currentCtl).errorString = "";
+					}else if(className == "NumericStepper"){
+						NumericStepper(currentCtl).value = 0;
+						NumericStepper(currentCtl).errorString = "";
+					}else if(className == "DropDownList"){
+						DropDownList(currentCtl).errorString = "";
+						DropDownList(currentCtl).selectedIndex = -1;
+						DropDownList(currentCtl).selectedItem = null;
+						DropDownList(currentCtl).dataProvider = null;
+					}else if(className == "ComboBox"){
+						spark.components.ComboBox(currentCtl).dataProvider = null;
+						spark.components.ComboBox(currentCtl).selectedItem = null;
+						spark.components.ComboBox(currentCtl).selectedIndex = -1;
+						spark.components.ComboBox(currentCtl).textInput.text = "";
+						spark.components.ComboBox(currentCtl).errorString = "";
+					}else if(className == "RadioButton"){
+						spark.components.RadioButton(currentCtl).selected = false;						
+					}else if(className=="DataGrid"){
+						mx.controls.DataGrid(currentCtl).dataProvider = null;
+					}/*else if(className=="Canvas"){
+						cleanTW(currentCtl);
+					}else if(className=="DragTileJCL"){
+						//var nElements:int=DragTileJCL(currentCtl).numElements;
+						//for(var i:int=0;i<nElements;i++){
+							DragTileJCL(currentCtl).removeAllElements();
+						//}
+							
+					}*/
+				}
+			}
+			
+			
+			private function filtrar():void {
+				if(rfcEmisorFind.text.length >0){
+					GVEnviados.dataProvider.filterFunction = filtroTextoEmisorFing;
+					GVRecibidos.dataProvider.filterFunction = filtroTextoEmisorFing;
+				}
+				if(rfcReceptorFind.text.length >0){
+					GVEnviados.dataProvider.filterFunction = filtroTextoReceptorFing;
+					GVRecibidos.dataProvider.filterFunction = filtroTextoReceptorFing;
+				}
+				
+				GVEnviados.dataProvider.refresh();
+				GVRecibidos.dataProvider.refresh();
+			}
+			
+			
+			
+			private function filtroTextoEmisorFing (item : Object) : Boolean
+			{         	
+				//return (item.toString().toLocaleLowerCase().indexOf(rfcEmisorFind.text.toLocaleLowerCase(),0) > -1);   
+				return (item[1].toString().toLocaleLowerCase().indexOf(rfcEmisorFind.text.toLocaleLowerCase(),0) > -1);   
+			}
+			
+			private function filtroTextoReceptorFing (item : Object) : Boolean
+			{         	
+				//return (item.toString().toLocaleLowerCase().indexOf(rfcReceptorFind.text.toLocaleLowerCase(),0) > -1);   
+				return (item[2].toString().toLocaleLowerCase().indexOf(rfcReceptorFind.text.toLocaleLowerCase(),0) > -1);
+			}
+			
+			protected function quitarFiltro():void
+			{
+				rfcEmisorFind.text="";
+				rfcReceptorFind.text="";
+			}
+			
+			private function enableIsRFCOK():void{
+				if(isRFCOK.text=="1"){
+					if(RFCReceptor.errorString.length>0){
+						goTo2From1.enabled=false;
+					}else{
+						goTo2From1.enabled=true;
+						
+					}
+					
+				}else if(isRFCOK.text=="0"){
+					goTo2From1.enabled=false;
+				}
+				isRFCOK.text="-1";
+			}
+			
+			
+			private function doRBIsChecked():void{
+				
+				if(rbPerMor.selected||rbPerFis.selected){
+					RFCReceptor.text="";
+					RFCReceptor.enabled = true;
+					RFCReceptor.errorString="";
+					goTo2From1.enabled=false;
+					receptorInfo.text="";
+					
+					
+				}	
+			}
+			
+			private function upComplete():void
+			{
+				Send(775);//BUSCA EN LA BASE EL MSJ SEGUN EL GUID
+				
+				/* if(op == 1)
+				{
+					Send(567);
+				} */
+			}
+			
+			private function doIfUploadComplete():void{
+				Send(774);//INDICA CUANTOS XML FUERON CARGADOS CON STATUS OK
+				if(msjUpload.text!="-1"){
+					if(msjUpload.text.length!=0){
+						
+					//}else{
+						//Alert.okLabel = "Aceptar";
+						//Alert.show(msjUpload.text, "Aviso", Alert.OK, null, null, iconAlert);
+						twUploadMsg.visible=true;
+											
+					}
+				}
+				msjUpload.text="-1";
+			}
+			
+			private function fxCreateRosters():void
+			{
+				var acdgAXE:ArrayCollection = new ArrayCollection();
+				acdgAXE = ArrayCollection(dgAXE.dataProvider);
+				var rows:int = acdgAXE.length;
+				var lblRoster:mx.controls.Label;
+				var dtRoster:qs.controls.DragTileJCL;
+				for(var i:int=0;i<rows;i++){
+					
+					lblRoster= new mx.controls.Label();
+					dtRoster= new qs.controls.DragTileJCL();
+					
+					/*
+					acdgAXE[i][0];//idAreaXEmpresa
+					acdgAXE[i][1];//area
+					acdgAXE[i][2];//correoXArea
+					acdgAXE[i][3];//area + correoXArea
+					acdgAXE[i][4];//rfc
+					*/
+					//#006bbb
+					lblRoster.id="lblRoster"+acdgAXE[i][0];//idAreaXEmpresa
+					lblRoster.htmlText="<html><font color='#054a95' size='15'><i>RFC: "	+ acdgAXE[i][4] + "</i> > <b>Area: "+ acdgAXE[i][1] 
+						+ " </b>.</font> > Email: <i> " + acdgAXE[i][2] + "</i></html>";
+					//lblRoster.text = "RFC: "+ acdgAXE[i][4]+ " > Area: "+ acdgAXE[i][1] ;
+					
+					//dtRoster.height=120;
+					//dtRoster.width=225;
+					dtRoster.id="roster"+acdgAXE[i][0];
+					//dtRoster.percentHeight=25;
+					dtRoster.minHeight=50;
+					dtRoster.percentWidth = 100;
+					dtRoster.maxRowLength=3;
+					dtRoster.verticalScrollPolicy="off";		
+					
+					//dtRoster.clipContent=true;
+					//dtRoster.showInAutomationHierarchy=true;
+					dtRoster.itemRenderer = new ClassFactory(Playerv4);
+					dtRoster.addEventListener(DragEvent.DRAG_ENTER,function dragEnterHandler(event:DragEvent):void{							
+						event.target.allowDrag(event)});
+					dtRoster.addEventListener(DragEvent.DRAG_OVER,function dragOverHandler(event:DragEvent):void{							
+						event.target.showDragFeedback(event,event.shiftKey?"copy":"move")});  
+					
+					rosterContainer.addElement(lblRoster);
+					rosterContainer.addElement(dtRoster);					
+				}			
+			}
+			
+			
+			private function closeTWIfCloseOrCancel():void{
+				if(currentState== "default"){
+						twEmisorInfo.visible=false;
+						twReceptorInfo.visible=false;
+						//twEmisorResponse.visible=false;
+						//twReceptorResponse.visible=false;
+						contentUpload.visible = false;
+						contentRoster.visible = false;
+						twReceptorInfo.visible=false;
+						playPlop();
+					}
+				
+			}
+			
+			private function setOrigenIdXML(event:DragEvent):void{
+			
+				
+				var newItems:Array = (event.dragSource.dataForFormat("items") as Array).concat();
+				this.idXMLCargados.text=newItems[0][0];
+				
+				if(event.currentTarget.className=="DataGrid"){
+					this.rosterOrigen.text="-1";			
+					dgXMLCargados.dataProvider.refresh();
+					var nElementDG:int = ArrayCollection(dgXMLCargados.dataProvider).length;
+					if(nElementDG-1==0){
+						goTo4From3.enabled=true;
+					}
+				}else{
+					this.rosterOrigen.text=event.currentTarget.className;
+				}
+				this.document.execInsUpdXMLXArea.text="1";
+						
+			}
+			
+			private function setDestinoIdXML(event:DragEvent):void{
+				
+				
+				var newItems:Array = (event.dragSource.dataForFormat("items") as Array).concat();
+				this.idXMLCargados.text=newItems[0][0];
+				
+				if(event.currentTarget.className=="DataGrid"){
+					this.rosterDestino.text="-1";
+					goTo4From3.enabled=false;	
+				}else{
+					
+					this.rosterDestino.text=event.currentTarget.className;
+				}
+			}
+			
+			private function insUpdIdXMLXArea():void{
+				if(execInsUpdXMLXArea.text=="1"){
+					if(dragAction.text=="move"){
+						Send(773);
+						
+					}else if(dragAction.text="copy"){
+					
+						Send(799);
+					}
+					
+					/*dgXMLCargados.dataProvider.refresh();
+					var nElementDG:int = ArrayCollection(dgXMLCargados.dataProvider).length;
+					if(nElementDG==0){
+						goTo4From3.enabled=true;
+					}
+					*/
+				}
+				execInsUpdXMLXArea.text ="0";
+			
+			
+			}
+			
+			private function resetRoster():void{
+				dgXMLCargados.dataProvider.removeAll();
+				dgXMLCargados.dataProvider=null;
+				rosterContainer.removeAllElements();
+				
+			}
+			
+			private function validData(pantalla:int):void
+			{
+				var errorMsg:String = "";
+				var errorTotal:String = "";
+				
+				
+				if(pantalla==1){
+					
+					var validFormatRFC:String;
+					var tipoPersona:String;
+					
+					Alert.okLabel = "Aceptar";
+					
+					if(rbPerFis.selected){
+						validFormatRFC = "^[A-Za-zñÑ&]{4}[0-9]{6}[0-9A-Za-z]{3}$";
+						errorMsg="RFC Persona Física Incorrecto!!\n\n"+
+							"Formato “AAAAaammddHHD”, en donde: \n" +
+							"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+							"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+							"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+							"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"Los caracteres alfabéticos deben ser mayúsculas.\n\n";
+						
+						
+					}else  if(rbPerMor.selected){
+						validFormatRFC = "^[A-Za-zñÑ&]{3}[0-9]{6}[0-9A-Za-z]{3}$";
+						errorMsg= "RFC Persona Moral Incorrecto!!\n\n"+
+							"Formato “AAAaammddHHD”, en donde: \n" +
+							"AAA = Siglas del contribuyente, alfanumérico. \n" +
+							"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+							"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+							"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+							"Los caracteres alfabéticos deben ser mayúsculas.\n\n";					
+						
+					}
+						
+					else{
+						errorMsg= "Seleccione el Tipo de Persona\n\n";
+					}
+					
+					var expRFC:RegExp = new RegExp(validFormatRFC,"g");
+					if(expRFC.test(RFCReceptor.text)){				
+						
+						RFCReceptor.errorString = "";
+						
+					}else{
+						RFCReceptor.errorString = errorMsg;
+						errorTotal = errorMsg;
+					}
+					
+					if(isRFCOK.text == "0"){
+						errorTotal += "No existe datos sobre el RFC introducido\n\n";
+					}
+					
+					if(errorTotal.length>0){
+						
+						Alert.show(errorTotal);
+						return;
+					}else{
+						
+						goToScreen(contentRFC,contentUpload);
+						currentState = "dos";
+					}
+				}else if(pantalla==2){//contentUpload
+					if(nXMLCargados.text=="0"){
+						Alert.okLabel = "Aceptar";
+						Alert.show("No hay ningún XML Cargado con status satisfactorio. Favor de revisar.", "Aviso", Alert.OK, null, null, iconAlert);
+					}else if(nXMLCargados.text>"0"){
+						goToScreen(contentUpload,contentRoster);
+						currentState = "tres";
+						if(dgXMLCargados.dataProvider==null){
+							Send(772);//LLENAR EL DATAGRID CON LOS DATOS DE LOS XML ENVIADOS
+							Send(753);//LLENAR EL DATAGRID CON LOS DATOS DE AREA POR EMPRESA PARA LOS DRAGTILE
+							
+						}else{
+							var nElementDG:int = ArrayCollection(dgXMLCargados.dataProvider).length;
+							
+							if(nElementDG==0&&rosterContainer.numElements==0){
+								
+								Send(772);//LLENAR EL DATAGRID CON LOS DATOS DE LOS XML ENVIADOS
+								Send(753);//LLENAR EL DATAGRID CON LOS DATOS DE AREA POR EMPRESA PARA LOS DRAGTILE
+							}	
+						}
+					}
+					nXMLCargados.text="0";
+					
+				}else if(pantalla==3){//contentRoster
+					var nElementDG:int = ArrayCollection(dgXMLCargados.dataProvider).length;
+					if(nElementDG==0){
+						
+						Alert.okLabel ="Enviar";
+						Alert.cancelLabel ="Cancelar";
+						Alert.show("Está apunto de enviar los CFD / CFDI's las áreas correspondientes, ¿Está seguro que desea continuar?", "Advertencia",
+							Alert.OK | Alert.CANCEL, this,	doSendEmail, iconAlert,  Alert.OK );
+					}	
+				}else if(pantalla==31){
+					caXMLPDFReceptor.close=true;
+					if(emisorResponse.text.length>0){
+						
+						Alert.okLabel ="Rechazar";
+						Alert.cancelLabel ="Cancelar";
+						Alert.show("Está apunto de Enviar su respuesta al receptor, ¿Está seguro que desea continuar?", "Advertencia",
+							Alert.OK | Alert.CANCEL, this,	function doResponse(eventObj:CloseEvent):void{
+								if (eventObj.detail==Alert.OK) {Send(790);/*ENVIAR RESPUESTA*/Send(727);currentState='default'}}, iconAlert,  Alert.OK );
+						
+					
+					}else{
+						Alert.okLabel ="Enviar";
+						Alert.show("Debe ingresar la respuesta. Favor de Verificar", "Advertencia",  Alert.OK );
+						
+					
+					}
+				
+				}else if(pantalla==41){
+					caXMLPDFReceptor.close=true;
+					if(statusFlujo.selectedIndex != -1){
+						if(statusFlujo.selectedIndex != 0){
+							Alert.okLabel ="Rechazar";
+							Alert.cancelLabel ="Cancelar";
+							Alert.show("Está apunto de Cambiar el estado del CFDI. El Emisor verá el nuevo estado, ¿Está seguro que desea continuar?", "Advertencia",
+								Alert.OK | Alert.CANCEL, this,	function doResponse(eventObj:CloseEvent):void{
+									if (eventObj.detail==Alert.OK) {Send(792);/*ENVIAR RESPUESTA*/Send(778);currentState='default'}}, iconAlert,  Alert.OK );
+							
+						}else{
+							statusFlujo.errorString="*Campo Obligatorio";
+							Alert.okLabel ="Enviar";
+							Alert.show("Debe ingresar el nuevo status. Favor de Verificar", "Advertencia",  Alert.OK );
+							
+							
+						}
+						
+						
+					}else{
+						statusFlujo.errorString="*Campo Obligatorio";
+						Alert.okLabel ="Enviar";
+						Alert.show("Debe ingresar el nuevo status. Favor de Verificar", "Advertencia",  Alert.OK );
+						
+						
+					}
+					
+				}
+			}
+			
+			private function doSendEmail(eventObj:CloseEvent):void {
+				// Check to see if the OK button was pressed.
+				if (eventObj.detail==Alert.OK) {
+					Send(777);//LLAMA A LA CLASE QUE ENVIA EL CORREO A LAS AREAS POR EMPRESA
+					currentState = "cuatro";
+					goToScreen(contentRoster,contentResult);
+					
+					
+				}
+			}
+			
+			private function goNextScreenFrom(screen:int):void{
+				if(screen==1){
+					if(RFCReceptor.errorString.length==0){
+							Send(750);//VERIFICA SI EXISTE DATOS DEL RFC RECEPTOR INTRODUCIDO
+					}
+				}else if(screen==2){
+					Send(727);//ACTUALIZAR EL DRIDVIEW PRINCIPAL
+					if(nXMLCargados.text>"0"){
+						goTo3From2.enabled=true;
+					}else if(nXMLCargados.text=="0"){
+						goTo3From2.enabled=false;
+					}
+					//nXMLCargados.text="0";
+				}
+				
+			}
+			
+			public function setUploadGUID():void{
+				
+				uploadGUID.text = GUID.create();
+			
+			}
+			 
+			public function playPlop():void{
+				var plop:Sound = new soundClass() as Sound;
+				plop.play();			
+			}
+			///////////////////////////AHORA////////////////////////////////////////////////////////////////////////////////////
+			public function displayDetails(event:ListEvent,dgEmisorReceptor:String):void{
+			
+				var selectedRow:Object = event.currentTarget.selectedItem;
+				var goOnTW:String=selectedRow[11];
+				var showTW:String=selectedRow[12];
+				if(goOnTW=="true"){
+					if(showTW!=null){
+						//this[showTW].visible = true;
+						twReceptorInfo.visible=true	
+						if(dgEmisorReceptor=="receptor"){
+							if(showTW=="twReceptorInfo"){
+								currentState="a";
+							}else if(showTW="twReceptorResponse"){
+								currentState="ii";
+							}
+							
+						}else if(dgEmisorReceptor=="emisor"){
+							currentState="i";
+						}
+					}
+					//this.twReceptorInfo.visible = true;
+					
+					idGVRecibidos.text = selectedRow[0];
+					
+				}
+			}
+			
+			private function myEasingFunction(t:Number, b:Number, 
+											  c:Number, d:Number):Number {
+				if ((t /= d) < (1 / 2.75)) {
+					return c * (7.5625 * t * t) + b;
+				}
+				else if (t < (2 / 2.75)) {
+					return c * (7.5625 * (t-=(1.5/2.75)) * t + .75) + b;
+				}
+				else if (t < (2.5 / 2.75)) {
+					return c * (7.5625 * (t-=(2.25/2.75)) * t + .9375) + b;
+				}
+				else {
+					return c * (7.5625 * (t-=(2.625/2.75)) * t + .984375) + b;
+				}
+			};
+			
+			public function setDataByidRecibido():void{
+				
+				rutaPDF.text="";
+				iframePDF.source ="";
+				
+				if(idGVRecibidos.text != "-1"){
+					
+					Send(779);//TRAER LOS DATOS DEL CFDI
+				
+				}
+			}
+			
+			public function acceptRejectCFDI(caso:int):void{
+				//iframePDF.visible = false;
+				caXMLPDFReceptor.close=true;
+				
+				if(caso==1){//ACEPTADO
+					Alert.okLabel ="Aceptar";
+					Alert.cancelLabel ="Cancelar";
+					Alert.show("Está apunto de Aceptar el CFD / CFDI seleccionado, ¿Está seguro que desea continuar?", "Advertencia",
+						Alert.OK | Alert.CANCEL, this,	function doAcceptCFDI(eventObj:CloseEvent):void{
+							if (eventObj.detail==Alert.OK) {Send(780);/*ACEPTAR*/
+								Send(778);/*ACTUALIZAR GRIDVIEW PRINCIPAL*/
+								currentState='default'}}, iconAlert,  Alert.OK );
+				
+				}else if(caso==0){//RECHAZADO
+					if(observRecep.text.length>0){
+						
+						Alert.okLabel ="Rechazar";
+						Alert.cancelLabel ="Cancelar";
+						Alert.show("Está apunto de Rechazar el CFD / CFDI seleccionado, ¿Está seguro que desea continuar?", "Advertencia",
+							Alert.OK | Alert.CANCEL, this,	function doRejectCFDI(eventObj:CloseEvent):void{
+								if (eventObj.detail==Alert.OK) {Send(789);/*RECHAZAR*/
+									Send(778);/*ACTUALIZAR GRIDVIEW PRINCIPAL*/
+									currentState='default'}}, iconAlert,  Alert.OK );
+						
+						
+					}else{
+						Alert.okLabel ="Enviar";
+						Alert.show("Antes de Rechazar un CFD / CFDI debe ingresar el motivo por el cuál lo hace. Favor de Verificar", "Advertencia",  Alert.OK );
+						
+					}
+				}
+			}
+			
+			public function restrictREC():void{
+				if(isThereAXE.text=="0"){
+					convertToMDI(twRestrictREC);
+					
+					twRestrictREC.visible=true;
+				}
+				isThereAXE.text=="-1"
+			}
+						
+			private function salir():void
+			{
+				mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="init.swf";
+			}
+			
+			private function getDGEnviados():void{
+				if(RFCEmpresa.text.length>0){
+					Send(727);//LLENAR EL DATAGRID AL RECIBIR EL DATO DE RFCEmpresa	
+				}
+				
+			}
+			
+			
+			
+		]]>
+		
+	</fx:Script>
+	<fx:Declarations>
+		<mx:Sequence id="glowIcon" repeatCount="100">
+			<mx:Glow duration="5000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="12.0" blurYFrom="0.0" blurYTo="12.0" color="#ffffff" /> 	
+			<mx:Glow duration="5000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="12.0" blurXTo="0.0" blurYFrom="12.0" blurYTo="0.0" color="#ffffff" /> 	
+		</mx:Sequence>	
+		<mx:Sequence id="glowButton" repeatCount="100">
+			<mx:Glow duration="4000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="10.0" blurYFrom="0.0" blurYTo="10.0" color="#054a95" /> 	
+			<mx:Glow duration="4000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="10.0" blurXTo="0.0" blurYFrom="10.0" blurYTo="0.0" color="#054a95" /> 	
+		</mx:Sequence>
+		<mx:Move id="moveLeftShow" 
+				 xFrom="600" xTo="0" yTo="0"  
+				 duration="3000" 
+				 easingFunction="myEasingFunction"/>
+	</fx:Declarations>
+	<s:transitions>
+		<s:Transition fromState="normal" toState="open">
+			<s:Fade id="cce"   alphaFrom="0" alphaTo="1"  />
+		</s:Transition>
+		
+		<s:Transition>
+				<!--<mx:Parallel targets="{[twEmisorInfo,twReceptorInfo,twEmisorResponse,twReceptorResponse,twHelpDT]}">-->
+			<mx:Parallel targets="{[twEmisorInfo,twReceptorInfo,twHelpDT]}">
+					<mx:Resize duration="900" easingFunction="Bounce.easeOut"   effectEnd="closeTWIfCloseOrCancel();" />
+					<mx:Sequence targets="{[twEmisorInfo,twReceptorInfo,twHelpDT]}" >
+						<!--<mx:Sequence targets="{[twEmisorInfo,twReceptorInfo,twEmisorResponse,twReceptorResponse,twHelpDT]}" >-->
+						<mx:Blur duration="200" blurYFrom="1.0" blurYTo="20.0"/>
+						<mx:Blur duration="200" blurYFrom="20.0" blurYTo="1"  />
+					</mx:Sequence>
+					<!--<mx:Resize duration="800" easingFunction="Bounce.easeOut"   effectEnd="closeTWIfCloseOrCancel(2);" />
+					<mx:Sequence target="{twReceptorInfo}" >
+						<mx:Blur duration="200" blurYFrom="1.0" blurYTo="20.0"/>
+						<mx:Blur duration="200" blurYFrom="20.0" blurYTo="1"  />
+					</mx:Sequence>-->
+				</mx:Parallel>
+		</s:Transition>
+		
+	</s:transitions>
+	
+	<s:states>
+		<s:State name="default"/>
+		<s:State name="uno"/>
+		<s:State name="dos"/>
+		<s:State name="tres"/>
+		<s:State name="cuatro"/>
+		<s:State name="a"/>
+		<s:State name="i"/>
+		<s:State name="ii"/>
+		<s:State name="hDT"/>
+	</s:states>
+	<s:Group id="ctrlCopy" x="0" y="0" visible="false">	
+		<s:ComboBox id="tipoTransaccionC" />
+		<s:TextInput id="disponiblesC" />
+		<s:TextInput id="creditosC"/>
+		<s:ComboBox id="emisorC" />
+		<s:TextInput id="transferirC" />
+		
+	</s:Group>
+	<mx:Canvas width="100%" height="100%" id="contentCTLS" x="0" y="0" >
+		<s:VGroup visible="true" x="0" y="0" gap="0" width="100%" height="100%" horizontalAlign="center" paddingTop="5">				
+			<s:BorderContainer width="100%" dropShadowVisible="true" borderVisible="false" backgroundAlpha="0.0" height="80"  >
+				<s:HGroup width="100%" verticalAlign="middle" horizontalAlign="right" paddingLeft="10" paddingRight="10" gap="0">
+					<s:HGroup width="100%" verticalAlign="middle" gap="0" paddingLeft="10" >
+						<mx:Image source="assets/vaultIcon-64.png" />
+						<mx:Label text="  CFD / CFDI´s Enviados y Recibidos"  fontWeight="bold" fontSize="15" color="#006BBD" />
+												
+						<s:TextInput id="idRegistro" visible="false" enabled="false" width="0"/>
+						<s:TextInput id="isThereAXE" visible="false" enabled="false" width="0" valueCommit="restrictREC();"/>
+						<s:TextInput id="idTW" visible="false" enabled="false" width="0"/>
+						<s:TextInput id="date"  width="0" visible="false" />
+						<s:TextInput id="account" creationComplete="Send(726);" width="0" visible="false" />
+						<s:TextInput id="RFCEmpresa"  width="0" visible="false" valueCommit="getDGEnviados();" />
+						<!--<s:TextInput id="RFCEmpresa" text="CON100623S70" width="0" visible="false" />-->
+						<s:TextInput id="idGVRecibidos" width="0" visible="false" valueCommit="setDataByidRecibido();"/>
+						
+					</s:HGroup>
+					<s:VGroup width="100%" horizontalAlign="right" verticalAlign="top" paddingLeft="15" paddingRight="10" x="0" y="0" paddingTop="0">
+						<s:HGroup width="100%" verticalAlign="bottom" horizontalAlign="right" paddingLeft="10" paddingBottom="5" gap="0">
+							<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="1" paddingTop="3">
+								<s:Label text="Cargar CFDI´s" color="#666666" fontWeight="bold" fontSize="13"/>
+								<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top">
+									<s:BorderContainer click="twEmisorInfo.visible=true;currentState='uno'" dropShadowVisible="false" borderVisible="false" 
+													   height="55" cornerRadius="3" backgroundAlpha="0" id="bcVerWizard" 
+													   rollOver="onButton(bcVerWizard);" rollOut="offButton(bcVerWizard);">
+										<s:HGroup width="100%" horizontalAlign="center" paddingLeft="4" paddingRight="4" verticalAlign="middle" 
+												  height="52" >
+											<mx:Image id="imgVerWizard" source="assets/distributor-report-icon_32.png"   height.uno="60" width.uno="60"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+							</s:VGroup>
+							<mx:VRule height="55"/>
+							<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="0" >
+								<s:Label color="#666666" fontWeight="bold" fontSize="13" text="Filtro"/>
+								<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55" width="425" cornerRadius="3" 
+												   id="btn007" rollOver="onButton(btn007);" rollOut="offButton(btn007);">
+									<s:HGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" paddingRight="4" paddingLeft="4" gap="7">
+										<s:VGroup gap="0">
+											<s:Label text="RFC Emisor" fontSize="11"/>
+											<s:TextInput id="rfcEmisorFind" width="120"  toolTip="RFC del Receptor"/>
+										</s:VGroup>
+										<s:VGroup gap="0">
+											<s:Label fontSize="11" text="RFC Receptor"/>
+											<s:TextInput id="rfcReceptorFind" width="120" toolTip="RFC del Receptor"/>
+										</s:VGroup>
+										<s:VGroup gap="0">
+											<!--
+											<s:ComboBox id="nombreSucursal" x="218" y="27" width="150" 
+														 toolTip="Nombre de la sucursal a buscar"/>
+											-->
+										</s:VGroup>
+									</s:HGroup>
+								</s:BorderContainer>
+							</s:VGroup>
+							<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="1" paddingTop="3">
+								<s:Label text="Filtrar" color="#666666" fontWeight="bold" fontSize="13"/>
+								<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top">
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55" width="140"  
+													   cornerRadius="3" id="btn0010" rollOver="onButton(btn0010);" rollOut="offButton(btn0010);" click="filtrar();">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4" gap="10">
+											<!--<s:VGroup gap="0" horizontalAlign="center">
+												<s:Label text="Registros" fontSize="11"/>
+												<s:NumericStepper x="148" y="88" id="topRow" width="70" name="Año" stepSize="1" 
+																   minimum="2010" maximum="2999" height="26" 
+																  toolTip="Número de registros a mostrar"/>
+											</s:VGroup>-->
+											<mx:Image id="btnFilter" source="assets/filter_ok_48.png" width="32" height="32" click="filtrar();" />
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+							</s:VGroup>
+							<mx:VRule height="55"/>
+							<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" gap="1" paddingTop="3">
+								<s:Label text="Quitar Filtros" color="#666666" fontWeight="bold" fontSize="13"/>
+								<s:HGroup height="100%" horizontalAlign="center" verticalAlign="top">
+									<s:BorderContainer backgroundAlpha="0"  dropShadowVisible="false" borderVisible="false" 
+													   height="55"  cornerRadius="3" width="100" id="btn010" rollOver="onButton(btn010);" rollOut="offButton(btn010);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+											<mx:Image source="assets/filter_ok_48.png" width="32" height="32" click="quitarFiltro();"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+							</s:VGroup>						
+						</s:HGroup>
+						
+					</s:VGroup>
+				</s:HGroup>
+			</s:BorderContainer>
+			
+			<mx:TabNavigator width="100%" height="100%" dropShadowVisible="true" paddingTop="0" tabOffset="10" 
+							 borderStyle="solid" chromeColor="#E5E5E5" id="tabEnvioRecepcion">
+				<s:NavigatorContent width="100%" height="100%" label="CFD / CFDI Enviados"  
+									id="tabEnviados" >
+				<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+					<mx:Canvas id="contentEnviados" width="100%" height="100%">
+						<mx:DataGrid id="GVEnviados"  doubleClickEnabled="true"
+									 variableRowHeight="true" liveScrolling="true" 
+									 wordWrap="true" headerStyleName="headerStyle"
+									 dropShadowVisible="true" sortableColumns="false" resizableColumns="false" 
+									 horizontalScrollPolicy="on" width="100%" height="100%" 
+									 name="Comprobantes Fiscales Enviados" borderColor="#ACABAA" rowHeight="40"
+									 itemDoubleClick="displayDetails(event,'emisor');">
+							
+							<!--<mx:DataGrid id="GVRecibidos" 
+							variableRowHeight="true" liveScrolling="true" 
+							wordWrap="true" headerStyleName="headerStyle"
+							dropShadowVisible="true" sortableColumns="false" resizableColumns="false" 
+							horizontalScrollPolicy="on" width="100%" height="100%" 
+							name="Comprobantes Fiscales Recibidos" borderColor="#ACABAA" rowHeight="40">-->
+							<mx:columns>								
+								<mx:DataGridColumn headerText="idCFDI" 			dataField="0" visible="false"/>
+								<mx:DataGridColumn headerText="Emisor"			dataField="1" textAlign="center"/>
+								<mx:DataGridColumn headerText="Receptor"		dataField="2" textAlign="center"/>
+								<mx:DataGridColumn headerText="Fecha"			dataField="3" textAlign="center"/>
+								<mx:DataGridColumn headerText="Serie" 			dataField="4" textAlign="center"/>
+								<mx:DataGridColumn headerText="Folio"			dataField="5" textAlign="center"/>
+								<mx:DataGridColumn headerText="Total Impuestos" dataField="6" textAlign="center"/>
+								<mx:DataGridColumn headerText="Total Factura" 	dataField="7" textAlign="center"/>
+								<mx:DataGridColumn headerText="Estado del CFDI" dataField="8" textAlign="center"/>
+								<mx:DataGridColumn headerText="Moneda" 			dataField="9" textAlign="center"/>
+								<mx:DataGridColumn headerText="Estatus de Envío" dataField="10" textAlign="center">
+									<mx:itemRenderer>
+										<fx:Component>
+											<mx:Text htmlText="{data[10]}" />
+										</fx:Component>
+									</mx:itemRenderer>
+								</mx:DataGridColumn>
+								<mx:DataGridColumn headerText="GoOn				" dataField="11" visible = "false"/>
+								<mx:DataGridColumn headerText="showTW				" dataField="12" visible = "false"/>
+							</mx:columns>
+						</mx:DataGrid>
+						
+					</mx:Canvas>
+				</s:HGroup>
+			</s:NavigatorContent>
+				<s:NavigatorContent width="100%" height="100%" label="CFD / CFDI Recibidos"  
+									id="tabRecibidos" >
+					<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+						<mx:Canvas id="contentRecibidos" width="100%" height="100%">
+							<mx:DataGrid id="GVRecibidos" 
+										 variableRowHeight="true" liveScrolling="true" 
+										 wordWrap="true" headerStyleName="headerStyle"
+										 dropShadowVisible="true" sortableColumns="false" resizableColumns="false" 
+										 horizontalScrollPolicy="on" width="100%" height="100%" 
+										 name="Comprobantes Fiscales Recibidos" borderColor="#ACABAA" creationComplete="Send(778);" rowHeight="40"
+										  doubleClickEnabled="true" itemDoubleClick="displayDetails(event,'receptor');" >
+								
+								<mx:columns>								
+									<mx:DataGridColumn headerText="idCFDI" 			dataField="0" visible="false"/>
+									<mx:DataGridColumn headerText="Emisor"			dataField="1" textAlign="center"/>
+									<mx:DataGridColumn headerText="Receptor"		dataField="2" textAlign="center"/>
+									<mx:DataGridColumn headerText="Fecha"			dataField="3" textAlign="center"/>
+									<mx:DataGridColumn headerText="Serie" 			dataField="4" textAlign="center"/>
+									<mx:DataGridColumn headerText="Folio"			dataField="5" textAlign="center"/>
+									<mx:DataGridColumn headerText="Total Impuestos" dataField="6" textAlign="center"/>
+									<mx:DataGridColumn headerText="Total Factura" 	dataField="7" textAlign="center"/>
+									<mx:DataGridColumn headerText="Estado del CFDI" dataField="8" textAlign="center"/>
+									<mx:DataGridColumn headerText="Moneda" 			dataField="9" textAlign="center"/>
+									<mx:DataGridColumn headerText="Estatus de Recepción" dataField="10" textAlign="center">
+										<mx:itemRenderer>
+											<fx:Component>
+												<mx:Text htmlText="{data[10]}" />
+											</fx:Component>
+										</mx:itemRenderer>
+									</mx:DataGridColumn>
+									<mx:DataGridColumn headerText="GoOn" dataField="11" visible = "false"/>
+									<mx:DataGridColumn headerText="showTW" dataField="12" visible = "false"/>
+								</mx:columns>
+							</mx:DataGrid>
+							
+						</mx:Canvas>
+					</s:HGroup>
+				</s:NavigatorContent>
+			</mx:TabNavigator>
+			
+		</s:VGroup>
+		<s:TitleWindow id="twEmisorInfo" width="0" height="0" visible="false" 
+					   horizontalCenter="0" verticalCenter="0"
+					   close="currentState='default';cleanTW(contentRFC);cleanTW(contentUpload);cleanTW(contentRoster);"
+					   title="Wizard de Recepción" 
+					   width.default="0" height.default="0" horizontalCenter.default="0" verticalCenter.default="0"
+					   width.uno="580" height.uno="380" horizontalCenter.uno="0" verticalCenter.uno="0" x.uno="0" y.uno="0"
+					   width.dos="580" height.dos="380"  horizontalCenter.dos="0" verticalCenter.dos="0" x.dos="0" y.dos="0"
+					   width.tres="1024" height.tres="650"   x.tres="0" y.tres="0"
+					   width.cuatro="580" height.cuatro="380"   x.cuatro="0" y.cuatro="0">
+			<s:VGroup width="100%" height="100%" paddingBottom="10" paddingLeft="5" paddingRight="5" paddingTop="10">
+				<mx:Canvas id="contentAll"  width="100%" height="100%" >
+					
+					
+					<!--PANTALLA UNO-->
+					<s:Group id="contentRFC" x="0" y="0" width="480" height="100%" visible="true">
+						
+						<s:HGroup width="374" verticalAlign="middle" paddingLeft="10" horizontalCenter="0" top="0">
+							<mx:Image source="assets/vaultIcon.png" x="10" y="10"/>
+							<mx:Label text="Datos del Receptor a enviar CFDI" fontWeight="bold" fontSize="13" color="#006BBD" x="52" y="17"/>
+						</s:HGroup>					
+						
+						<s:TextInput x="74" y="174" id="receptorInfo"  visible="false"/>
+						<s:TextInput x="74" y="194" id="isRFCOK" valueCommit="enableIsRFCOK();"  visible="false"/>
+						
+						<mx:Label x="70" y="80" text="* Tipo de Persona:" fontWeight="bold"/>
+						<s:RadioButton id="rbPerMor" selected="false" label="Persona Moral:" groupName="tipoPersona"
+									   visible="true"  x="315" y="80" change="doRBIsChecked();"/>
+						<s:RadioButton id="rbPerFis" selected="false" label="Persona Física:" groupName="tipoPersona"
+									   visible="true" x="186" y="80"  change="doRBIsChecked();"/>
+						
+						<mx:Label x="72" y="114" text="* R.F.C. Receptor." fontWeight="bold"/>
+						<s:TextInput x="182" y="113" id="RFCReceptor" enabled="false"
+									 editable="true" name="RFC Receptor" visible="true" width="236"
+									  keyUp="checkRFC();if(RFCReceptor.text.length>=12){goNextScreenFrom(1);}"
+									  enabled.uno="false"
+									  
+									 restrict="A-Za-z0-9ñÑ&amp;" typographicCase="uppercase"/>
+						
+						<mx:Text x="72" y="140" fontWeight="bold" htmlText="{receptorInfo.text}"/>
+						
+						<mx:Label  text="Los Campos marcados con * son obligatorios" 
+								   fontWeight="bold" fontSize="12" fontStyle="italic" x="244" y="279"/>
+						
+						<mx:Button id="goTo2From1" click="validData(1);" visible="true" width="148" enabled="false" 
+								    label="Siguiente" icon="@Embed(source='assets/next-icon_32.png')"  paddingTop="4" 
+								   paddingBottom="4" tabIndex="6" x="319" y="231"
+								    enabled.uno="false" creationCompleteEffect="{glowButton}" />
+						
+						<mx:Button id="cancelar1"  click="currentState = 'default';Send(727);cleanTW(contentRFC);cleanTW(contentUpload);cleanTW(contentRoster);" 
+								   visible="true" width="118"
+								   label="Cancelar"  icon="@Embed(source='assets/delete-icon_32.png')"  
+								   paddingTop="4" paddingBottom="4" tabIndex="6" x="191" y="231"
+								   creationCompleteEffect="{glowButton}" />
+									
+					</s:Group>
+					
+					<!--PANTALLA DOS-->
+					
+					<s:Group id="contentUpload" x="1" y="0" width="100%" height="100%" visible="false">
+						<s:HGroup width="100%" verticalAlign="middle" paddingLeft="10" horizontalCenter="0" top="0">
+							<mx:Image source="assets/vaultIcon.png" x="10" y="10"/>
+							<mx:Label text="Carga de Comprobantes Fiscales Digitales por Internet" fontWeight="bold" fontSize="13" color="#006BBD" x="52" y="17"/>
+						</s:HGroup>
+						
+						<mx:Label x="69" y="48" text="* Seleccionar Documentos" fontWeight="bold"/>
+						<s:TextInput x="230" y="54" id="rutaCFDIS" enabled="false" editable="false" visible="false"/>
+						<s:TextInput x="230" y="54" id="nXMLCargados" enabled="false" visible="false" valueCommit="goNextScreenFrom(2);"/>
+						<s:TextInput x="230" y="54" id="uploadGUID" enabled="false" visible="false" />
+						<s:TextInput id="msjUpload" text="-1" valueCommit="doIfUploadComplete();" visible="false" />
+						
+						<ns1:uploadCFDI id="uploadCFDI" x="69" y="77" width="414" height="157" 
+										r3Param1="{account.text}" r3Param2="{RFCReceptor.text}" 
+										r3Param3="{uploadGUID.text}" r3Param4="{RFCEmpresa.text}"
+										uploadSelectFiles="setUploadGUID();" 
+										r3AshxPath="https://fx.facturaxion.com/facturaxion/uploadCFDI.ashx" 
+										uploadComplete="upComplete();"/>
+						<!--http://localhost:49227/r3Take/uploadCFDI.ashx-->
+						
+						
+						<mx:Button id="goTo1From2" click="currentState='uno';goToScreen(contentUpload,contentRFC);" visible="true" width="124" enabled="true" 
+								   label="Atrás" icon="@Embed(source='assets/back-icon_32.png')"  
+								   paddingTop="4" paddingBottom="4" tabIndex="6" x="207" y="275" height="38"
+								   creationCompleteEffect="{glowButton}" />	
+						
+						<mx:Button id="goTo3From2" click="validData(2);" visible="true" width="133" enabled="false" 
+								   label="Siguiente" icon="@Embed(source='assets/next-icon_32.png')"  
+								   paddingTop="4" paddingBottom="4" tabIndex="6" x="350" y="275"
+								   creationCompleteEffect="{glowButton}" />	
+						
+						
+						<mx:Button id="cancelar2" click="currentState='default';Send(727);cleanTW(contentRFC);cleanTW(contentUpload);cleanTW(contentRoster);" label="Cancelar" 
+								   icon="@Embed(source='assets/delete-icon_32.png')" 
+								   paddingTop="4" paddingBottom="4" width="118" tabIndex="7"  x="74" y="275" height="38"
+								   creationCompleteEffect="{glowButton}" />				
+						
+					</s:Group>
+					
+					<!--PANTALLA TRES-->
+					
+					<s:Group id="contentRoster" x="1" y="0" width="100%" height="100%" visible="false" >
+						<mx:Canvas  width="100%" height="100%" verticalScrollPolicy="auto">
+							<s:VGroup width="100%" height="100%" paddingBottom="15">
+								
+								<mx:ApplicationControlBar width="100%" fillColors="[#000000, #333333]"  height="50">		
+									
+									<mx:Image source="assets/vaultIcon.png" x="0" y="0" horizontalAlign="left" height="40"/>
+									<mx:Text text="Asignación de XML por área" color="#000000" fontSize="12"
+											 textAlign="left" verticalCenter="center" fontWeight="bold"
+											 x="30" y="15"/>
+									
+									<s:HGroup width="100%" horizontalAlign="center" height="40" x="0" y="0">								
+										
+										<s:TextInput id="rosterOrigen"  width="0" visible="false" />
+										<s:TextInput id="rosterDestino"  width="0" visible="false" />
+										<s:TextInput id="idXMLCargados"  width="0" visible="false" />
+										<s:TextInput id="idAreaXEmpresaOrigen" width="0" text="{rosterOrigen.text.replace('roster','')}" visible="false" />
+										<s:TextInput id="idAreaXEmpresaDestino" width="0" text="{rosterDestino.text.replace('roster','')}" visible="false" />
+										<s:TextInput id="execInsUpdXMLXArea" width="0" valueCommit="insUpdIdXMLXArea();" visible="false" />
+										<s:TextInput id="dragAction" width="0" visible="false" />
+										
+										<mx:Button id="goTo2From3" click="currentState='dos';goToScreen(contentRoster,contentUpload);" visible="true" width="124" enabled="true" 
+												   label="Atrás" icon="@Embed(source='assets/back-icon_32.png')"  
+												   paddingTop="4" paddingBottom="4" tabIndex="6" x="207" y="241" height="38"
+												   creationCompleteEffect="{glowButton}" />	
+										
+										<mx:Button id="goTo4From3" click="validData(3);" visible="true" width="183" enabled="false" 
+												   label="Enviar Correo" icon="@Embed(source='assets/next-icon_32.png')"  
+												   paddingTop="4" paddingBottom="4" tabIndex="6" x="350" y="240"
+												   creationCompleteEffect="{glowButton}" />	
+										
+										
+										<mx:Button id="cancelar3" click="currentState='default';Send(727);cleanTW(contentRFC);cleanTW(contentUpload);cleanTW(contentRoster);resetRoster();" label="Cancelar" 
+												   icon="@Embed(source='assets/delete-icon_32.png')" 
+												   paddingTop="4" paddingBottom="4" width="118" tabIndex="7"  x="74" y="243" height="38"
+												   creationCompleteEffect="{glowButton}" />
+										
+									</s:HGroup>	
+									
+									<mx:Image id="helpDT" source="assets/ayuda_hot.png" click="currentState='tres';twHelpDT.visible=true;dragTile.load();" creationCompleteEffect="{glowButton}"/>					
+									
+								</mx:ApplicationControlBar>
+								<mx:Canvas width="100%" height="100%" verticalScrollPolicy="auto" horizontalScrollPolicy="auto" dropShadowVisible="true">
+									<s:VGroup width="100%" paddingBottom="5" >
+										<mx:DataGrid x="0" y="0" id="dgAXE" width="0" height="0"  visible="false" valueCommit="fxCreateRosters();" />
+										<mx:DataGrid id="dgXMLCargados" x="0" y="0"
+													 allowMultipleSelection="true" 
+													 dragEnabled="true" 
+													 dropEnabled="true" 
+													 dragMoveEnabled="true"
+													 width="100%"
+													  dragComplete="setOrigenIdXML(event);"
+													   dragDrop="setDestinoIdXML(event)">						                 
+											<mx:columns>
+												<mx:DataGridColumn headerText="id" 				dataField="0" 	width="50"	visible="false"/>
+												<mx:DataGridColumn headerText="Tipo" 			dataField="1" 	width="50"/>
+												<mx:DataGridColumn headerText="Versión" 		dataField="2" 	width="50"/>
+												<mx:DataGridColumn headerText="RFC Emisor" 		dataField="3" 	width="50"/>
+												<mx:DataGridColumn headerText="RFC Receptor" 	dataField="4" 	width="50"/>
+												<mx:DataGridColumn headerText="Suc. Emisor" 	dataField="5" 	width="150"/>
+												<mx:DataGridColumn headerText="Suc. Receptor" 	dataField="6" 	width="150"/>
+												<mx:DataGridColumn headerText="Serie" 			dataField="7" 	width="20"/>
+												<mx:DataGridColumn headerText="Folio" 			dataField="8"   width="50"/>
+												<mx:DataGridColumn headerText="Total Doc" 		dataField="9"   width="50"/>
+												<mx:DataGridColumn headerText="Total IVA" 		dataField="10"   width="50"/>
+												<mx:DataGridColumn headerText="Moneda" 			dataField="11" width="50"/>
+											</mx:columns>    
+										</mx:DataGrid>										
+										<mx:Text height="100" width="100%" htmlText="{dragTileExplication}"/>
+									</s:VGroup>
+									
+								</mx:Canvas>
+								<mx:Canvas width="100%" height="100%" verticalScrollPolicy="auto"  horizontalScrollPolicy="auto" dropShadowVisible="true">
+									<!--<s:VGroup creationCompleteEffect="{cce}" id="rosterContainer" width="100%" height="100%" gap="20"/>-->
+									<s:VGroup creationCompleteEffect="{glowButton}" id="rosterContainer" width="100%" height="100%" gap="20"/>
+								</mx:Canvas>
+							</s:VGroup>									
+						</mx:Canvas>						
+					</s:Group>				
+					
+					<!--PANTALLA CUATRO-->
+					<s:Group id="contentResult" x="0" y="0" width="100%" height="100%" visible="false">
+						<s:HGroup width="100%" verticalAlign="middle" paddingLeft="10" horizontalCenter="0" top="0">
+							<mx:Image source="assets/vaultIcon.png" x="10" y="10"/>
+							<mx:Label text="Resultado del envio de correo" fontWeight="bold" fontSize="13" color="#006BBD" x="52" y="17"/>
+						</s:HGroup>
+						
+						<!--<s:TextInput x="0" y="0" id="result" enabled="false" visible="false" />-->
+						<!--<s:TextInput x="230" y="54" id="resultMsg" enabled="false" visible="false"/>-->
+						<mx:Image x="60" y="60" source="assets/mail-64X64.png" id="imgValid"/>
+						<mx:Text x="160" y="80" id="resultMsg"  color="#054a95" fontWeight="bold" fontSize="15"  textAlign="center"/>
+						
+						<!--								
+						<mx:Button id="goTo1From2" click="currentState='uno';goToScreen(contentUpload,contentRFC);" visible="true" width="124" enabled="true" 
+								   label="Atrás" icon="@Embed(source='assets/back-icon_32.png')"  
+								   paddingTop="4" paddingBottom="4" tabIndex="6" x="207" y="275" height="38"/>	-->
+						
+						<mx:Button id="goTo1From4" click="currentState='uno';goToScreen(contentResult,contentRFC);Send(727);cleanTW(contentRFC);cleanTW(contentUpload);cleanTW(contentRoster);cleanTW(contentResult);" 
+								   visible="true" width="133" enabled="true" 
+								   label="Otra Empresa..." icon="@Embed(source='assets/next-icon_32.png')"  
+								   paddingTop="4" paddingBottom="4" tabIndex="6" x="150" y="225"
+								   creationCompleteEffect="{glowButton}" />	
+						
+						
+						<mx:Button id="finalizar" click="currentState='default';Send(727);cleanTW(contentRFC);cleanTW(contentUpload);cleanTW(contentRoster);cleanTW(contentResult);" label="Finalizar" 
+								   icon="@Embed(source='assets/accept-icon_32.png')" 
+								   paddingTop="4" paddingBottom="4" width="118" tabIndex="7"  x="300" y="225" height="38"
+								   creationCompleteEffect="{glowButton}" />				
+						
+					</s:Group>
+				</mx:Canvas>
+				
+			</s:VGroup>
+		</s:TitleWindow>
+		
+		<s:TitleWindow id="twReceptorInfo" width="0" height="0" visible="false" 
+					   horizontalCenter="0" verticalCenter="0"
+					   close="currentState='default'"
+					   width.default="0" height.default="0" horizontalCenter.default="0" verticalCenter.default="0" 
+					   width.a="1200" height.a="700" horizontalCenter.a="0" verticalCenter.a="0" x.a="0" y.a="0" 
+					   width.i="1200" height.i="700" horizontalCenter.i="0" verticalCenter.i="0" x.i="0" y.i="0" 
+					   width.ii="1200" height.ii="700" horizontalCenter.ii="0" verticalCenter.ii="0" x.ii="0" y.ii="0" >
+			<s:VGroup width="100%" height="100%" paddingBottom="10" paddingLeft="5" paddingRight="5" paddingTop="10">
+				<mx:Canvas id="contentXMLPDFReceptor"  width="100%" height="80%" visible="true">
+					<s:HGroup height="100%" width="100%">
+						<components:CollapsibleAccordionJCL id="caXMLPDFReceptor" 
+														 height="490"
+														 orientation="right"
+														 openSize="1000" 
+														 barSize="36"
+														 currentWidth="36"
+														 drawerButtonStyle="drawerButton"
+														 closeButtonStyle="drawerCloseRight"
+														 accordianStyle="drawerAccordion"
+														 backgroundColor="#FFFFFF" fontSize="14" >
+							
+							<mx:Canvas id="xmlCanvas"  icon="@Embed(source='assets/RGCFDI-XML.png')"
+									    color="#000000" backgroundColor="#E6E6E6" width="100%" height="100%">
+								<s:Group>
+									<s:TextInput id="xmlCFDI" valueCommit="getXMLFormatted();" visible="false"/>
+									<s:Label id="xmlFormatted"/>
+								</s:Group>
+							</mx:Canvas> 
+							
+							<mx:Canvas id="pdfCanvas" icon="@Embed(source='assets/RGCFDI-PDF.png')"
+									   backgroundColor="#FFFFFF" visible="true"  width="100%" height="100%" >
+								<!--<IFrame id="iFrame" width="80%" height="100%">
+									<mx:Text text="Cargando documento...&#xa;&#xa;Por favor, espere.&#xa;" visible="false" 
+											 selectable="false" horizontalCenter="0" verticalCenter="0" width="200" height="80" 
+											 color="#333333" textAlign="center" id="mensaje" fontSize="12" fontWeight="bold"/>
+								</IFrame>-->
+								<s:TextInput id="rutaPDF"  visible="false"/>
+								<flexiframe:IFrame x="0" y="0" source="{rutaPDF.text}" id="iframePDF"  
+												   backgroundColor="#FFFFFF" width="100%" height="100%" uid="11145522"/>
+								
+								<!--<flexiframe:IFrame x="0" y="0" source="https://fx.facturaxion.com/repositorioFacturaxion/cfdi/2011/3/3/AAQM610917QJA-RTAKE1-72a8cce8-1d62-4eb3-a3ba-ba00d3172e3d.pdf"  
+								backgroundColor="#FFFFFF" width="100%" height="100%"  uid="1111aswaas"/>-->
+								
+
+							</mx:Canvas>
+						</components:CollapsibleAccordionJCL>
+						<mx:Canvas height="100%" width="100%">
+							<s:VGroup horizontalAlign="center" verticalAlign="middle" height="30%" width="100%">
+								<s:HGroup y="0" width="100%" height="100%" horizontalAlign="right" verticalAlign="top">
+									<mx:Image id="helpCA" source="assets/ayuda_hot.png" click="twHelpCA.visible=true;accordion.load();" creationCompleteEffect="{glowButton}"/>
+								</s:HGroup>
+								<s:VGroup horizontalAlign="center" verticalAlign="middle" height="70%" width="100%">
+									<mx:Image  width="100%"  source="assets/logo_SAT.png" horizontalAlign="center" verticalAlign="middle" creationCompleteEffect="{glowButton}" />
+									<mx:Image  width="100%" source="assets/logo_new.png" horizontalAlign="center" verticalAlign="middle" creationCompleteEffect="{glowButton}"/>
+								</s:VGroup>			
+							</s:VGroup>
+						</mx:Canvas>
+					</s:HGroup>
+				</mx:Canvas>
+				<mx:Canvas id="contentAllResponses" visible="true"  width="100%" height="20%">
+					<mx:Canvas id="contentObservacionReceptor"  width="100%" height="100%" visible="false" visible.a="true">
+						<s:VGroup height="100%" width="100%">
+							
+							<s:Label text="*Observaciones"/>
+							<s:TextArea id="observRecep" width="100%" height="30"/>
+							
+							<s:HGroup width="100%" height="40" horizontalAlign="center" >
+								<mx:Button id="accepRejectt" click="acceptRejectCFDI(1);" visible="true" width="124" enabled="true" 
+										   label="Aceptar" icon="@Embed(source='assets/accept-icon_32.png')"  
+										   paddingTop="4" paddingBottom="4" tabIndex="6" x="207" y="241" height="38"
+										   creationCompleteEffect="{glowButton}" />	
+								
+								<mx:Button id="reject" click="acceptRejectCFDI(0);" visible="true" width="133" enabled="true" 
+										   label="Rechazar" icon="@Embed(source='assets/delete-icon_32.png')"  height="38"
+										   paddingTop="4" paddingBottom="4" tabIndex="6" x="350" y="240"
+										   creationCompleteEffect="{glowButton}" />
+								
+							</s:HGroup>
+						</s:VGroup>
+					</mx:Canvas>
+					<mx:Canvas id="contentEmisorResponse" width="100%" height="100%" visible.i="true" visible="false" >
+						<s:VGroup width="100%" height="100%" paddingBottom="10" paddingLeft="5" paddingRight="5" paddingTop="10">
+							
+							<s:VGroup width="100%">
+								<s:Label text="*Respuesta:"/>
+								<s:TextArea id="emisorResponse" height="30" width="100%" />
+								
+							</s:VGroup>
+							
+							<s:HGroup width="100%" height="40" horizontalAlign="center" >
+								<mx:Button id="responderi" click="validData(31);" visible="true" width="124" enabled="true" 
+										   label="Responder" icon="@Embed(source='assets/goIcon32.png')"  
+										   paddingTop="4" paddingBottom="4" tabIndex="6" x="207" y="241" height="30"
+										   creationCompleteEffect="{glowButton}" />	
+								
+								<mx:Button id="cancelari" click="currentState='default';Send(727);cleanTW(contentEmisorResponse);" label="Cancelar" 
+										   icon="@Embed(source='assets/delete-icon_32.png')" 
+										   paddingTop="4" paddingBottom="4" width="118" tabIndex="7"  x="74" y="243" height="30"
+										   creationCompleteEffect="{glowButton}" />
+								
+							</s:HGroup>
+						</s:VGroup>
+					</mx:Canvas>
+					<mx:Canvas id="contentReceptorResponse" width="100%" height="100%"  visible.ii="true" visible="false" >
+						<s:VGroup width="100%" height="100%" paddingBottom="10" paddingLeft="5" paddingRight="5" paddingTop="10">
+								<s:HGroup width="100%" horizontalAlign="center" >
+								
+								<s:Label text="*Respuesta:"/>
+								<s:ComboBox id="statusFlujo" width="200" creationComplete="Send(791);" />
+								
+							</s:HGroup>
+							<s:HGroup width="100%" height="30" horizontalAlign="center" >
+								<mx:Button id="responderii" click="validData(41);" visible="true" width="124" enabled="true" 
+										   label="Responder" icon="@Embed(source='assets/goIcon32.png')"  
+										   paddingTop="4" paddingBottom="4" tabIndex="6" x="207" y="241" height="30"
+										   creationCompleteEffect="{glowButton}" />	
+								
+							</s:HGroup>
+						</s:VGroup>
+					</mx:Canvas>
+					
+				</mx:Canvas>
+				
+			</s:VGroup>
+		</s:TitleWindow>		
+		
+		<s:TitleWindow id="twHelpDT" width="0" height="0" visible="false"
+					   horizontalCenter="0" verticalCenter="0"
+					   close="twHelpDT.visible=false"
+					   width.default="0" height.default="0" horizontalCenter.default="0" verticalCenter.default="0"
+					   width.tres="600" height.tres="500"  
+					   title="¿Cómo usar el Drag Tile?">
+			<mx:SWFLoader height="100%" width="100%" id="dragTile" source="assets/dragTile.swf" autoLoad="false"/>
+		</s:TitleWindow>
+		
+		<s:TitleWindow id="twHelpCA" width="600" height="500" visible="false"
+					   horizontalCenter="0" verticalCenter="0"
+					   close="twHelpCA.visible=false"
+					  horizontalCenter.default="0" verticalCenter.default="0"
+					      title="¿Cómo usar el Acordión Colapsable?">
+			<mx:SWFLoader height="100%" width="100%" id="accordion" source="assets/completoAccordion.swf" autoLoad="false"/>
+		</s:TitleWindow>
+		<s:TitleWindow id="twUploadMsg"  visible="false"
+					   horizontalCenter="0" verticalCenter="0"
+					   close="twUploadMsg.visible=false"
+					   width="440" height="270" 
+					   title="Mensajes de los archivos cargados">
+			<mx:DataGrid id="GVUploadMsj"  doubleClickEnabled="false"
+						 variableRowHeight="true" liveScrolling="true" 
+						 wordWrap="true" headerStyleName="headerStyle"
+						 dropShadowVisible="true" sortableColumns="false" resizableColumns="false" 
+						 horizontalScrollPolicy="auto" width="100%" height="100%"  x="0" y="0" verticalScrollPolicy="auto"
+						 name="Comprobantes Fiscales Enviados" borderColor="#ACABAA" showHeaders="false">
+				
+				<mx:columns>								
+					<mx:DataGridColumn headerText="Mensajes" 			dataField="0" width="100"/>										
+					
+				</mx:columns>
+			</mx:DataGrid>
+			
+		</s:TitleWindow>
+		<s:TitleWindow id="twRestrictREC" title="Recepción Restringido"  visible="false" width="341" height="192" borderAlpha=".95" 
+					   close="salir();twRestrictREC.visible=false;" horizontalCenter="0" verticalCenter="0">
+			
+			
+			<mx:Text  x="10" y="30" width="100%" height="100%"  color="#FF0101" fontWeight="bold"
+					  text="No ha configurado las Áreas Administrativas de su Empresa. Favor de dirigirse al Menú Envío / Recepción, enseguida dé clic a la opción Configuración Área por Empresa.  Recuerde que la Empresa Receptora también debe configurar este catálogo"/>
+			
+		</s:TitleWindow>
+	
+	</mx:Canvas>
+</s:Application>
+<!--<components:CollapsibleAccordion id="collapsibleAccordion2" 
+height="500"
+orientation="right"
+openSize="325" 
+barSize="36"
+currentWidth="36"
+drawerButtonStyle="drawerButton"
+closeButtonStyle="drawerCloseRight"
+accordianStyle="drawerAccordion">
+
+<mx:Canvas id="xmlCanvasInfo"  label="Cómo leer mi CDD / CDFI" 
+icon="@Embed(source='assets/email-48x48.png')"
+showEffect="{moveLeftShow}" backgroundColor="#006BBD">
+
+<s:Label text="explicación CFDI"/>
+
+</mx:Canvas> 
+<mx:Canvas id="pdfCanvasInfo" label="Qué es una Representación Gráfica del CFD / CFDI" 
+icon="@Embed(source='assets/article-48x48.png')"
+backgroundColor="#006BBD">
+
+<s:TextArea text="Content" width="100%" height="100%"/>
+
+</mx:Canvas>
+</components:CollapsibleAccordion>-->
+
+<!--<mx:Canvas id="pdfCanvas" icon="@Embed(source='assets/RGCFDI-PDF.png')"
+backgroundColor="#FFFFFF" visible="true"  width="100%" height="100%">
+
+
+<mx:Image id="header"  x="20" y="0" source="assets/header.png"/>
+<mx:Image id="logo" source="assets/imagenLogo.png"  x="32" y="69"/>
+<mx:Image id="QRCode" source="assets/qrCode.png"  x="43" y="914"/>
+
+<s:Label id="UUID1"  text="UUID" x="897" y="14"/>
+<s:Label id="UUID2"  text="UUID" x="240" y="913"/>
+<mx:Text id="selloSAT"  text="selloSAT" x="168" y="967" height="40"  width="100%" />
+<s:Label id="emisor" x="354" y="69"  text="emisor"/>
+<s:Label id="direccionEmisor2"  x="353" y="128"  text="direccionEmisor2"/>
+<s:Label id="direccionEmisor3" x="353" y="149"  text="direccionEmisor3"/>
+<s:Label id="rfcReceptor" x="51" y="258"  fontSize="12"  text="rfcReceptor"/>
+<s:Label id="nombreReceptor" x="51" y="278"   fontSize="12" text="nombreReceptor"/>
+<s:Label id="direccionReceptor1" x="51" y="298"  fontSize="12" text="direccionReceptor1"/>
+<s:Label id="serie" x="915" y="101"  text="serie"  fontSize="12"/>
+<s:Label id="folio" x="1084" y="102"  text="folio"  fontSize="12"/>
+<s:Label id="direccionReceptor3" x="51" y="345"    fontSize="12" text="direccionReceptor3"/>
+<s:Label id="direccionReceptor2" x="51" y="327"   fontSize="12" text="direccionReceptor2"/>
+<s:Label id="direccionEmisor1"  x="353" y="108"   fontSize="12" text="direccionEmisor1"/>
+<s:Label id="nombreEmisor"  x="353" y="88"   fontSize="12" text="nombreEmisor"/>
+<s:Label id="fechaCFDI" x="972" y="173"  fontSize="12" text="fechaCFDI"/>
+<mx:Text id="cadenaOriginalPAC" x="48" y="806"  fontSize="12" text="cadenaOriginalPAC"  height="32"  width="100%"  />
+<s:Label id="totalDocumento" x="915" y="516"  fontSize="12" text="totalDocumento" textAlign="right"/>
+<mx:Text id="selloDigital" x="45" y="864"  fontSize="12" text="selloDigital" height="32"  width="100%"  />
+<mx:Text id="observaciones" x="45" y="723"  fontSize="12" text="observaciones"  height="31"  width="100%" />
+<s:Label id="metodoPago" x="935" y="675"  fontSize="12" text="metodoPago"/>
+<s:Label id="formaPago" x="672" y="677"  fontSize="12" text="formaPago"/>
+<s:Label id="totalIVA" x="959" y="536"  fontSize="12"  text="totalIVA"  textAlign="right"/>
+
+<mx:Text id="noCertificadoSAT" x="618" y="909" width="100%"   fontSize="12" text="noCertificadoSAT"/>
+<s:Label id="tipoCFDI" x="179" y="683"  fontSize="12"  text="tipoCFDI"/>
+<s:Label id="moneda" x="317" y="680"  fontSize="12"  text="moneda"/>
+<s:Label id="tasaCambio" x="492" y="678"  fontSize="12"  text="tasaCambio" />
+<s:Label id="fechaHrCertif" x="344" y="933"  fontSize="12"  text="fechaHrCertif" />
+
+
+<s:Label id="cadenaOriginal"  fontSize="12" text="cadenaOriginal" x="358" y="509"  visible="false"/>
+<s:Label id="selloProveedor" x="358" y="536"  fontSize="12" text="selloProveedor"  visible="false"/>
+<s:Label id="anio" x="370" y="488"  fontSize="12"  text="anio" visible="false"/>
+<mx:Text id="certificado" x="245" y="575"  fontSize="12" text="certificado"  visible="false"  width="100%"  />
+<s:Label id="certifSAT" x="457" y="554"  fontSize="12"  text="certifSAT" visible="false" />
+
+
+<s:Label x="214" y="1015" id="totalLetra0"   name="1" text="Este documento es una representación impresa de un CFDI. No tiene validez oficial" fontSize="16" fontWeight="bold"/>
+<s:Label x="578" y="677"   name="1" text="Forma de Pago:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="47" y="684"    name="1" text="Tipo de Comprobante:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="372" y="676"   name="1" text="|" fontWeight="bold" fontSize="12"/>
+<s:Label x="229" y="680"    name="1" text="|" fontWeight="bold" fontSize="12" height="22"/>
+<s:Label x="500" y="914"    name="1" text="|" fontWeight="bold" fontSize="12" width="13"/>
+<s:Label x="822" y="675"    name="1" text="|" fontWeight="bold" fontSize="12" width="13"/>
+<s:Label x="593" y="1238"    name="1" text="|" fontWeight="bold" fontSize="12" width="13"/>
+<s:Label x="832" y="675"    name="1" text="Método de Pago:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="390" y="679"    name="1" text="Tasa de Cambio:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="243" y="682"    name="1" text="Moneda:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="49" y="771"    name="1" text="Certificado del Emisor:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="44" y="713"  name="1"  text="Observaciones:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="48" y="794" text="Cadena Original del Complemento de Certificación Digital del SAT" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="45" y="852" text="Sello Digita del Emisorl:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="166" y="915" text="Folio Fiscal: " fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="166" y="933" text="Fecha y Hora de Certificación:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="165" y="954" text="Sello Digital SAT:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="517" y="914" text="Certificado SAT:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+<s:Label x="569" y="675"   name="1" text="|" fontWeight="bold" fontSize="12" width="13"/>
+
+<s:Label x="45" y="690" text="____________________________________________________________________________________________________________________________________________________" width="1136"/>
+<s:Label x="50" y="777" text="____________________________________________________________________________________________________________________________________________________" width="1136"/>
+<s:Label x="45" y="833" text="____________________________________________________________________________________________________________________________________________________" width="1136"/>
+<s:Label x="45" y="892" text="____________________________________________________________________________________________________________________________________________________" width="1136"/>
+<s:Label x="46" y="753" text="____________________________________________________________________________________________________________________________________________________" width="1136"/>
+
+
+<mx:DataGrid id="GVCFDIDetalleRecibidos"  doubleClickEnabled="false"
+variableRowHeight="true" liveScrolling="true" 
+wordWrap="true" headerStyleName="headerStyle"
+dropShadowVisible="true" sortableColumns="false" resizableColumns="false" 
+horizontalScrollPolicy="on" width="100%" height="240"  x="10" y="420"
+name="Comprobantes Fiscales Enviados" borderColor="#ACABAA" showHeaders="false">
+
+<mx:columns>								
+<mx:DataGridColumn headerText="Cantidad" 			dataField="0" width="100"/>										
+<mx:DataGridColumn headerText="Unidad Medida"		dataField="1" width="100" textAlign="center"/>
+<mx:DataGridColumn headerText="Descripción"			dataField="2" width="600" textAlign="center"/>
+<mx:DataGridColumn headerText="Importe Unitario" 	dataField="3" width="100" textAlign="center"/>
+
+</mx:columns>
+</mx:DataGrid>
+</mx:Canvas>-->

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('FXcatUsuarios.swf');" pageTitle="Catálogo de Usuarios">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha; 
+			
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			import com.ExcelExports;
+			
+			private var rfcPM:RegExp = /([a-zA-Z|ñÑ|&]{3,4})(([0-9]{2})([0][13456789]|[1][012])([0][1-9]|[12][\d]|[3][0])|([0-9]{2})([0][13578]|[1][02])([0][1-9]|[12][\d]|[3][01])|([02468][048]|[13579][26])([0][2])([0][1-9]|[12][\d])|([0-9]{2})([0][2])([0][1-9]|[12][0-9]))([a-zA-Z|0-9|ñÑ]{2}[a-zA-Z|0-9|ñÑ]{1})/;
+			
+			private function exportXLS():void
+			{
+				if(GWV_UserxRol.dataProvider != null)
+					com.ExcelExports.fromGrid(this.GWV_UserxRol,"UsuariosxRol.xls", new Object());
+					
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No existen registros para exportar.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+			}
+
+		private function ejecutaFiltro():void
+		{
+			if(txtRFCFilter.text.length > 0)
+			{
+				if((txtRFCFilter.text.length < 12) || (txtRFCFilter.text.length > 13))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El RFC debe tener como mínimo 12 caracteres y máximo 13.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+			}
+			
+			Send(654); //LLENA DATA GRID USUARIOS
+		}
+			
+		private function cleanCtrls():void
+		{
+			GWV_UserxRol.dataProvider = null;
+			cmbRol.selectedIndex = 0;
+			txtAccount.text = '';
+		}
+			
+		private function checkRFC(myCtrl:spark.components.TextInput):void
+		{
+				myCtrl.text.toUpperCase();
+				if(rfcPM.test(myCtrl.text))
+				{
+					myCtrl.errorString = "";
+				}
+				else
+				{				
+					myCtrl.errorString = "RFC Persona Moral \n\n" +
+						"Formato “AAAaammddHHD”, en donde: \n" +
+						"AAA = Siglas del contribuyente, alfanumérico. \n" +
+						"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+						"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+						"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"Los caracteres alfabéticos deben ser mayúsculas.\n\n\n" +
+						"RFC Persona Física \n\n" +
+						"Formato “AAAAaammddHHD”, en donde: \n" +
+						"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+						"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+						"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+						"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"Los caracteres alfabéticos deben ser mayúsculas.";
+				}			
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Usuarios" width="100%" height="100%">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="0">
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="5" paddingTop="5" paddingBottom="5" verticalAlign="bottom">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingTop="5" paddingBottom="5">
+							<s:Label text="USUARIOS" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+							<s:Label id="lblTextFilter0" text=" Tipo Rol: "  height="24" verticalAlign="middle" visible="true"/>
+							<s:ComboBox id="cmbRol" creationComplete="Send(653);" width="225" x="180"/>
+							<s:Label id="lblTextFilter" text=" Cuenta: "  height="24" verticalAlign="middle" visible="true" width="56" x="439" textAlign="right"/>
+							<s:TextInput x="417" y="43" id="txtAccount" width="150" maxChars="50" tabIndex="1" height="24" visible="true"/>
+							<s:Label id="lblTextFilterRFC" text=" RFC: "  height="24" verticalAlign="middle" visible="true" width="56" textAlign="right"/>
+							<s:TextInput id="txtRFCFilter" width="106" maxChars="13" tabIndex="1" height="24" visible="true" change="if(txtRFCFilter.text!=&quot;&quot;)checkRFC(txtRFCFilter) else txtRFCFilter.errorString = '';"/>
+							
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="ejecutaFiltro();" height="24" tabIndex="2" width="100"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrls();" height="24" tabIndex="3" width="100"/>
+							<mx:Button label="Exportar" icon="@Embed(source='assets/Exel_24.png')" height="24" click="exportXLS();" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<mx:DataGrid id="GWV_UserxRol" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%">
+							<mx:columns> 
+								<mx:DataGridColumn headerText="idUsuario" 				dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="idRol" 					dataField="1" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Cuenta" 					dataField="2" width="40"/>
+								<mx:DataGridColumn headerText="Nombre" 					dataField="3" width="50"/>
+								<mx:DataGridColumn headerText="E-Mail" 					dataField="4" width="50"/>
+								<mx:DataGridColumn headerText="Tipo Rol" 				dataField="5" width="50"/>
+								<mx:DataGridColumn headerText="Fecha Alta" 				dataField="6" width="50"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+				</s:VGroup>
+
+		</s:Panel>
+	</s:VGroup>
+</s:Application>

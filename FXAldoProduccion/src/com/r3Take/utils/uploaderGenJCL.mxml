@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:Panel 
+	xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:html="com.htmlFilter.*"
+	xmlns:com="*"
+	xmlns:local="*" 	
+	xmlns:ns1="com.flashdev.file.*"
+	layout="vertical" 
+	
+	title="Enviar Archivos" xmlns:s="library://ns.adobe.com/flex/spark">	
+	
+	<mx:Metadata>
+		[Event(name="uploadComplete", type="flash.events.Event")]
+		[Event(name="uploadProgress", type="flash.events.ProgressEvent")]
+		[Event(name="uploadCancel", type="flash.events.Event")]
+		[Event(name="uploadIOError", type="flash.events.IOErrorEvent")]
+		[Event(name="uploadSecurityError", type="flash.events.SecurityErrorEvent")]		
+	</mx:Metadata>	
+	<mx:Script source="../../../r3Take.as" />
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.*;
+			import mx.managers.*;
+			import mx.events.*;
+			import flash.events.*;
+			import flash.net.*;
+			
+			//private var _strUploadUrl:String;
+			private var _refAddFiles:FileReferenceList;	
+			private var _refUploadFile:FileReference;
+			private var _myFile:FileReference;				
+			/*private var _idRef:String;
+			private var _baseURL:String;
+			private var _path:String;
+			private var _DS:String;
+			private var _SQL:String;
+			private var _SQLArgs:String;
+			private var _SQLDel:String;
+			private var _SQLArgsDel:String;
+			private var _strActionOnUploadComplete:String;
+			*/
+			private var _r3FilePath:String;
+			private var _r3IdRef:String;
+			private var _r3DS:String;
+			private var _r3SQL:String;
+			private var _r3SQLArgs:String;
+			private var _r3ActionOnUploadComplete:String;
+			private var _r3AshxPath:String;
+			private var _r3Param1:String;
+			private var _r3Param2:String;
+			private var _r3Param3:String;
+			private var _r3Param4:String;
+			private var _r3Param5:String;
+			
+			
+			
+			[Embed(source="assets/add.png")]
+			[Bindable]
+			public var iconAdd:Class;
+			
+			//			[Embed(source="assets/view.png")]
+			//			[Bindable]
+			//			public var iconView:Class;
+			
+			/* [Embed(source="assets/delete.png")]
+			[Bindable]
+			public var iconDel:Class; */
+			
+			// Establece la ruta del directorio dónde se guardará el archivo físicamente
+			public function set r3FilePath(strFilePath:String):void {
+				_r3FilePath = strFilePath;
+			}
+			
+			// Set idRef
+			public function set r3IdRef(strIdRef:String):void {
+				_r3IdRef = strIdRef;
+			}
+			
+			// Set DS
+			public function set r3DS(strDS:String):void {
+				_r3DS = strDS;
+			}
+			
+			// Set SQL
+			public function set r3SQL(strSQL:String):void {
+				_r3SQL = strSQL;
+			}
+			
+			// Set SQLArgs
+			public function set r3SQLArgs(strSQLArgs:String):void {
+				_r3SQLArgs = strSQLArgs;
+			}
+			
+			
+			// Set Action OnUploadComplete
+			public function set r3ActionOnUploadComplete(strActionOnUploadComplete:String):void {
+				_r3ActionOnUploadComplete = strActionOnUploadComplete;
+			}
+			// Set uploadUrl
+			public function set r3AshxPath(strAshxPath:String):void {
+				_r3AshxPath = strAshxPath;
+			}
+			// Set Action OnUploadComplete
+			public function set r3Param1(strParam1:String):void {
+				_r3Param1 = strParam1;
+			}
+			
+			
+			// Set Action OnUploadComplete
+			public function set r3Param2(strParam2:String):void {
+				_r3Param2 = strParam2;
+			}
+			
+			
+			// Set Action OnUploadComplete
+			public function set r3Param3(strParam3:String):void {
+				_r3Param3 = strParam3;
+			}
+			
+			
+			// Set Action OnUploadComplete
+			public function set r3Param4(strParam4:String):void {
+				_r3Param4 = strParam4;
+			}
+			
+			
+			// Set Action OnUploadComplete
+			public function set r3Param5(strParam5:String):void {
+				_r3Param5 = strParam5;
+			}
+			//e.diaz@freightideas.com
+			
+			
+			// Set BaseURL
+			/* public function set eBaseURL(strbaseURL:String):void {
+				_baseURL = strbaseURL;
+			} */
+			
+			// Set path
+			/* public function set ePath(strPath:String):void {
+				_path= strPath;
+			} */
+			
+			
+			/*
+			// Set SQL
+			public function set eSQLDel(strSQLDel:String):void {
+				_SQLDel = strSQLDel;
+			}
+			
+			// Set SQLArgs
+			public function set eSQLArgsDel(strSQLArgsDel:String):void {
+				_SQLArgsDel = strSQLArgsDel;
+			}
+			
+			// Set uploadUrl
+			public function set eUploadUrl(strUploadUrl:String):void {
+				_strUploadUrl = strUploadUrl;
+			}
+			*/
+			
+			
+			
+			private function setAdd(event:MouseEvent):void{
+				r3FileName .text = "";
+				btnAdd.setStyle("icon",iconAdd);
+				btnAdd.toolTip = "Adjuntar Archivo"
+				btnAdd.removeEventListener(MouseEvent.CLICK,addFiles);
+				//btnAdd.removeEventListener(MouseEvent.CLICK,viewFiles);
+				btnAdd.addEventListener(MouseEvent.CLICK,addFiles);				
+				enableUI();
+			}
+			
+			
+			private function doDownload(evt:Event):void {               
+				var fr:FileReference = evt.currentTarget as FileReference; 
+				try {
+					/* Do something */
+					Alert.show(evt.toString(),evt.type.toString());             
+				} catch (err:*) {
+					Alert.show(evt.toString(),"Erroooooor");
+				}
+			}
+			
+			
+			
+			// Called to add file(s) for upload
+			private function addFiles(event:MouseEvent):void {				
+				_refAddFiles = new FileReferenceList();
+				_refAddFiles.addEventListener(Event.SELECT, onSelectFile);
+				_refAddFiles.browse();
+			}
+			
+			// Called when a file is selected
+			private function onSelectFile(event:Event):void {				
+				if (_refAddFiles.fileList.length >= 1) {				
+					for (var k:Number = 0; k < _refAddFiles.fileList.length; k++) {
+						
+						/* if(_refAddFiles.fileList[k].size < 60000)
+						{ */
+						nameL.text = _refAddFiles.fileList[k].name;
+						sizeL.text = formatFileSize(_refAddFiles.fileList[k].size);						
+						_myFile = _refAddFiles.fileList[k];		
+						/* }
+						else
+						{
+						Alert.show("El Archivo adjuntado debe de pesar menos de 60 Kb", "r3Take Message");
+						}	 */			
+					}					
+				}
+				updateProgBar();				
+				uploadCheck();
+				fsW.visible = true;
+			}
+			
+			// Called to format number to file size
+			private function formatFileSize(numSize:Number):String {
+				var strReturn:String;
+				numSize = Number(numSize / 1000);
+				strReturn = String(numSize.toFixed(1) + " KB");
+				if (numSize > 1000) {
+					numSize = numSize / 1000;
+					strReturn = String(numSize.toFixed(1) + " MB");
+					if (numSize > 1000) {
+						numSize = numSize / 1000;
+						strReturn = String(numSize.toFixed(1) + " GB");
+					}
+				}				
+				return strReturn;
+			}
+			
+			
+			
+			// Called to remove selected file(s) for upload
+			private function removeFiles():void {
+				try{
+					fsW.visible = false;
+					updateProgBar();					
+					uploadCheck();
+				} catch (er:Error) {}
+			}
+			
+			// Called to check if there is at least one file to upload
+			private function uploadCheck():void {
+				if (nameL.text.length == 0) {
+					btnUpload.enabled = false;					
+				} else {
+					btnUpload.enabled = true;					
+				}
+			}
+			
+			// Disable UI control
+			private function disableUI():void {	
+				btnUpload.enabled = false;
+				btnCancel.enabled = true;				
+			}
+			
+			// Enable UI control
+			private function enableUI():void {				
+				btnUpload.enabled = true;
+				btnCancel.enabled = false;				
+			}			
+			
+			// Called to delete file 
+			private function startDelete():void {
+				if (r3FileName.text.length > 0) {
+					Alert.show("Remover Archivo?","Confirmación",Alert.YES|Alert.NO, null, doDelete, iconDel);
+				}
+			}
+			
+			
+			private function doDelete(eventObj:CloseEvent):void{
+				if (eventObj.detail==Alert.YES) {
+					disableUI();
+					var sendVars:URLVariables = new URLVariables();
+					
+					sendVars.action = "eliminar";
+					sendVars.r3FilePath = _r3FilePath;
+					sendVars.r3FileName = nameL.text;
+					sendVars.r3IdRef = _r3IdRef;
+					sendVars.r3DS = _r3DS;
+					sendVars.r3SQL = _r3SQL;
+					sendVars.r3SQLArgs = _r3SQLArgs;
+					sendVars.r3AshxPath = _r3AshxPath;
+					sendVars.r3Param1 = _r3Param1;
+					sendVars.r3Param2 = _r3Param2;
+					sendVars.r3Param3 = _r3Param3;
+					sendVars.r3Param4 = _r3Param4;
+					sendVars.r3Param5= _r3Param5;
+					//sendVars.eFileName = eFileName.text;
+					
+					var request:URLRequest = new URLRequest();
+					
+					request.data = sendVars;
+					request.url = _r3AshxPath;
+					request.method = URLRequestMethod.POST;
+					
+					
+					var loader:URLLoader = new URLLoader();
+					loader.load(request);
+					setAdd(null);
+					Alert.show("Archivo Borrado!","");
+				}
+				
+			}
+			
+			// Called to upload file
+			private function startUpload():void {
+				if (nameL.text.length > 0) {
+					disableUI();															
+					// Variables to send along with upload
+					var sendVars:URLVariables = new URLVariables();
+					/*
+					sendVars.r3IdRef = _r3IdRef;
+					sendVars.eBaseURL = _baseURL;
+					sendVars.ePath = _path;
+					sendVars.eDS = _DS;
+					sendVars.eSQL = _SQL;
+					sendVars.eSQLArgs = _SQLArgs;*/
+					
+					sendVars.action = "cargar";
+					sendVars.r3FilePath = _r3FilePath;
+					sendVars.r3FileName = nameL.text;
+					sendVars.r3IdRef = _r3IdRef;
+					sendVars.r3DS = _r3DS;
+					sendVars.r3SQL = _r3SQL;
+					sendVars.r3SQLArgs = _r3SQLArgs;
+					sendVars.r3AshxPath = _r3AshxPath;
+					sendVars.r3Param1 = _r3Param1;
+					sendVars.r3Param2 = _r3Param2;
+					sendVars.r3Param3 = _r3Param3;
+					sendVars.r3Param4 = _r3Param4;
+					sendVars.r3Param5= _r3Param5;
+					
+					
+					var request:URLRequest = new URLRequest();
+					request.data = sendVars;
+					request.url = _r3AshxPath;
+					request.method = URLRequestMethod.POST;
+					_refUploadFile = new FileReference();
+					_refUploadFile = _myFile;
+					_refUploadFile.addEventListener(ProgressEvent.PROGRESS, onUploadProgress);
+					_refUploadFile.addEventListener(Event.COMPLETE, onUploadComplete);
+					_refUploadFile.addEventListener(IOErrorEvent.IO_ERROR, onUploadIoError);
+					_refUploadFile.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onUploadSecurityError);
+					_refUploadFile.upload(request, "file", false);
+				}
+			}
+			
+			// Cancel and clear eventlisteners on last upload
+			private function clearUpload():void {
+				_refUploadFile.removeEventListener(ProgressEvent.PROGRESS, onUploadProgress);
+				_refUploadFile.removeEventListener(Event.COMPLETE, onUploadComplete);
+				_refUploadFile.removeEventListener(IOErrorEvent.IO_ERROR, onUploadIoError);
+				_refUploadFile.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onUploadSecurityError);
+				_refUploadFile.cancel();				
+				updateProgBar();
+				enableUI();
+			}
+			
+			// Called on upload cancel
+			private function onUploadCanceled():void {
+				clearUpload();
+				dispatchEvent(new Event("uploadCancel"));
+			}
+			
+			// Get upload progress
+			private function onUploadProgress(event:ProgressEvent):void {
+				var numPerc:Number = Math.round((event.bytesLoaded / event.bytesTotal) * 100);
+				updateProgBar(numPerc);
+				var evt:ProgressEvent = new ProgressEvent("uploadProgress", false, false, event.bytesLoaded, event.bytesTotal);
+				dispatchEvent(evt);
+			}
+			
+			// Update progBar
+			private function updateProgBar(numPerc:Number = 0):void {
+				var strLabel:String = "";
+				strLabel = (numPerc > 0 && numPerc < 100) ? numPerc + "% - " + strLabel : strLabel;
+				strLabel = (numPerc == 100) ? "Carga Completa - " + strLabel : strLabel;
+				//strLabel = (_arrUploadFiles.length == 0) ? "" : strLabel;
+				progBar.label = strLabel;
+				progBar.setProgress(numPerc, 100);
+				progBar.validateNow();
+			}
+			
+			// Called on upload complete
+			private function onUploadComplete(event:Event):void {				
+				r3FileName.text = nameL.text;					
+				clearUpload();
+				dispatchEvent(new Event("uploadComplete"));
+				removeFiles();
+				Get(int(_r3ActionOnUploadComplete));
+				
+			}
+			
+			// Called on upload io error
+			private function onUploadIoError(event:IOErrorEvent):void {
+				clearUpload();
+				var evt:IOErrorEvent = new IOErrorEvent("uploadIoError", false, false, event.text);
+				dispatchEvent(evt);
+			}
+			
+			// Called on upload security error
+			private function onUploadSecurityError(event:SecurityErrorEvent):void {
+				clearUpload();
+				var evt:SecurityErrorEvent = new SecurityErrorEvent("uploadSecurityError", false, false, event.text);
+				dispatchEvent(evt);
+			}
+			
+		]]>
+	</mx:Script>
+	<s:Group x="0" y="0" width="100%" height="100%" >
+		<mx:TitleWindow x="0" y="26" width="100%" layout="absolute" title="Seleccione un Archivo" id="fsW" visible="false" showCloseButton="true" close="fsW.visible=false;" alpha="1">			
+			<s:VGroup x="0" y="0" width="100%"  paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4">
+				<mx:Label  text="Nombre" width="100%" id="nameL"/>
+				<mx:Label  text="Tamaño" width="100%" id="sizeL"/>
+			</s:VGroup>			
+			<mx:ControlBar horizontalAlign="center" verticalAlign="middle" width="100%" horizontalGap="2" paddingLeft="3" paddingRight="3" paddingBottom="3" paddingTop="3">
+				<mx:ProgressBar id="progBar" mode="manual" label="" labelPlacement="center" width="100%"  fontSize="8"/>
+				<mx:Button label="Cargar" icon="@Embed(source='assets/bullet_go.png')" click="startUpload()"  id="btnUpload"/>
+				<mx:Button label="Cancelar" icon="@Embed(source='assets/cancel2.png')" click="onUploadCanceled()"  id="btnCancel"/>
+			</mx:ControlBar>
+		</mx:TitleWindow>
+		<mx:ControlBar horizontalAlign="center" verticalAlign="middle" width="100%" horizontalGap="0" paddingBottom="0" paddingRight="0" paddingLeft="0" paddingTop="0">			
+			<mx:TextInput  id="r3FileName" width="100%" editable="false">
+				<!--<mx:valueCommit>if(eFileName.text==&quot;&quot;){setAdd(null);}else{setAdd(null);}</mx:valueCommit>-->
+			</mx:TextInput>
+			<mx:Button  id="btnAdd" icon="@Embed(source='assets/add.png')" toolTip="Adjuntar Archivo" width="26" creationComplete="setAdd(null);"/>
+			<mx:Button id="btnRemove" icon="@Embed(source='assets/delete.png')" click="startDelete()" width="26" toolTip="Borrar Archivo"/>			
+			
+		</mx:ControlBar>		
+	</s:Group>	
+</mx:Panel>

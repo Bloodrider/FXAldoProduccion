@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" pageTitle="Transacciones No Facturadas"
+	applicationComplete="validateUser('sucursalesFacturaT.swf');">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+		import com.ExcelExports;
+		import mx.events.*;
+		
+		private function pasaInfoTransLogin():void
+		{
+			if(DGEmpFacturaT.selectedIndex >= 0)
+			{
+				lblLeyenda.text = DGEmpFacturaT.selectedItem[3].toString();
+				lblPortal.text = DGEmpFacturaT.selectedItem[4].toString();
+				lblRepositorio.text = DGEmpFacturaT.selectedItem[5].toString();
+				lblVigencia.text = DGEmpFacturaT.selectedItem[8].toString();
+				lblDecimales.text = DGEmpFacturaT.selectedItem[7].toString();
+				//lblContacto.text = DGEmpFacturaT.selectedItem[6].toString();
+				txtIdEmpresa.text = DGEmpFacturaT.selectedItem[0].toString();
+			}
+			
+			//Send(1175); //Ejecuta Clase que hace Filtro
+		}
+		
+		private function onButton(btn:BorderContainer):void
+		{
+			btn.setStyle("backgroundAlpha",1.0);
+			btn.setStyle("borderVisible",true);
+			btn.setStyle("borderColor",0xcedbef);
+			btn.setStyle("backgroundColor",0xcedbef);										
+		}
+		
+		private function offButton(btn:BorderContainer):void
+		{
+			btn.setStyle("backgroundAlpha",0.0);
+			btn.setStyle("borderVisible",false);
+			btn.setStyle("borderColor",0x0);
+			btn.setStyle("backgroundColor",0x0);
+		}
+		
+		private function filtrar():void
+		{
+			if(txtIdEmpresa.text.length > 0)
+				Send(1175); //Ejecuta Clase que hace Filtro
+		}
+		
+		private function limpiarFiltro():void
+		{
+			nomSucFilter.text = "";  
+			idSucFilter.value = 0; 
+			fechaIniTransFilter.text = ""; 
+			fechaFinTransFilter.text = "";
+		}
+		
+		private function exportXLS():void
+		{
+			if(DGSucursalesFact.dataProvider != null)
+				com.ExcelExports.fromGrid(this.DGSucursalesFact,"SucursalesFacturaT.xls", new Object());
+				
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No existen registros para exportar.","Aviso",Alert.OK,null,null, iconAlert);	
+				return;
+			}
+		}
+		
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{
+			if (date != null)
+			{
+				cntlH.selectedDate = null;
+				cntlH.selectableRange = {
+					rangeStart:new Date(
+						date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()))
+				};
+			}
+		}
+		
+		
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Control Factura-T" width="100%" height="100%" left="10" top="10" right="10" bottom="10">
+		<s:VGroup width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+			
+			<s:HGroup width="100%" horizontalAlign="left" verticalAlign="middle" >			
+				<s:VGroup width="150" height="100%">
+					<mx:DataGrid width="100%" id="DGEmpFacturaT" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="pasaInfoTransLogin();" creationComplete="Send(1174);">
+						<mx:columns>
+							<mx:DataGridColumn headerText="idEmpresa"			dataField="0" width="200" visible="false"/>
+							<mx:DataGridColumn headerText="idTransLogin"		dataField="1" width="200" visible="false"/>
+							<mx:DataGridColumn headerText="RFC" 				dataField="2" width="110"/>
+							<mx:DataGridColumn headerText="Leyenda Ventana" 	dataField="3" width="80" visible="false"/>
+							<mx:DataGridColumn headerText="Portal Cliente"		dataField="4" width="140" visible="false"/>
+							<mx:DataGridColumn headerText="Repositorio CFDI" 	dataField="5" width="140" visible="false"/>
+							<mx:DataGridColumn headerText="LeyendaSoporte"	 	dataField="6" width="140" visible="false"/>
+							<mx:DataGridColumn headerText="No.Decimales" 		dataField="7" width="100" visible="false"/>
+							<mx:DataGridColumn headerText="Vigencia Tickets" 	dataField="8" width="110" visible="false"/>
+						</mx:columns>
+					</mx:DataGrid>
+				</s:VGroup>
+				
+				<s:VGroup width="100%" height="100%">
+					<s:HGroup width="100%" height="100%">
+						<s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+							<mx:Image source="assets/UserCat_64.png" />
+							<s:Label text="CONTROL FACTURA-T" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="80%" height="100%" horizontalAlign="center" verticalAlign="middle">
+							<s:Group>
+								<s:TextInput x="796" y="59" id="txtIdRol" editable="false" enabled="false" visible="false" width="13"/>
+								<s:TextInput x="796" y="59" id="txtIdEmpresa" editable="false" enabled="false" visible="false" width="13"/>
+								<s:Label text="Portal Cliente:" fontWeight="bold" x="50" y="30"/>
+								<s:Label id="lblPortal" text="" fontWeight="bold" x="138" y="30"/>
+								<s:Label text="Repositorio CFDI:" fontWeight="bold" x="50" y="50"/>
+								<s:Label id="lblRepositorio" text="" fontWeight="bold" x="153" y="50"/>
+								<s:Label text="Vigencia de Tickets:" fontWeight="bold" x="380" y="49"/>
+								<s:Label id="lblVigencia" text="" fontWeight="bold" x="500" y="49"/>
+								<s:Label id="lblDecimales" text="" fontWeight="bold" x="470" y="30"/>
+								<s:Label text="No. Decimales:" fontWeight="bold" x="380" y="30"/>
+								<s:Label id="lblContacto" text="" fontWeight="bold" x="440" y="10" visible="false"/>
+								<s:Label text="Contacto:" fontWeight="bold" x="380" y="10" visible="false"/>
+								<s:Label text="Leyenda de Ventana:" fontWeight="bold" x="50" y="10"/>
+								<s:Label id="lblLeyenda" text="" fontWeight="bold" x="174" y="10"/>
+							</s:Group>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%">						
+						<s:VGroup width="100%" height="100%">
+							<s:HGroup width="100%" height="100%" verticalAlign="bottom" paddingLeft="10">
+								<s:Label text="Nombre Sucursal:" fontWeight="bold" width="110"/>
+								<s:Label text="Id Sucursal" width="94" fontWeight="bold"/>
+								<s:Label text="F.Inicio" width="123" fontWeight="bold"/>
+								<s:Label text="F.Final" width="124" fontWeight="bold"/>
+								<s:Label text="Estatus" width="75" fontWeight="bold" visible="false"/>
+							</s:HGroup>
+							
+							<s:HGroup width="100%" height="100%" paddingLeft="10">	
+								<s:TextInput width="110" id="nomSucFilter" height="24" maxChars="25"/>
+								<s:NumericStepper id="idSucFilter" width="92" maximum="50000000" height="24" value="0"/>
+								<mx:DateField id="fechaIniTransFilter" width="125" height="24" creationComplete="DCInit('fechaIniTransFilter');" change="dateControl(fechaIniTransFilter,fechaFinTransFilter, DateField(event.target).selectedDate)" />
+								<mx:DateField id="fechaFinTransFilter" width="125" height="24" creationComplete="DCInit('fechaFinTransFilter');"/>
+								<s:ComboBox id="cmbEstatus" width="120" visible="false"/>
+							</s:HGroup>
+						</s:VGroup>
+						
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" x="911" y="14">				
+							<s:HGroup>
+								<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+												   id="btnFiltro" click="filtrar();" rollOver="onButton(btnFiltro);" rollOut="offButton(btnFiltro);">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+										<mx:Image source="assets/filter_ok_48.png"/>
+									</s:HGroup>
+								</s:BorderContainer>
+							</s:HGroup>
+							<s:Label text="Filtrar" fontWeight="bold" fontSize="13"/>
+						</s:VGroup>
+						
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" x="911" y="14">				
+							<s:HGroup>
+								<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+												   id="btnEliminarFiltro" click="limpiarFiltro();" rollOver="onButton(btnEliminarFiltro);" rollOut="offButton(btnEliminarFiltro);">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+										<mx:Image source="assets/filter_cncl_48.png"/>
+									</s:HGroup>
+								</s:BorderContainer>
+							</s:HGroup>
+							<s:Label text="Eliminar Filtro" fontWeight="bold" fontSize="13"/>
+						</s:VGroup>
+						
+						<s:VGroup height="100%" horizontalAlign="center" verticalAlign="top" x="911" y="14">				
+							<s:HGroup>
+								<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+												   id="btnExport" click="exportXLS();" rollOver="onButton(btnExport);" rollOut="offButton(btnExport);">
+									<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+										<mx:Image source="assets/Excel-Icon48.png"/>
+									</s:HGroup>
+								</s:BorderContainer>
+							</s:HGroup>
+							<s:Label text="Exportar" fontWeight="bold" fontSize="13"/>
+						</s:VGroup>
+					
+					</s:HGroup>
+				</s:VGroup>
+			</s:HGroup>
+				
+			<s:HGroup width="100%" height="100%">
+				<mx:DataGrid width="100%" id="DGSucursalesFact" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Id Sucursal"				dataField="0" width="80"/>
+						<mx:DataGridColumn headerText="Nombre Sucursal" 		dataField="1" width="120"/>
+						<mx:DataGridColumn headerText="Dirección"				dataField="2" width="300"/>
+						<mx:DataGridColumn headerText="Tickets Totales"			dataField="3" width="120"/>
+						<mx:DataGridColumn headerText="Tickets Facturados"		dataField="4" width="120"/>
+						<mx:DataGridColumn headerText="Ultimo Ticket"			dataField="5" />
+					</mx:columns>
+				</mx:DataGrid>
+			</s:HGroup>
+			
+		</s:VGroup>
+	</s:Panel>	
+</s:Application>
+

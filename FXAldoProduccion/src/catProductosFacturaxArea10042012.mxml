@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('catProductosFacturaxArea.swf');">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			
+			import org.generalrelativity.foam.dynamics.collision.geom.AABR;
+			
+			private function selectProductosXArea():void
+			{
+				if (gvwProductosxArea.selectedItem != null)
+					txtIdProducto.text = gvwProductosxArea.selectedItem["0"].toString();
+			} 
+			
+			private function validaArea():void
+			{
+				if (cmbArea.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un Área del combo.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbArea.errorString = "Seleccione un Área.";
+					return;
+				}
+				Send(1264);//carga Data Grid Productos x Area
+			}
+			
+			private function SelectProducto(op:int):void
+			{
+				if(txtIdProducto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un Producto de la tabla.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if (op == 1) //Muestra TTW para Editar producto
+				{
+					TituloProductoAdd.text = "Editar Producto";
+					addProducto.title = "Editar Producto";
+					addProductoInDB.visible = false; 
+					actualizarProductoInDB.visible = true;
+					
+					cleanCtrlsAddProducto();
+					
+					traeDatosEdicion(); // Trae los datos a editar del Producto
+					
+					addProducto.visible = true;	
+				}
+					
+				else if (op == 2) // Eliminar Producto
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Desea eliminar el Producto del Área?","Aviso",Alert.YES|Alert.NO, null, eliminarProducto, iconAlert);
+				}
+			}
+			
+			private function traeDatosEdicion():void
+			{				
+				descripcionAdd.text = gvwProductosxArea.selectedItem["3"].toString();
+				descripcionCortaAdd.text = gvwProductosxArea.selectedItem["2"].toString();
+				precioUnitarioAdd.text = gvwProductosxArea.selectedItem["4"].toString();
+				
+				umAdd.selectedIndex = gvwProductosxArea.selectedItem["5"].toString();
+			}
+			
+			private function eliminarProducto(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(1267); //Elimina Producto
+					Send(1264); //Actualiza GridView Productos x Area
+					
+					cleanCtrlsAudit();
+				}	
+			}
+			
+			private function cleanCtrlsAudit():void
+			{
+				txtIdProducto.text = "";
+				precioAddValid.text = "";
+			}
+			
+			private function cleanCtrlsAddProducto():void
+			{
+				descripcionAdd.text = "";
+				descripcionCortaAdd.text = "";
+				precioUnitarioAdd.text = "";
+				
+				umAdd.selectedIndex = 0;
+			}
+			
+			private function muestraTTWAddProducto():void
+			{
+				if (cmbArea.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para poder agregar Productos seleccione un Área.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				cleanCtrlsAddProducto(); //Limpia controles de TTW Agregar Producto
+				
+				TituloProductoAdd.text = "Agregar Producto";
+				addProducto.title = "Agregar Producto";
+				addProductoInDB.visible = true; 
+				actualizarProductoInDB.visible = false;
+				
+				addProducto.visible = true;			
+			}
+			
+			private function addProductoAndValid(op:int):void
+			{
+				if(descripcionAdd.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para agregar el producto es necesario ingresar una descripción.","Aviso",Alert.OK,null,null, iconAlert);				
+					descripcionAdd.setFocus();
+					descripcionAdd.errorString = "Debe especificar la descripción.";
+					return;
+				}
+				
+				if(descripcionCortaAdd.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para agregar el producto es necesario ingresar una descripción corta.","Aviso",Alert.OK,null,null, iconAlert);				
+					descripcionCortaAdd.setFocus();
+					descripcionCortaAdd.errorString = "Debe especificar la descripción corta.";
+					return;
+				}
+				
+				if(precioUnitarioAdd.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para agregar el producto es necesario ingresar un precio unitario.","Aviso",Alert.OK,null,null, iconAlert);				
+					precioUnitarioAdd.setFocus();
+					precioUnitarioAdd.errorString = "Debe especificar el precio.";
+					return;
+				}
+				
+				if(precioAddValid.text == "1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Precio Unitario es incorrecto.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					precioUnitarioAdd.setFocus();
+					return;				
+				}
+				
+				if(umAdd.selectedIndex <= 0)
+				{		
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar una Unidad de Medida.","Aviso",Alert.OK,null,null, iconAlert);				
+					umAdd.setFocus();
+					umAdd.errorString = "Debe especificar la unidad de medida.";
+					return;
+				}		
+				
+				if (op == 1) 
+				{
+					Send(1265); //Guarda Producto
+				}
+					
+				else if (op == 2) 
+				{
+					Send(1266); //Editar Producto
+				}
+				
+				Send(1264); //Actualiza Grid Productos x Empresa
+				addProducto.visible = false;
+				cleanCtrlsAddProducto();
+				cleanCtrlsAudit();
+			}
+			
+
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<mx:CurrencyValidator source="{precioUnitarioAdd}" decimalPointCountError="El punto decimal sólo se puede agregar una vez." requiredFieldError="Este campo es requerido." invalidCharError="El precio contiene caracteres inválidos" property="text" maxValue="999999999" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.999999" lowerThanMinError="El valor debe de ser mayor a 0" allowNegative="false"  precision="6" precisionError="El precio debe de ser numérico con máximo seis posiciones decimales." valid="precioAddValid.text = '0';" invalid="precioAddValid.text = '1'" trigger="{precioUnitarioAdd}" triggerEvent="focusOut"/>
+	</fx:Declarations>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Productos por Área" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="15" paddingBottom="5">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">	
+					<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingRight="0" paddingLeft="0" paddingTop="0" paddingBottom="0">
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="Descripción" verticalAlign="middle"/>
+							<s:TextInput width="189" id="filtroDescripcion" tabIndex="51" height="24" maxChars="50" />
+							<s:Label text="*Área" fontWeight="bold" verticalAlign="middle"/>
+							<s:ComboBox creationComplete="Send(1271);" id="cmbArea" width="259" tabIndex="1" height="24" x="736" focusOut="cmbArea.errorString = ''"/>
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="validaArea();" height="24" tabIndex="3" width="100"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrlsAudit(); gvwProductosxArea.dataProvider = null; cmbArea.selectedIndex = 0; filtroDescripcion.text = '';" height="24" tabIndex="4" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<mx:DataGrid id="gvwProductosxArea" wordWrap="true" variableRowHeight="true" rowHeight="22" liveScrolling="true" height="100%" width="100%" click="selectProductosXArea();" >
+							<mx:columns>
+								<mx:DataGridColumn headerText="idProductoXEmpresa" 			dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="idArea" 						dataField="1" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Descripción Corta"			dataField="2" width="50"/>
+								<mx:DataGridColumn headerText="Descripción del Producto"	dataField="3" width="50"/>
+								<mx:DataGridColumn headerText="Precio Unitario"				dataField="4" width="50"/>
+								<mx:DataGridColumn headerText="Unidad de Medida"			dataField="5" width="50"/>	
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+						<s:TextInput id="txtIdProducto" width="38" maxChars="50" visible="false" enabled="false"/>
+						<s:TextInput id="precioAddValid" visible="false" x="582" y="10" width="29" enabled="false"/>
+						
+						<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="SelectProducto(2);" height="24" tabIndex="7" width="100" toolTip="Eliminar Producto"/>
+						<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="SelectProducto(1);" height="24" tabIndex="6" width="100" toolTip="Editar Producto"/>
+						<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="muestraTTWAddProducto();" height="24" tabIndex="5" width="100" toolTip="Agregar Producto"/>
+					</s:HGroup>
+				</s:VGroup>
+				
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>	
+	
+	<s:TitleWindow id="addProducto" visible="false" width="662" height="369" close="addProducto.visible = false;" title="" horizontalCenter="0" verticalCenter="11">
+		<s:Label x="39" y="96" text="* Descripción del Producto"/>
+		<s:Label x="39" y="184" text="* Descripción corta del Producto"/>
+		<s:Label x="38" y="216" text="* Precio Unitario"/>
+		<s:Label x="38" y="248" text="* Unidad de Medida"/>
+		
+		<s:Label text="Todos los campos marcados con *, son obligatorios." x="39" y="310" fontWeight="bold"/>
+		<s:Label id="TituloProductoAdd" text="" x="118" y="40" fontWeight="bold"/>
+		
+		<s:TextArea x="39" y="114" width="531" id="descripcionAdd" tabIndex="50" height="56" maxChars="3500" focusOut="if(descripcionAdd.text.length > 0) descripcionAdd.errorString = '';"/>
+		<s:TextInput x="224" y="178" width="250" id="descripcionCortaAdd" tabIndex="51" height="24" maxChars="50" focusOut="if(descripcionCortaAdd.text.length > 0) descripcionCortaAdd.errorString = '';"/>
+		<s:TextInput x="224" y="210" width="167" id="precioUnitarioAdd" restrict="0-9." tabIndex="52" height="24" focusOut="if(precioUnitarioAdd.text.length > 0) precioUnitarioAdd.errorString = '';"/>
+		
+		<s:ComboBox x="224" y="242" id="umAdd" creationComplete="Send(1268);" width="167" height="24" labelField="11" focusOut="if(umAdd.selectedIndex != 0) umAdd.errorString='';" tabIndex="53"/>
+		
+		<mx:Button x="470" y="282.95" label="Agregar" id="addProductoInDB" icon="@Embed(source='newIcons/add_24.png')" height="24" width="100" tabIndex="55" click="addProductoAndValid(1);" toolTip="Agregar Producto" visible="false"/>
+		<mx:Button x="470" y="282.95" label="Actualizar" id="actualizarProductoInDB" icon="@Embed(source='newIcons/add_24.png')" height="24" width="100" tabIndex="56" click="addProductoAndValid(2);" toolTip="Agregar Producto" visible="false"/>
+		
+		<mx:Image source="assets/docs-128.png" x="32" y="10" width="78" height="78"/>
+	</s:TitleWindow>
+	
+</s:Application>

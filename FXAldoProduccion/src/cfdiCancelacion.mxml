@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	pageTitle="Cancelación"
+	applicationComplete="validateUser('cfdiCancelacion.swf');">
+	
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+
+		import mx.events.*;
+		private function cargaCancelar():void
+		{
+			if(gridCCFE.selectedIndex >= 0)
+			{
+				idGridCCFE.text = gridCCFE.selectedItem["0"].toString();
+			} 
+		}
+		
+		private function cancelarFactura():void
+		{			
+			if(observaciones.text != "")
+			{
+				Alert.yesLabel="Si";
+				Alert.noLabel="No";
+				Alert.show("¿Está seguro que desea cancelar el CFDI?","Aviso",Alert.YES|Alert.NO, null, doCancelar, iconDel);
+			}
+			else 
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Debe ingresar un motivo por el cual desea cancelar el CFDI","Aviso",Alert.OK,null,null, iconAlert);
+				return;
+			}
+		}
+				
+		private function doCancelar(eventObj:CloseEvent):void{
+			if (eventObj.detail==Alert.YES) 
+			{
+				pnCancelar.visible =false;
+				Send(287);//Cancelar CFDI
+				Send(575); //Ejecuta FIltro
+			}
+		}
+		
+		private function limpiar():void
+		{
+			gridCCFE.dataProvider = null;
+			rfcReceptorFilter.text = "";
+			fechaFinFilter.text = "";
+			fechaIniFilter.text = "";
+			nombreReceptorFilter.text = "";
+			serieFilter.text = "";
+			folioFilter.value = 0;
+			topQuery.value = 200;
+			cmbSucursalesFilter.selectedIndex = 0;
+			monedaFilter.selectedIndex = 0;
+		}
+		
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{
+			if (date != null)
+			{
+				cntlH.selectedDate = null;
+				cntlH.selectableRange = {
+					rangeStart:new Date(
+						date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()+1))
+				};
+			}
+		}
+		
+		private function validFilter():void
+		{
+			if(monedaFilter.selectedIndex < 0)
+			{
+				Alert.okLabel = "Aceptar";		
+				Alert.show("El tipo de moneda es inválido","Aviso",Alert.OK,null,null, iconAlert);
+				monedaFilter.setFocus();
+				monedaFilter.errorString = "Seleccione una modena.";
+				return;
+			}
+			else
+			{
+				monedaFilter.errorString = "";
+				Send(575);
+			}		
+		}
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Cancelar Comprobante Fiscal Digital por Internet CFDI" width="100%" height="100%" >
+		
+		<s:VGroup x="0" y="0" width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+			<s:HGroup width="100%" horizontalAlign="right" >
+				<s:Label text="RFC Receptor" width="124" fontWeight="bold"/>
+				<s:Label text="Nombre Receptor" width="124" fontWeight="bold" x="548"/>
+				<s:Label text="Sucursal" width="242" fontWeight="bold"/>
+				<s:Label text="Fecha Inicial" width="125" fontWeight="bold" x="926"/>
+				<s:Label text="Fecha Final" width="133" fontWeight="bold" x="1057"/>
+			</s:HGroup>
+			<s:HGroup width="100%" horizontalAlign="right" paddingRight="10">
+				<s:TextInput width="125" id="rfcReceptorFilter"  height="24" restrict="0-9A-Za-z&amp;" typographicCase="uppercase" maxChars="13"/>
+				<s:TextInput width="125" id="nombreReceptorFilter" height="24" maxChars="40"/>
+				<s:ComboBox id="cmbSucursalesFilter" creationComplete="Send(681);" width="240"/>
+				<mx:DateField id="fechaIniFilter" width="125" height="24" creationComplete="DCInit('fechaIniFilter');" change="dateControl(fechaIniFilter,fechaFinFilter, DateField(event.target).selectedDate)"/>
+				<mx:DateField id="fechaFinFilter" width="125" height="24" creationComplete="DCInit('fechaFinFilter');"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" >
+				<s:Label text="Serie" width="124" fontWeight="bold" x="512"/>
+				<s:Label text="Folio" width="67" fontWeight="bold" x="642"/>
+				<s:Label text="Moneda" width="124" fontWeight="bold" x="715"/>
+				<s:Label text="Mostrar Registros" width="345" fontWeight="bold" x="845"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" height="35" horizontalAlign="right" paddingRight="5">
+				<s:TextInput width="125" id="serieFilter" height="24" restrict="0-9A-NM-Za-nm-z" typographicCase="uppercase" maxChars="25"/>
+				<s:NumericStepper id="folioFilter" width="65" maximum="50000000" height="24"/>
+				<s:ComboBox id="monedaFilter" width="125" creationComplete="Send(188);" height="24"></s:ComboBox>
+				<s:NumericStepper id="topQuery" width="96" maximum="50000000" height="24" value="200"/>
+				<s:TextInput width="27" id="idGridCCFE" visible="false" valueCommit="if(idGridCCFE.text.length > 0){pnCancelar.visible = true;}"/>
+				<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" click="validFilter();" width="100"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="100"/>
+			</s:HGroup>
+			
+			<mx:DataGrid width="100%" id="gridCCFE" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+				<mx:click>cargaCancelar();</mx:click>
+				<mx:columns>
+					<mx:DataGridColumn headerText="#" dataField="0" width="50" visible="false"/>
+					<mx:DataGridColumn headerText="RFC Receptor" dataField="1" width="40"/>
+					<mx:DataGridColumn headerText="Nombre Receptor" dataField="2" width="50"/>
+					<mx:DataGridColumn headerText="Fecha" dataField="3" width="50"/>
+					<mx:DataGridColumn headerText="Serie" dataField="4" width="50"/>
+					<mx:DataGridColumn headerText="Folio" dataField="5" width="50"/>
+					<mx:DataGridColumn headerText="Total Impuestos" dataField="6" width="50"/>
+					<mx:DataGridColumn headerText="Total Factura" dataField="7" width="50"/>
+					<mx:DataGridColumn headerText="Estado" dataField="8" width="75"/>
+				</mx:columns>
+			</mx:DataGrid>
+
+		</s:VGroup>
+	</s:Panel>
+	
+	<s:TitleWindow width="500" height="225" title="Cancelar CFDI" id="pnCancelar" borderAlpha=".95" visible="false" close="pnCancelar.visible = false; idGridCCFE.text = '';"  horizontalCenter="0" verticalCenter="12">
+		<s:Label x="11" y="22" text="*Motivo por el cual desea cancelar el CFDI" enabled="true" fontSize="11"/>
+		<mx:Button label="Cancelar CFDI" icon="@Embed(source='newIcons/delete_24.png')" height="24" click="cancelarFactura();" width="151" x="337" y="156"/>
+		<s:TextArea id="observaciones" x="8" y="37" width="480" height="100"/>
+	</s:TitleWindow>
+	
+</s:Application>

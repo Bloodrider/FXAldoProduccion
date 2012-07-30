@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   skinClass="skinR3" 
+			   width="100%" height="100%">
+	<fx:Script source="r3Take.as" />
+	<fx:Script>
+		<![CDATA[			
+			import flash.events.*;
+			import mx.controls.*;
+			import mx.collections.*;
+			
+			
+			private function loadAvisos():void
+			{
+				abrirF();
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				if(avisosAC.length > 0)
+				{
+					avisos.htmlText = avisosAC[0][1].toString();
+					numeroAviso.text = "1";
+					izquierda.visible = false;
+					existeSiguiente();
+				}
+			}
+		
+			private function existeSiguiente():void
+			{
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				if(avisosAC.length == parseInt(numeroAviso.text))
+				{
+					derecha.visible = false;
+					numeroAviso.text = (parseInt(numeroAviso.text) - 1).toString();
+					
+				}
+			}
+			
+			private function existeAnterior():void
+			{
+				if(parseInt(numeroAviso.text) == 0)
+				{
+					izquierda.visible = false;
+					derecha.visible = true;
+					numeroAviso.text = "1";
+				}
+			}
+			
+			private function siguienteAviso():void
+			{
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				avisos.htmlText = avisosAC[parseInt(numeroAviso.text)][1].toString();
+				numeroAviso.text = (parseInt(numeroAviso.text) + 1).toString();
+				existeSiguiente();
+				izquierda.visible = true;
+			}
+			
+			private function anteriorAviso():void
+			{
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				avisos.htmlText = avisosAC[parseInt(numeroAviso.text) - 1][1].toString();
+				numeroAviso.text = (parseInt(numeroAviso.text) - 1).toString();
+				existeAnterior();
+			}
+			
+			private function abrirF():void
+			{				
+				moveRight.end(); 
+				moveRight.play(); 
+				moveRightAvisos.end(); 
+				moveRightAvisos.play(); 
+				moveRightClose.end(); 
+				moveRightClose.play(); 
+				moveRightLeft.end(); 
+				moveRightLeft.play(); 
+				moveRightRight.end(); 
+				moveRightRight.play();
+			}
+			
+			private function cerrarF():void
+			{					
+				moveLeft.end(); 
+				moveLeft.play(); 
+				moveLeftAvisos.end(); 
+				moveLeftAvisos.play(); 
+				moveLeftClose.end(); 
+				moveLeftClose.play(); 
+				moveLeftLeft.end(); 
+				moveLeftLeft.play(); 
+				moveLeftRight.end(); 
+				moveLeftRight.play();
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:Sine id="sineEasing" easeInFraction="0.3"/>
+		<s:Power id="powerEasing" exponent="4"/>
+		
+		<s:Move id="moveRight" target="{myImage}" xBy="320" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeft" target="{myImage}" xBy="-320" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightAvisos" target="{avisos}" xBy="320" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftAvisos" target="{avisos}" xBy="-320" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightClose" target="{cerrar}" xBy="320" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftClose" target="{cerrar}" xBy="-320" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightLeft" target="{izquierda}" xBy="320" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftLeft" target="{izquierda}" xBy="-320" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightRight" target="{derecha}" xBy="320" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftRight" target="{derecha}" xBy="-320" duration="2000" easer="{sineEasing}"/>
+	</fx:Declarations>
+	
+	<s:TextInput width="100" height="20" id="send" visible="false" text="Hola Mundo"/>
+	<s:TextInput width="100" height="20" id="randAvisos" visible="false" enabled="true" valueCommit="loadAvisos();"/>
+	
+	<s:TextInput width="100" height="20" id="numeroAviso" visible="false"/>
+	
+	<mx:Image id="myImage" source="newIcons/messageH.png" x="-320" y="100"/>	
+	<mx:Image id="cerrar" source="newIcons/delete_24.png" x="-27" y="92" click="cerrarF();"/>
+	<mx:Image id="izquierda" source="newIcons/back_24.png" x="-274" y="239" toolTip="Aviso anterior" click="anteriorAviso();"/>
+	<mx:Image id="derecha" source="newIcons/fordward_24.png" x="-86" y="239" toolTip="Aviso siguiente" click="siguienteAviso();"/>
+	<mx:Text width="282" height="125" id="avisos" x="-300" y="110"/>
+		
+		
+	<mx:DataGrid id="avisosDG" visible="false" creationComplete="Send(614);" x="500" y="500">											
+		<mx:columns>
+			<mx:DataGridColumn headerText="idAviso" width="120" dataField="0"/>
+			<mx:DataGridColumn headerText="aviso" width="120" dataField="1"/>
+		</mx:columns>
+	</mx:DataGrid>
+</s:Application>

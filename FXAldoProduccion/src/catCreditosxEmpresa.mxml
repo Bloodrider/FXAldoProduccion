@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('catUsuarios.swf');">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha; 
+			
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			private var validFormat:String = "^[A-Za-zñÑ&]{3,4}[0-9]{6}[0-9A-Za-z]{3}$";
+
+			private var expRfc:RegExp = new RegExp(validFormat,"g");
+
+			private function validaInsertCreditos():void
+			{			
+				if(txtEditAlertCreditos.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Alerta Créditos es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditAlertCreditos.errorString = "Alerta Créditos es requerido.";
+					return;
+				}
+				
+				if(parseInt(txtEditAlertCreditos.text) == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Alerta Créditos debe ser un valor mayor a cero, favor de verificar.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditAlertCreditos.errorString = "Alerta Créditos debe ser un valor mayor a cero.";
+					return;
+				}
+				
+				if(txtEditAlertTimbres.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Alerta Timbres es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditAlertTimbres.errorString = "Alerta Timbres es requerido.";
+					return;
+				}
+				
+				if(parseInt(txtEditAlertTimbres.text) == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Alerta Timbres debe ser un valor mayor a cero, favor de verificar.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEditAlertTimbres.errorString = "Alerta Timbres debe ser un valor mayor a cero.";
+					return;
+				}
+				
+				Send(655); //Actualiza Créditos
+				
+				ttwEditCreditos.visible = false;
+				gvwCreditosDetalle.dataProvider = null;
+				
+				Send(647); //Carga Grid Créditos 
+			}
+			
+			private function cleanCtrlsCreditos():void
+			{
+				txtEditAlertCreditos.text = "";
+				txtEditAlertTimbres.text = "";
+			}
+			
+			private function cleanCtrlsOperaciones():void
+			{
+				txtCreditos.enabled = true;
+				RFC.enabled = false;
+				cmbCambioRol.enabled = false;
+				
+				//cmbSelectPago.selectedIndex = 0;
+				txtMonto.text = "0"; 
+				txtCreditos.text = "0";  
+				txtObservaciones.text = "";  
+				validNextRFC.text = "";
+				existeCliente.text = "";
+				RFC.text = "";
+				
+				cmbCambioRol.selectedIndex = 0;
+			}
+			
+			private function cleanCtrlsAudit():void
+			{
+				//Ctrls Ocultos
+				txtIdCredito.text = "";
+				txtRol.text = "";
+			}
+			
+			private function cleanDGVW():void
+			{
+				//GW
+				txtAccount.text = "";
+				gvwCreditos.dataProvider = null;
+				gvwCreditosDetalle.dataProvider = null;
+			}
+			
+			private function validaUserCredito(ttwOption:int):void
+			{
+				if (txtIdCredito.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un Usuario.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if (ttwOption == 1) // Editar Creditos
+				{
+					cleanCtrlsCreditos();
+					Send(657); //Trae datos de Créditos de Usuario a Editar
+					ttwEditCreditos.visible = true;
+				}
+				
+				else if (ttwOption == 2) // Agregar Operación
+				{
+					//16 -Gratuito
+					//19 -Prepago
+					//20 -Timbrado
+					//22 -Adm. Facturizate
+					//24 -Prep. Especial
+					//26 -Distribuidor
+					//32 -Proveedor Autorizado
+					if ((parseInt(txtRol.text) == 16) || (parseInt(txtRol.text) == 19) || (parseInt(txtRol.text) == 20) || (parseInt(txtRol.text) == 22) || (parseInt(txtRol.text) == 24) || (parseInt(txtRol.text) == 26) || (parseInt(txtRol.text) == 32))
+					{
+						cmbSelectPago.selectedIndex = 0; 
+						cleanCtrlsOperaciones();
+						ttwCreditosDetalle.visible = true;
+					}
+					else
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("No puede agregar una transacción a este tipo de usuarios.","Aviso",Alert.OK,null,null, iconAlert);
+						return;
+					}
+				}
+			}
+			
+			private function validaCuenta():void
+			{
+				txtIdCredito.text= "";
+				
+				if(txtAccount.text.length > -1)
+				{
+					gvwCreditosDetalle.dataProvider = null;
+					Send(647); //Actualiza GridView Créditos
+				}
+					
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Inserte la Cuenta del usuario.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+			}
+		
+			private function validaInsertOperacion():void
+			{
+				if(cmbSelectPago.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un concepto de Pago.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbSelectPago.errorString = "Seleccione un concepto de Pago.";
+					return;
+				}
+				
+				if(txtMonto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Monto es una campo obligatorio, favor de insertarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMonto.errorString = "Monto es requerido.";
+					return;
+				}
+				
+				if(parseInt(txtMonto.text) == 0)
+				{
+					if(txtObservaciones.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("El campo Observaciones es obligatorio debido a que el monto es cero, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtObservaciones.errorString = "Observaciones es un campo requerido.";
+						return;
+					}
+				}
+				
+				if ((cmbSelectPago.selectedIndex == 1) || (cmbSelectPago.selectedIndex == 2) || (cmbSelectPago.selectedIndex == 5)) //CFDI y Timbres
+				{	
+					if(txtCreditos.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Puntos es una campo obligatorio, favor de insertarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						txtCreditos.errorString = "Puntos es un campo obligatorio.";
+						return;
+					}
+					
+					if(parseInt(txtCreditos.text) == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Los Puntos deben ser mayor a cero, favor de verificar.","Aviso",Alert.OK,null,null, iconAlert);
+						txtCreditos.errorString = "Puntos debe ser un valor mayor a cero.";
+						return;
+					}
+					
+					if ((cmbSelectPago.selectedIndex == 2) || (cmbSelectPago.selectedIndex == 5)) // Timbres y Licencias
+					{
+						if(parseInt(txtRol.text) != 32) //Diferente al rol de Proveedor Autorizado
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Este Usuario no puede realizar este tipo de transacciones, solo los usuarios del rol ´Proveedor Autorizado´.","Aviso",Alert.OK,null,null, iconAlert);
+							return;
+						}
+					}
+				}
+				
+				else if ((cmbSelectPago.selectedIndex == 3) || (cmbSelectPago.selectedIndex == 4)) //Diseño Factura y Anualidad CFDI
+				{
+					if((validNextRFC.text == "0") || (validNextRFC.text.length == 0))
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("El formato del RFC es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+						RFC.errorString = "El RFC es incorrecto.";
+						return;
+					}
+					
+					if(RFC.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("El RFC Beneficiario es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						RFC.errorString = "El RFC Beneficiario es un campo obligatorio.";
+						return;
+					}
+					
+					if((existeCliente.text == "0") || (existeCliente.text.length == 0))
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("El RFC del Contribuyente no ha sido registrado en el sistema, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+						RFC.errorString = "El RFC no ha sido registrado en el sistema.";
+						return;
+					}
+					
+					if((cmbSelectPago.selectedIndex == 4)) //Anualidad CFDI Distrubuidor
+					{
+						if(parseInt(txtRol.text) != 26) //Diferente al rol de distribuidor
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Este Usuario no puede realizar este tipo de transacciones, solo los usuarios del rol ´Distribuidor´.","Aviso",Alert.OK,null,null, iconAlert);
+							return;
+						}
+						
+						if(cmbCambioRol.selectedIndex == 0)
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Seleccione el rol al cual se migrará el RFC del Beneficiario .","Aviso",Alert.OK,null,null, iconAlert);
+							return;
+						}
+					}
+				}
+				
+				Send(658); // Inserta Operacion
+				Send(647); //Actualiza GridView Créditos
+				Send(649);// Actualiza Data Grid Operaciones
+
+				ttwCreditosDetalle.visible = false;
+			}
+			
+			private function selectIdUser():void
+			{
+				if (gvwCreditos.selectedIndex >= 0)
+				{
+					txtIdCredito.text = gvwCreditos.selectedItem["0"].toString();
+					txtRol.text = gvwCreditos.selectedItem["8"].toString();
+					Send(649); //Actualiza Grid Operaciones
+				}
+			}
+
+			private function cleanCtrlsEditCreditos():void
+			{
+				txtEditAlertCreditos.text = ""; 
+			}
+			
+			private function opcionPago():void
+			{
+				cleanCtrlsOperaciones();
+				if ((cmbSelectPago.selectedIndex == 1) || (cmbSelectPago.selectedIndex == 2))
+				{
+					txtCreditos.enabled = true;
+					RFC.enabled = false;
+					cmbCambioRol.enabled = false;
+				}
+				
+				else if (cmbSelectPago.selectedIndex == 3)
+				{
+					txtCreditos.enabled = false;
+					RFC.enabled = true;
+					cmbCambioRol.enabled = false;
+				}
+				
+				else if (cmbSelectPago.selectedIndex == 4)
+				{
+					txtCreditos.enabled = false;
+					RFC.enabled = true;
+					cmbCambioRol.enabled = true;
+				}
+				
+				txtCreditos.text = "0";
+				RFC.text = "";
+				cmbCambioRol.selectedIndex = 0;
+			}
+			
+			private function checkRFC(myCtrl:TextInput):void
+			{
+				if(expRfc.test(myCtrl.text) || (myCtrl.text.length == 0))
+				{
+					myCtrl.errorString = "";
+					validNextRFC.text = "1";
+				}
+				else
+				{				
+					myCtrl.errorString = "RFC Contribuyente Incorrecto\n\n" +
+						"Formato “AAA(A)aammddHHD”, en donde: \n" +
+						"AAAA = Siglas del contribuyente (Persona Fisica), alfanumérico. \n" +
+						"AAA = Siglas del contribuyente (Persona Moral), alfanumérico. \n" +
+						"              Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+						"aammdd = Fecha de Nacimiento/Constitución, numérico (año,mes,día). \n" +
+						"HH = Homonimia, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"D = Dígito verificador, alfanumérico (acepta los valores [A-Z incluso Ñ]) \n" +
+						"Los caracteres alfabéticos deben ser mayúsculas.";
+					validNextRFC.text = "0";
+				}	
+			}
+			
+			private function validaExisteCliente():void
+			{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(RFC.text.length != 0)
+				{
+					if(RFC.text.search(patternBlank) != -1 )
+						RFC.errorString = "El RFC no debe llevar espacios en blanco";	
+						
+					else
+						RFC.errorString = "";	
+					
+					existeCliente.text = "";
+					Send(710); //Verifica que exista el Cliente
+				}
+			}
+			
+			private function existeCli():void
+			{
+				if(existeCliente.text == "0")
+				{
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("Este Contribuyente no ha sido registrado en el sistema.","Aviso",Alert.OK,null,null, iconAlert);
+					
+					//ttwCreditosDetalle.visible = false;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Créditos" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="15" paddingBottom="5">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="0">
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="5" paddingTop="5" paddingBottom="5" verticalAlign="bottom">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingTop="5" paddingBottom="5">
+							<s:Label text="CRÉDITOS" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+							<s:TextInput id="txtRol" width="35" maxChars="50" tabIndex="1" height="24" x="584" visible="false"/>
+							<s:TextInput id="txtIdCredito" width="38" maxChars="50" visible="false"/>
+							<s:Label text="Cuenta:  "  height="24" verticalAlign="middle"/>
+							<s:TextInput x="518" y="43" id="txtAccount" width="160" maxChars="50" tabIndex="1" height="24"/>
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="validaCuenta();" height="24" tabIndex="2" width="100"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrlsAudit();cleanDGVW();" height="24" tabIndex="3" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<mx:DataGrid id="gvwCreditos" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectIdUser();">
+							<mx:columns> 
+								<mx:DataGridColumn headerText="idCredito" 				dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Cuenta" 					dataField="1" width="40"/>
+								<mx:DataGridColumn headerText="Nombre" 					dataField="2" width="50"/>
+								<mx:DataGridColumn headerText="Rol" 					dataField="3" width="50"/>
+								<mx:DataGridColumn headerText="Timbres" 				dataField="4" width="50"/>
+								<mx:DataGridColumn headerText="Alerta Timbres" 			dataField="5" width="50"/>
+								<mx:DataGridColumn headerText="Créditos CFDI" 			dataField="6" width="50"/>
+								<mx:DataGridColumn headerText="Alerta Créditos" 		dataField="7" width="50"/>
+								<mx:DataGridColumn headerText="idRol" 					dataField="8" width="50" visible="false"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="0" paddingBottom="0" verticalAlign="bottom">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingTop="5" paddingBottom="5">
+							<s:Label text="OPERACIONES" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+							<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Editar" click="validaUserCredito(1);" height="24" tabIndex="5" width="100" toolTip="Editar Créditos Alerta"/>
+						</s:HGroup>
+					</s:HGroup>
+				</s:VGroup>
+				
+				<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="1" paddingBottom="0">
+					<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="1" paddingLeft="1" paddingTop="1" paddingBottom="5">
+							<mx:DataGrid id="gvwCreditosDetalle" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%">
+								<mx:columns>
+									<mx:DataGridColumn headerText="idCreditoDetalle" 		dataField="0" width="50" visible="false"/>
+									<mx:DataGridColumn headerText="Concepto de Pago" 		dataField="1" width="50"/>
+									<mx:DataGridColumn headerText="Monto" 					dataField="2" width="50"/>
+									<mx:DataGridColumn headerText="Puntos(+)" 				dataField="3" width="40"/>
+									<mx:DataGridColumn headerText="Fecha Inicio Plan" 		dataField="4" width="40"/>
+									<mx:DataGridColumn headerText="Fecha Fin Plan" 			dataField="5" width="40"/>
+									<mx:DataGridColumn headerText="Observaciones" 			dataField="6" width="40"/>
+									<mx:DataGridColumn headerText="Comprobante" 			dataField="7" width="40" visible="false"/>
+								</mx:columns>
+							</mx:DataGrid>
+						</s:VGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+							
+							<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="validaUserCredito(2);" height="24" tabIndex="7" width="100" x="763" toolTip="Agregar Sucursal a Usuario"/>
+						</s:HGroup>	
+					</s:VGroup>
+				</s:HGroup>	
+				
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>
+	
+	<s:TitleWindow width="772" height="349" title="Agregar Operación" id="ttwCreditosDetalle" visible="false" close="ttwCreditosDetalle.visible=false" horizontalCenter="0" verticalCenter="-37">
+		<s:Label text="Monto" x="49" y="157" fontWeight="bold"/>
+		<s:Label text="Concepto de Pago" x="47" y="102" fontWeight="bold"/>
+		<s:Label text="Puntos" x="161" y="157" fontWeight="bold"/>
+		<s:Label text="Observaciones" x="49" y="204" fontWeight="bold" width="94"/>
+		<s:Label text="Requisite los campos para agregar una operación." x="50" y="277" fontWeight="bold"/>
+		<s:Label text=" AGREGAR OPERACIÓN" x="116" y="28" fontWeight="bold"/>
+		
+		<s:TextInput x="161" y="170" id="txtCreditos" width="100" tabIndex="3" restrict="0-9" focusOut="if(txtCreditos.text.length > 0) txtCreditos.errorString='';" height="22" text="0" enabled="false"/>
+		<s:TextInput x="48" y="220" id="txtObservaciones" width="353" tabIndex="4" height="22" focusOut="if(txtObservaciones.text.length != 0) txtObservaciones.errorString = ''; if(parseInt(txtMonto.text) > 0) txtObservaciones.errorString = '';"/>
+		<s:TextInput x="49" y="170" id="txtMonto" width="100" restrict="0-9." tabIndex="2" maxChars="100" height="22" text="0"  focusOut="if(parseInt(txtMonto.text) > 0){txtMonto.errorString = ''; txtObservaciones.errorString = '';} "/>
+		
+		<s:TextInput id="validNextRFC" visible="false" width="20" x="557" y="10" enabled="false"/>
+		<s:TextInput id="existeCliente" valueCommit="existeCli();" editable="false" visible="false" width="20" enabled="false" x="530" y="10"/>
+		
+		<mx:Button id="btnGuardarOperacion" x="577" y="269" icon="@Embed(source='newIcons/accept_24.png')" label="Guardar" click="validaInsertOperacion();" height="24" tabIndex="7" width="115" toolTip="Guardar Operación"/>
+		
+		<s:ComboBox creationComplete="Send(656);" id="cmbSelectPago" width="355" tabIndex="1" height="24" x="46" y="116" change="opcionPago();" focusOut="if(cmbSelectPago.selectedIndex!=0) cmbSelectPago.errorString = '';"/>
+		
+		<mx:Image x="25" y="7" source="assets/1053-64.png" width="80" height="67"/>	
+		
+		<s:BorderContainer x="412" y="50" width="321" height="162" backgroundAlpha="0" dropShadowVisible="false" 
+						   borderVisible="true" cornerRadius="3" id="btnAddTransaction">
+			<s:Group  width="100%" height="100%">
+				<s:Label text="RFC Beneficiario" x="6" y="53" fontWeight="bold" id="lblRFC"/>
+				<s:Label text="Cambio de Rol" x="9" y="101" fontWeight="bold"/>
+				<s:TextInput x="7" y="65" id="RFC" width="162" maxChars="13" 
+							 change="if(RFC.text!=&quot;&quot;)checkRFC(RFC);" 
+							 enabled="false"  restrict="A-Za-z0-9Ñ&amp;"
+							 focusOut="validaExisteCliente();" typographicCase="uppercase" height="24" tabIndex="5"/>
+				<s:ComboBox creationComplete="Send(714);" id="cmbCambioRol" width="298" tabIndex="6" height="24" x="8" y="115" focusOut="if(cmbCambioRol.selectedIndex!=0) cmbCambioRol.errorString = '';" enabled="false"/>
+				<s:Label text="Inserte el RFC del usuario que pago la anualidad" x="6" y="9" fontWeight="bold" />
+				<s:Label text="y seleccione su nuevo tipo de rol: " x="6" y="22" fontWeight="bold" />
+			</s:Group>
+		</s:BorderContainer>
+	</s:TitleWindow>
+	
+	<s:TitleWindow width="494" height="176" title="Editar Créditos" id="ttwEditCreditos" visible="false" close="ttwEditCreditos.visible=false;" horizontalCenter="0" verticalCenter="-37">
+		<s:Label text="Todos los campos marcados con *, son obligatorios." x="18" y="104" fontWeight="bold"/>
+		<s:Label text="* Alerta Timbres" x="25" y="28" fontWeight="bold"/>
+		<s:TextInput x="25" y="41" id="txtEditAlertTimbres" width="120" restrict="0-9" focusOut="if(txtEditAlertTimbres.text.length > 0) txtEditAlertTimbres.errorString='';"/>
+		<s:Label text="* Alerta Créditos" x="163" y="27" fontWeight="bold"/>
+		<s:TextInput x="163" y="40" id="txtEditAlertCreditos" width="120" restrict="0-9" focusOut="if(txtEditAlertCreditos.text.length > 0) txtEditAlertCreditos.errorString='';"/>
+		
+		<mx:Button x="327" y="40" icon="@Embed(source='newIcons/accept_24.png')" label="Guardar" click="validaInsertCreditos();" height="24" tabIndex="10" width="115"/>
+	</s:TitleWindow>
+
+</s:Application>

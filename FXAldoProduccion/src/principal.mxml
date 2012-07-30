@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Module xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   layout="absolute" width="100%" height="100%"
+		   creationComplete="creationCompleteTransaction();"
+		   xmlns:ns1="com.google.code.flexiframe.*"
+		   pageTitle="Escritorio">
+	
+	<fx:Script source="r3Take.as"/>
+	<fx:Style source="fx.css" />
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import mx.controls.Alert;
+			import mx.events.MenuEvent;
+			import mx.managers.PopUpManager;
+			
+			protected var tlWindow:wizardConfig;
+			
+			private function viewWizardConfig():void
+			{
+				if(idPaso.text > "0" && idPaso.text < "7")
+				{
+					tlWindow = PopUpManager.createPopUp(this, wizardConfig, true) as wizardConfig;
+					PopUpManager.centerPopUp(tlWindow);        
+					
+					wizardConfig(tlWindow).window.addEventListener("valueCommit", Estatus);
+					
+					wizardConfig(tlWindow).window.text = idPaso.text;
+				}
+				else if (idPaso.text == "finalizar")
+				{
+					PopUpManager.removePopUp(tlWindow);
+					Send(603);
+					Send(604);
+					idPaso.text="";
+					loadSWF2("globalLoader","init.swf");
+					
+				}
+				else if (idPaso.text == "cancelar")
+				{
+					PopUpManager.removePopUp(tlWindow);
+					idPaso.text="";
+					loadSWF2("globalLoader","init.swf");
+				}
+				else if (idPaso.text == "recargar")
+				{
+					PopUpManager.removePopUp(tlWindow);
+					Send(739);//Preguntar si hay más sucursales sin configurar
+				}
+			}
+			
+			private function checkAndLoadScreen():void
+			{
+				if(numEmpresas.text == "0")
+				{	
+					if(idRol.text == "18" || idRol.text == "21" || idRol.text == "23" || idRol.text == "25")
+					{
+						globalLoader.unloadAndStop(true);
+						globalLoader.source = "";
+						globalLoader.load(null);
+						globalLoader.source = "init.swf";
+					}
+					else
+					{
+						idPaso.text = "1";
+					}
+				} 
+				else
+				{
+					if(idRol.text == "15")
+					{
+						Send(757); //Cambia Variables de session y ejecuta wizard si hay sucursales sin configurar.
+					}
+					globalLoader.unloadAndStop(true);
+					globalLoader.source = "";
+					globalLoader.load(null);
+					//globalLoader.content.loaderInfo.loader.unload();
+					globalLoader.source = "init.swf";
+				}
+			}
+			
+			private function creationCompleteTransaction():void
+			{
+				mx.core.Application.application.beginCountdown(); 
+				mx.core.Application.application.entrar.visible = false; 
+				mx.core.Application.application.resetPassBtn.visible = false; 
+				mx.core.Application.application.resetPassImage.visible = false;  
+				Get(9); 
+				Send(93);
+			}
+			
+			private function DirectAccess(event:ContextMenuEvent):void
+			{
+				crearAD.visible = true;
+				crearAD.isPopUp = true;
+			}
+			
+			private function DeleteAccess(event:ContextMenuEvent):void
+			{
+				eliminarAD.visible = true;
+				eliminarAD.isPopUp = true;
+			}
+			
+			private function loadHome():void
+			{
+				if(globalLoader.source != "init.swf")
+				{
+					loadSWF2("globalLoader","init.swf");
+				}
+			}
+			
+			
+			
+			import flash.display.StageDisplayState;
+			import flash.utils.Timer;
+			import mx.core.SoundAsset;
+			import mx.controls.Alert;
+			import flash.events.TimerEvent;
+			
+			[Embed('assets/tick.mp3')]
+			private var tick_mp3:Class;
+			private var tickSound:SoundAsset = new tick_mp3() as SoundAsset;
+			
+			[Embed('assets/alarm.mp3')]
+			private var alarm_mp3:Class;
+			private var alarmSound:SoundAsset = new alarm_mp3() as SoundAsset;
+			
+			private function handleMenu(event:MenuEvent):void {
+				var op:String = "";
+				var val:String = "";
+				try {
+					
+					
+					op = event.item.@op;
+					val = event.item.@data;
+					
+					if(idRol.text == "16")
+					{											   
+						if(val == "catUsuarios.swf" || val == "catProductosFacturaxEmpresa.swf" || val == "catUnidadesMedxEmpresa.swf" || val == "configuraFact.swf" || val == "cfdiRecibidos.swf" || val == "grafica.swf" || val == "crearAD" || val == "eliminarAD" || val == "transCreditos.swf" )
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("Esta funcionalidad solo esta disponible en la versión de prepago, para mayor información favor de contactar al area de ventas en el teléfono 55 12070708","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+							setCompany.setFocus();
+							setCompany.errorString="Favor de elegir una empresa.";
+							return;
+						}
+					}
+					if(op=="Form")
+					{
+						Alert.okLabel = "Aceptar";
+						if(setCompany.dataProvider.length > 0)
+						{
+							if(setCompany.selectedIndex < 0 )
+							{
+								Alert.show("Para poder entrar a un menú, es necesario elegir la empres con la que se trabajará","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+								setCompany.setFocus();
+								setCompany.errorString="Favor de elegir una empresa.";
+								return;
+							}
+							
+							if(setBranchOffice.selectedIndex < 0)
+							{
+								Alert.show("Para poder entrar a un menú, es necesario elegir la sucursal con la que se trabajará","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+								setBranchOffice.setFocus();
+								setBranchOffice.errorString="Favor de elegir una sucursal.";
+								return;
+							}
+						}
+						else
+						{
+							if(val != "administracion.swf")
+							{
+								Alert.show("Para poder entrar a un menú, es necesario realizar la configuración de una empresa en el menú Administración.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+								return;
+							}
+						}
+						
+						mx.core.Application.application.stopCountdown();
+						mx.core.Application.application.beginCountdown();	
+						
+						loadSWF2("globalLoader",val);
+						
+					} else if (op=="TW"){
+						mx.core.Application.application.stopCountdown();
+						mx.core.Application.application.beginCountdown();
+						spark.components.TitleWindow(this[val]).isPopUp = true;
+						spark.components.TitleWindow(this[val]).visible = true;	
+					} else if (op=="FN"){
+						//if(val == "abrirAvisos")
+						//{
+						abrirF();
+						//}
+					} else if(op=="Get"){
+						Get(parseInt(val));
+					} else if(op=="Send"){
+						Send(parseInt(val));
+					}
+				} catch (Err:Error) { }
+			}
+			
+			public function enableCombos():void
+			{
+				setCompany.enabled = true;
+				setBranchOffice.enabled = true; 
+			}
+			
+			private function validInsertAD():void
+			{
+				if(process.selectedIndex > 0 )
+				{
+					if(nameImageTW.text.length > 0)
+					{
+						Send(96);
+						Send(93);
+						Send(305);
+						process.errorString = "";
+						containerImages.errorString = "";
+						nameImageTW.text = "";       
+						globalLoader.source = "nada.swf";
+						globalLoader.source = "init.swf"; 
+					}
+					else
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Seleccione un icono por favor.", "Mensaje FacturaXion",Alert.OK,null, null, iconAlert);
+						containerImages.setFocus();
+						containerImages.errorString = "Seleccione un icono por favor";
+					}
+				}
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un proceso por favor.", "Mensaje FacturaXion",Alert.OK,null, null, iconAlert);
+					process.setFocus();
+					process.errorString = "Seleccione un proceso por favor";				
+				}
+				
+			}
+			
+			private function validDeleteAD():void
+			{
+				if(adDeleteRenderer.selectedIndex > 0)
+				{
+					Send(306);				
+					Send(305);
+					adDeleteRenderer.errorString = "";
+					globalLoader.source = "nada.swf";
+					globalLoader.source = "init.swf"; 
+				}
+				else
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione un proceso por favor.", "Mensaje FacturaXion",Alert.OK,null, null, iconAlert);
+					adDeleteRenderer.setFocus();
+					adDeleteRenderer.errorString = "Seleccione un proceso por favor.";
+				}
+			}
+			
+			/* Funciones para mostrar Avisos */
+			private function loadAvisos():void
+			{
+				abrirF();
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				if(avisosAC.length > 0)
+				{
+					avisos.htmlText = avisosAC[0][1].toString();
+					numeroAviso.text = "1";
+					izquierda.visible = false;
+					existeSiguiente();
+				}
+			}
+			
+			private function existeSiguiente():void
+			{
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				if(avisosAC.length == parseInt(numeroAviso.text))
+				{
+					derecha.visible = false;
+					numeroAviso.text = (parseInt(numeroAviso.text) - 1).toString();
+					
+				}
+			}
+			
+			private function existeAnterior():void
+			{
+				if(parseInt(numeroAviso.text) == 0)
+				{
+					izquierda.visible = false;
+					derecha.visible = true;
+					numeroAviso.text = "1";
+				}
+			}
+			
+			private function siguienteAviso():void
+			{
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				avisos.htmlText = avisosAC[parseInt(numeroAviso.text)][1].toString();
+				numeroAviso.text = (parseInt(numeroAviso.text) + 1).toString();
+				existeSiguiente();
+				izquierda.visible = true;
+			}
+			
+			private function anteriorAviso():void
+			{
+				var avisosAC:ArrayCollection = new ArrayCollection(); 				
+				avisosAC = new ArrayCollection(ArrayUtil.toArray(avisosDG.dataProvider.source));
+				
+				avisos.htmlText = avisosAC[parseInt(numeroAviso.text) - 1][1].toString();
+				numeroAviso.text = (parseInt(numeroAviso.text) - 1).toString();
+				existeAnterior();
+			}
+			
+			private function Estatus(event:Event):void
+			{
+				if(event.currentTarget.id == "window")
+				{    
+					this.idPaso.text = event.currentTarget.text;
+					return;
+				}
+			}
+			
+			private function abrirF():void
+			{	
+				if(myImage.x < -40)
+				{
+					moveRight.end(); 
+					moveRight.play(); 
+					moveRightAvisos.end(); 
+					moveRightAvisos.play(); 
+					moveRightClose.end(); 
+					moveRightClose.play(); 
+					moveRightLeft.end(); 
+					moveRightLeft.play(); 
+					moveRightRight.end(); 
+					moveRightRight.play();
+				}
+			}
+			
+			private function cerrarF():void
+			{		
+				//pInit.globalInit.visible = true;
+				moveLeft.end(); 
+				moveLeft.play(); 
+				moveLeftAvisos.end(); 
+				moveLeftAvisos.play(); 
+				moveLeftClose.end(); 
+				moveLeftClose.play(); 
+				moveLeftLeft.end(); 
+				moveLeftLeft.play(); 
+				moveLeftRight.end(); 
+				moveLeftRight.play();
+			}
+			
+			private function changeSetCompany():void
+			{
+				if(setCompany.selectedIndex > -1)
+				{				
+					setBranchOffice.textInput.text = ''; 
+					Send(562);
+				}
+			}
+			
+			private function changeSetBranchOffice():void
+			{
+				if(setBranchOffice.textInput.text.length > 0)
+				{
+					if(setCompany.selectedIndex > -1  || setBranchOffice.selectedIndex > -1)
+					{
+						Send(561); 
+						setBranchOffice.errorString = '';
+					}
+				}
+			}
+			
+			private function cambiaSucursal():void
+			{
+				Send(561);
+			}
+			
+			private var checkPWD:RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)[a-zA-Z0-9\S]{8,}$/;
+			
+			private function checkPass(chkCtrl:TextInput):void
+			{            
+				if(checkPWD.test(chkCtrl.text))
+				{
+					chkCtrl.errorString = "";
+				}
+				else
+				{    
+					chkCtrl.errorString  =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Mayúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un Caracter Especial”";
+					return;     
+				}		
+				
+				if(txtConfirmNewPass.text.length > 0 && txtNewPass.text.length > 0)
+				{
+					if(txtNewPass.text == txtConfirmNewPass.text)
+					{
+						txtNewPass.errorString = "";
+						txtConfirmNewPass.errorString = "";
+					}
+					else
+					{				
+						txtConfirmNewPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+						txtConfirmNewPass.errorString = "Las dos contraseñas deben de coincidir, favor de corregirlas";
+					}	
+				}	
+			}
+			
+			private function enviarCambioPass():void
+			{ 
+				if(txtPasssActual.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Contraseña actual es obligatoria, favor de ingresarla", "Aviso",Alert.OK,null,null, iconAlert);
+					txtPasssActual.errorString = "La Contraseña actual es un campo obligatorio.";
+					return;			
+				}
+				
+				if(txtNewPass.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La nueva Contraseña es un campo obligatorio, favor de ingresarlo.", "Aviso",Alert.OK,null,null, iconAlert);
+					txtNewPass.errorString = "La nueva Contraseña es un campo obligatorio.";
+					return;
+				}
+				
+				if(txtConfirmNewPass.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Confirmación de Contraseña es un campo obligatorio, favor de ingresarlo.", "Aviso",Alert.OK,null,null, iconAlert);
+					txtConfirmNewPass.errorString = "La Confirmación de Contraseña es un campo obligatorio.";
+					return;
+				}
+				
+				if(txtValidPassActual.text.length == 0 || txtValidPassActual.text == "0")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Contraseña actual es incorrecta, favor de verificar.", "Aviso",Alert.OK,null,null, iconAlert);
+					txtPasssActual.errorString = "La Contraseña actual es incorrecta.";
+					return;
+				}
+				
+				if(txtNewPass.text != txtConfirmNewPass.text)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Las dos contraseñas deben de ser iguales, favor de corregirlas.", "Aviso",Alert.OK,null,null, iconAlert);
+					txtConfirmNewPass.errorString = "Las dos contraseñas deben de ser iguales.";
+					return;
+				}
+				
+				if(!checkPWD.test(txtNewPass.text))
+				{
+					Alert.show("La contraseña no corresponde con los requisitos minimos.",  "Aviso",Alert.OK,null,null, iconAlert);
+					txtNewPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Máyúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un un Caracter Especial”";
+					return;
+				}
+				
+				if(!checkPWD.test(txtConfirmNewPass.text))
+				{
+					Alert.show("La contraseña no corresponde con los requisitos minimos.",  "Aviso",Alert.OK,null,null, iconAlert);
+					txtConfirmNewPass.errorString      =  "Las contraseñas de acceso debe contener:\n" + 
+						"“al menos 8 Caracteres”\n" + 
+						"“debe incluir al menos una Máyúscula”\n" + 
+						"“debe incluir al menos un Número”\n" + 
+						"“y debe incluir al menos un un Caracter Especial”";
+					return;
+				}
+				
+				Send(725);	//Cambia la contraseña
+				
+				setPassword.visible = false;
+				cleanCtrls();
+			}
+			
+			private function cleanCtrls():void
+			{	
+				txtPasssActual.text = ""; 
+				txtNewPass.text = ""; 
+				txtConfirmNewPass.text = "";
+				
+				txtValidPassActual.text = "";
+			}
+			
+			private function validPassActual():void
+			{
+				if(txtPasssActual.text.length > 0) 
+				{
+					txtPasssActual.errorString = "";
+					Send(730); //Valida si la contraseña actual es correcta
+				}
+			}		
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:Sine id="sineEasing" easeInFraction="0.3"/>
+		<s:Power id="powerEasing" exponent="4"/>
+		
+		<s:Move id="moveRight" target="{myImage}" xBy="450" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeft" target="{myImage}" xBy="-450" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightAvisos" target="{avisos}" xBy="450" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftAvisos" target="{avisos}" xBy="-450" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightClose" target="{cerrar}" xBy="450" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftClose" target="{cerrar}" xBy="-450" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightLeft" target="{izquierda}" xBy="450" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftLeft" target="{izquierda}" xBy="-450" duration="2000" easer="{sineEasing}"/>
+		
+		<s:Move id="moveRightRight" target="{derecha}" xBy="450" duration="2000" easer="{powerEasing}"/>
+		<s:Move id="moveLeftRight" target="{derecha}" xBy="-450" duration="2000" easer="{sineEasing}"/>
+	</fx:Declarations>
+	
+	<mx:DataGrid id="avisosDG" visible="false" creationComplete="Send(614);" x="0" y="0">											
+		<mx:columns>
+			<mx:DataGridColumn headerText="idAviso" width="120" dataField="0"/>
+			<mx:DataGridColumn headerText="aviso" width="120" dataField="1"/>
+		</mx:columns>
+	</mx:DataGrid>
+	
+	<mx:Canvas width="100%" height="100%" id="contentCNTLS">
+		<s:VGroup x="0" y="0" id="globalContainer" width="100%" height="100%" horizontalAlign="left" color="#252525" gap="0">
+			<s:HGroup width="100%" >
+				<mx:MenuBar id="mnu1" labelField="@label" width="100%" fontSize="11" fontWeight="bold" itemClick="handleMenu(event);" height="40" showRoot="false" ></mx:MenuBar>
+			</s:HGroup>
+			<mx:SWFLoader width="100%" height="100%" id="globalLoader"/>
+		</s:VGroup>
+		
+		<!--<mx:Canvas x="14" y="46" width="300" height="50" borderColor="#FFFFFF" borderStyle="solid" cornerRadius="5" verticalScrollPolicy="off" horizontalScrollPolicy="off"  backgroundColor="#020202" backgroundAlpha=".5">
+		<s:HGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" gap="5" >
+		<s:VGroup gap="1">
+		<s:Label text="Empresa" color="#FFFFFF" />
+		<s:ComboBox id="setCompany" color="#000000" width="140" height="23" change="changeSetCompany();" tabIndex="100"/>
+		</s:VGroup>
+		<s:VGroup gap="1">
+		<s:Label text="Sucursal" color="#FFFFFF"/>
+		<s:ComboBox id="setBranchOffice" width="140" color="#000000" height="23" change="changeSetBranchOffice();" tabIndex="101"/>
+		</s:VGroup>
+		
+		</s:HGroup>
+		
+		</mx:Canvas>-->
+		
+		<s:Label text="Empresa" color="#000000"  right="250" top="3"/>
+		<s:ComboBox id="setCompany" color="#000000" width="140" height="23" change="changeSetCompany();" tabIndex="100" right="160" top="13"/>
+		<s:Label text="Sucursal" color="#000000" right="100" top="3"/>
+		<s:ComboBox id="setBranchOffice" width="140" color="#000000" height="23" change="changeSetBranchOffice();" tabIndex="101" right="10" top="13"/>
+		
+	</mx:Canvas>
+	
+	
+	
+	<s:TextInput id="idRol" x="0" y="0" width="100" height="24" visible="false" enabled="false" creationComplete="Send(452);"/>	
+	<s:TextInput id="setIndexBranchOffice" x="0" y="0" width="100" height="24" visible="false" enabled="false" valueCommit="cambiaSucursal();"/>
+	<s:TextInput id="numEmpresas" x="0" y="0" width="1" height="1" visible="false" enabled="false" valueCommit="checkAndLoadScreen();"/>
+	<s:TextInput id="idPaso" x="510" y="70" width="0" visible="false" editable="false" valueCommit="viewWizardConfig();"/>
+	<mx:Image x="3" y="5" id="imagePrincipal" source="newIcons/start.png" click="loadHome(); Get(9);" toolTip="Regresar a Escritorio"/>
+	
+	<s:TitleWindow id="crearAD" width="470" height="361" title="Creación de Acceso Directo" close="crearAD.visible = false;" visible="false"  horizontalCenter="0" verticalCenter="0">
+		<s:ComboBox x="11" y="32" id="process" creationComplete="Get(95);" width="444" color="#000000" height="24"></s:ComboBox>			
+		<s:Label x="11" y="18" text="Elija el Proceso" color="#000000"/>
+		<s:Label x="10" y="64" text="Elija el Icono" color="#000000"/>			
+		<mx:Button label="Crear" click="validInsertAD();" tabIndex="101" height="24" icon="@Embed(source='newIcons/accept_24.png')" x="356" y="293" width="100" color="#000000"></mx:Button>
+		<mx:Tile  x="10" y="78" width="445" height="207" id="containerImages" creationComplete="Get(94);"></mx:Tile>
+	</s:TitleWindow>
+	<s:TextInput id="nameImageTW" x="0" y="40" width="88" visible="false" enabled="false"/>
+	<s:TitleWindow id="eliminarAD" width="282" height="128" title="Eliminar Acceso Directo" close="eliminarAD.visible=false;" visible="false"  horizontalCenter="0" verticalCenter="-33">
+		<s:ComboBox x="13" y="23" id="adDeleteRenderer" width="250" height="24" color="#000000" itemRenderer="adRenderer" labelField="3" creationComplete="Send(305);"></s:ComboBox>
+		
+		<s:Label x="12" y="9" text="Elija el Acceso Directo" color="#000000"/>
+		<mx:Button label="Eliminar" click="validDeleteAD();" tabIndex="101" height="24" icon="@Embed(source='newIcons/accept_24.png')" x="162" y="52" width="100" color="#000000"></mx:Button>
+		
+	</s:TitleWindow>
+	
+	<s:TitleWindow id="showInformation" width="816" height="510" title="Información de Facturaxion" close="showInformation.visible = false;" visible="false"  horizontalCenter="0" verticalCenter="0">
+		<mx:SWFLoader width="100%" height="100%" id="showInformationSWF" source="infoFacturaxion.swf" />
+	</s:TitleWindow>
+	
+	<s:TitleWindow id="setPassword" title="Cambio de Contraseña" visible="false" width="385" height="256" borderAlpha=".95" close="setPassword.visible = false;cleanCtrls();" horizontalCenter="0" verticalCenter="-7">
+		<s:Label text="* Contraseña" x="20" y="127" fontWeight="bold" color="#000000"/>
+		<s:Label text="* Contraseña Actual" x="21" y="85" fontWeight="bold" color="#000000"/>
+		<s:Label text="CAMBIO DE CONTRASEÑA" x="115" y="35" fontWeight="bold" color="#000000"/>
+		<s:Label text="* Campos obligatorios" x="25" y="195" fontWeight="bold" color="#000000"/>
+		<s:Label text="* Reingresar Contraseña" x="158" y="127" fontWeight="bold" color="#000000"/>
+		
+		<s:TextInput id="txtPasssActual" displayAsPassword="true" x="20" y="99" tabIndex="1" maxChars="50" color="#000000" focusOut="validPassActual();" change="txtValidPassActual.text=''"/>
+		<s:TextInput id="txtNewPass" displayAsPassword="true" change="if(txtNewPass.text.length != 0) checkPass(txtNewPass)"  x="19" y="141"  tabIndex="2" maxChars="50" color="#000000"/>
+		<s:TextInput id="txtConfirmNewPass" displayAsPassword="true"  x="156" y="141" tabIndex="3"  maxChars="50" color="#000000" change="if(txtConfirmNewPass.text.length != 0) checkPass(txtConfirmNewPass)"/>
+		<s:TextInput id="txtValidPassActual" x="331" y="11" tabIndex="3"  maxChars="50" color="#000000" enabled="false" editable="false" visible="false" width="43"/>
+		
+		<mx:Button icon="@Embed(source='assets/accept-icon_24.png')" label="Cambiar Contraseña" click="enviarCambioPass();" height="24" tabIndex="7" width="165" x="196" toolTip="Cambiar Contraseña" y="180"/>
+		
+		<mx:Image x="25" y="7" source="assets/3830-64.png" width="80" height="67"/>	
+	</s:TitleWindow>
+	
+	<s:TextInput width="100" height="20" id="send" visible="false" text="Hola Mundo"/>
+	<s:TextInput width="100" height="20" id="randAvisos" visible="false" enabled="true" valueCommit="loadAvisos();"/>
+	
+	<s:TextInput width="100" height="20" id="numeroAviso" visible="false"/>
+	
+	<mx:Image id="myImage" source="newIcons/messageH.png" x="-451" y="284"/>	
+	<mx:Image id="cerrar" source="newIcons/delete_24.png" x="-37" y="308" click="cerrarF();"/>
+	<mx:Image id="izquierda" source="newIcons/back_24.png" x="-289" y="493" toolTip="Aviso anterior" click="anteriorAviso();"/>
+	<mx:Image id="derecha" source="newIcons/fordward_24.png" x="-97" y="493" toolTip="Aviso siguiente" click="siguienteAviso();"/>
+	<mx:Text width="282" height="135" id="avisos" x="-317" y="344"/>
+	
+	
+</mx:Module>
+
+

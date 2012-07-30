@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" pageTitle="Transacciones No Facturadas"
+	applicationComplete="validateUser('transacNoFacturadas.swf');">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+		import com.ExcelExports;
+		
+		import mx.events.*;
+		
+		private function exportXLS():void
+		{
+			if(DGTransacciones.dataProvider != null)
+				com.ExcelExports.fromGrid(this.DGTransacciones,"Transacciones.xls", new Object()); 
+			
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No existen registros para exportar.","Aviso",Alert.OK,null,null, iconAlert);	
+				return;
+			} 
+		}
+		
+		private function openPDF():void
+		{
+			navigateToURL(new URLRequest(rutaPDF.text), "_blank");
+		}
+		
+		private function openXML():void
+		{
+			navigateToURL(new URLRequest(rutaXML.text), "_blank");
+		}
+		
+		private function limpiar():void
+		{
+			DGTransacciones.dataProvider = null;
+			
+			noTransFilter.text = "";
+			serieFilter.text = "";
+			
+			fechaIniFacFilter.text = "";
+			fechaFinFacFilter.text = "";
+			fechaIniTransFilter.text = ""; 
+			fechaFinTransFilter.text = "";
+			
+			folioFilter.value = 0;
+			topFilter.value = 500;
+			
+			cmbSucursalesFilter.selectedIndex = 0;
+			cmbEstatusFilter.selectedIndex = 0;
+		}
+		
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{
+			if (date != null)
+			{
+				cntlH.selectedDate = null;
+				cntlH.selectableRange = {
+					rangeStart:new Date(
+						date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()))
+				};
+			}
+		}
+		
+		private function muestraTTWDoc():void
+		{
+			if (facturado.text == "1")
+			{
+				pnVisorDetalle.visible = true;
+			}
+		}
+		
+		private function pasaRutas():void
+		{
+			if (DGTransacciones.selectedIndex >= 0)
+			{
+			
+				facturado.text = DGTransacciones.selectedItem[10].toString();
+				
+				if (facturado.text == "1")
+				{
+				 	rutaPDF.text = DGTransacciones.selectedItem[8].toString();
+					rutaXML.text = DGTransacciones.selectedItem[9].toString();
+					lblSerieFolio.text = "Serie y Folio:   " + DGTransacciones.selectedItem[6].toString() + " - " + DGTransacciones.selectedItem[7].toString();
+					
+					btnDoctos.enabled = true;
+				}
+				else
+				{
+					rutaPDF.text = "";
+					rutaXML.text = "";
+					
+					btnDoctos.enabled = false;
+				}
+			}
+		}
+		
+		private function ejecutaFiltro():void
+		{
+			if(cmbSucursalesFilter.selectedIndex <= 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Seleccione la Sucursal a la que desea ejecutar la búsqueda.","Aviso",Alert.OK,null,null, iconAlert);	
+				return;
+			}
+			
+			Send(708); //Ejecuta Filtro de Busqueda
+		}
+		
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Transacciones Facturizate" width="100%" height="100%" >
+		<s:VGroup x="0" y="0" width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingTop="10">
+				<s:Label text="No.Transacción" width="104" fontWeight="bold" x="357"/>
+				<s:Label text="Sucursal" width="240" fontWeight="bold" x="320"/>
+				<s:Label text="Serie" width="72" fontWeight="bold" x="619"/>
+				<s:Label text="Folio" width="64" fontWeight="bold" x="697"/>
+				<s:Label text="Estatus" width="138" fontWeight="bold" x="767"/>
+				<s:Label text="F.Inicio Factura" width="126" fontWeight="bold" x="911"/>
+				<s:Label text="F.Final Factura" width="134" fontWeight="bold" x="1083"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="7" paddingRight="10">
+				<s:TextInput width="103" id="noTransFilter" height="24" restrict="0-9" maxChars="25" x="356"/>
+				<s:ComboBox id="cmbSucursalesFilter" creationComplete="Send(681);" width="240" x="678"/>
+				<s:TextInput width="72" id="serieFilter" height="24" restrict="0-9A-NM-Za-nm-z" typographicCase="uppercase" maxChars="25" x="618"/>
+				<s:NumericStepper id="folioFilter" width="65" maximum="50000000" height="24"/>
+				<s:ComboBox id="cmbEstatusFilter" creationComplete="Send(709);" width="138" x="767"/>
+				<mx:DateField id="fechaIniFacFilter" width="125" height="24" creationComplete="DCInit('fechaIniFacFilter');" change="dateControl(fechaIniFacFilter,fechaFinFacFilter, DateField(event.target).selectedDate)" />
+				<mx:DateField id="fechaFinFacFilter" width="125" height="24" creationComplete="DCInit('fechaFinFacFilter');"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" >
+				<s:Label text="F.Inicio Trans" width="123" fontWeight="bold"/>
+				<s:Label text="F.Final trans" width="126" fontWeight="bold" x="478"/>
+				<s:Label text="Mostrar Registros" width="601" fontWeight="bold" x="616"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+				<s:TextInput width="50" id="idGridCCFE" visible="false" valueCommit="pnVisorDetalle.visible = true;"/>
+				<mx:DateField id="fechaIniTransFilter" width="125" height="24" creationComplete="DCInit('fechaIniTransFilter');" change="dateControl(fechaIniTransFilter,fechaFinTransFilter, DateField(event.target).selectedDate)" />
+				<mx:DateField id="fechaFinTransFilter" width="125" height="24" creationComplete="DCInit('fechaFinTransFilter');"/>
+				<s:NumericStepper id="topFilter" width="96" maximum="50000000" height="24" value="500" x="615"/>
+				
+				<mx:Spacer width="50"/>
+								
+				<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" width="100" click="ejecutaFiltro();"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="100"/>
+				<mx:Button label="Exportar" icon="@Embed(source='assets/Exel_24.png')" height="24" click="exportXLS();" width="100"/>
+				<mx:Button label="Documentos" icon="@Embed(source='newIcons/pdf02_32.png')" height="24" click="muestraTTWDoc();" width="116" x="1091" id="btnDoctos" enabled="false"/>
+			</s:HGroup>
+			
+			<mx:DataGrid width="100%" id="DGTransacciones" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="pasaRutas();">
+				<mx:columns>
+					<mx:DataGridColumn headerText="No.Transacción"		dataField="0" width="200"/>
+					<mx:DataGridColumn headerText="Sucursal" 			dataField="1" width="110"/>
+					<mx:DataGridColumn headerText="Monto" 				dataField="2" width="100"/>
+					<mx:DataGridColumn headerText="Fecha Transacción" 	dataField="3" width="140"/>
+					<mx:DataGridColumn headerText="Estatus" 			dataField="4" width="100"/>
+					<mx:DataGridColumn headerText="Fecha facturado" 	dataField="5" width="140"/>
+					<mx:DataGridColumn headerText="Serie" 				dataField="6" width="80"/>
+					<mx:DataGridColumn headerText="Folio" 				dataField="7" width="80"/>
+					<mx:DataGridColumn headerText="rutaPDF" 			dataField="8" width="0" visible="false"/>	
+					<mx:DataGridColumn headerText="rutaXML" 			dataField="9" width="0" visible="false"/>
+					<mx:DataGridColumn headerText="facturado" 			dataField="10" width="0" visible="false"/>	
+				</mx:columns>
+			</mx:DataGrid>
+			
+		</s:VGroup>
+	</s:Panel>
+	
+	<s:TitleWindow width="402" height="156" title="Documentos" id="pnVisorDetalle" visible="false" close="pnVisorDetalle.visible=false;" verticalCenter="-16" horizontalCenter="0">
+		<s:Label x="14" y="15" text="Serie y Folio: " fontWeight="bold" enabled="true" fontSize="12" id="lblSerieFolio"/>
+		
+		<mx:Button x="213" y="59" label="Descarga XML" icon="@Embed(source='newIcons/NetByte Design Studio - 0796 copia.png')" width="180" height="24" click="openXML();"/>
+		<mx:Button x="10" y="59" label="Descarga PDF" icon="@Embed(source='assets/pdf-64X64.png')" height="24" click="openPDF();"  width="180"/>
+		
+		<s:TextInput x="594" y="59" width="154" id="rutaPDF" editable="false" enabled="false" visible="false"/>
+		<s:TextInput x="778" y="59" width="154" id="rutaXML" editable="false" enabled="false" visible="false"/>
+		<s:TextInput x="778" y="59" width="154" id="facturado" editable="false" enabled="false" visible="false"/>	
+	</s:TitleWindow>
+	
+</s:Application>

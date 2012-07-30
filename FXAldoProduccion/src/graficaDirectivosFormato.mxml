@@ -1,0 +1,913 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:mx2="library://ns.adobe.com/flex/halo"
+			   xmlns:amcharts="http://www.amcharts.com/com_internal" 
+			   xmlns:code="http://code.google.com/p/flex-iframe/"
+			   width="100%" height="100%" backgroundColor="#000000" 
+			   pageTitle="Grafica Directivos"
+			   applicationComplete="validateUser('graficaDirectivosFormato.swf');">
+	
+<fx:Script source="r3Take.as"/>
+
+<fx:Script>
+	<![CDATA[
+		import mx.controls.Alert;
+		import mx.collections.ArrayCollection;			
+		import spark.filters.DropShadowFilter;
+		import com.amcharts.chartClasses.AmGraph;
+
+		[Embed(source="assets/accept-icon_24.png")]	[Bindable]	public var iconAcp:Class;
+		[Embed(source="assets/2519-32.png")]		[Bindable]	public var iconNot:Class;
+		[Embed(source="assets/userOK2.png")]		[Bindable]	public var imgOK:Class;
+		[Embed(source="assets/userFail2.png")]		[Bindable]	public var imgFail:Class;		
+		
+		import mx.events.FlexEvent;
+		
+		private function fullScreen():void
+		{
+			stage.displayState = StageDisplayState.FULL_SCREEN;					
+		}
+		
+		protected function addImage(event:MouseEvent):void
+		{
+			graficas.visible = true;
+			filtros.visible = true;
+			myImage.visible = true;
+			myImage.includeInLayout = true;
+			myImage2.visible = true;
+			myImage2.includeInLayout = true;
+			myImage3.visible = true;
+			myImage3.includeInLayout = true;
+			cerrarFiltro.visible = true;
+			cerrarGrafica.visible = true;
+			cerrarFnGraficas.visible = true;
+			fnGraficas.visible = true;
+		}
+		
+		protected function removeImage(event:MouseEvent):void
+		{
+			graficas.visible = false;
+			filtros.visible = false;
+			myImage.visible = false;
+			myImage.includeInLayout = false;
+			myImage2.visible = false;
+			myImage2.includeInLayout = false;
+			myImage3.visible = false;
+			myImage3.includeInLayout = false;
+			cerrarFiltro.visible = false;
+			cerrarGrafica.visible = false;
+			cerrarFnGraficas.visible = false;
+			fnGraficas.visible = false;
+			mapaEmpresasXEstado.source = ""; 
+			mapaEmpresasXEstado.visible = false; 
+			mapaEmpresasXEstado.includeInLayout = false;
+		}
+		
+		
+		
+		private function graficaVisible():void
+		{
+			var gb:ArrayCollection = new ArrayCollection();
+			gb = new ArrayCollection(ArrayUtil.toArray(dsGraficas.dataProvider.source));
+			
+			deshabilitaGraficas();
+			if(tipoGrafica.selectedValue == 4)
+			{	
+				myPie.visible = true;
+				myPie.dataProvider = gb;
+			}
+			if(tipoGrafica.selectedValue == 3)
+			{	
+				myBar.visible = true;
+				myBar.dataProvider = gb;
+			}
+			if(tipoGrafica.selectedValue == 1)
+			{	
+				myArea.visible = true;
+				myArea.dataProvider = gb;
+			}				
+			if(tipoGrafica.selectedValue == 5)
+			{	
+				if(tipoIndicador.selectedItem[0].toString() == 4)
+				{
+					cuboBarras.visible = true;
+					leyendaCubo.visible = true;
+					cuboBarras.dataProvider = gb;
+				}					
+				if(tipoIndicador.selectedItem[0].toString() == 5)
+				{
+					cuboBarrasClientesRegistrados.visible = true;
+					leyendaCuboClientesRegistrados.visible = true;
+					cuboBarrasClientesRegistrados.dataProvider = gb;
+				}
+			}
+			if(tipoGrafica.selectedValue == 2)
+			{	
+				if(tipoIndicador.selectedItem[0].toString() == 4)
+				{
+					cuboLineas.visible = true;
+					cuboLineas.dataProvider = gb;
+					botonesCubosLineasClientesRegistradosXAplicacion.visible = true;
+				}					
+				if(tipoIndicador.selectedItem[0].toString() == 5)
+				{
+					cuboLineasClientesRegistrados.visible = true;
+					cuboLineasClientesRegistrados.dataProvider = gb;
+					botonesCubosLineasClientesRegistradosXAplicacion.visible = true;	
+				}
+			}				
+			
+			labelGrafica.text = tipoIndicador.selectedItem[1].toString().toUpperCase();
+			dsGraficas.visible = true;
+		}
+		
+		private function generarGrafica():void
+		{		
+			mapaEmpresasXEstado.source = ""; 
+			mapaEmpresasXEstado.visible = false; 
+			mapaEmpresasXEstado.includeInLayout = false;
+			if(tipoIndicador.selectedItem[0].toString() == 2)
+			{
+				Send(758); // Número de Facturas Emitidas por Cliente
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 3)
+			{
+				Send(759); // Monto de Facturas Emitidas por Cliente
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 4)
+			{
+				Send(760); // Facturas Emitidas por Aplicación por Día					
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 5)
+			{
+				Send(761); // Clientes Registrados por Aplicación por Día					
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 6)
+			{
+				mapaEmpresasXEstado.source = "https://fx.facturaxion.net/mexico/mapa.html";
+				mapaEmpresasXEstado.visible = true;	
+				mapaEmpresasXEstado.includeInLayout = true;
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 7)
+			{
+				Send(762); // Facturas Emitidas por Día
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 8)
+			{
+				Send(763); // Clientes Registrados por Día
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 9)
+			{
+				Send(764); // Facturas Generadas por aplicación
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 10)
+			{
+				Send(765); // Empresas por Aplicación
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 11)
+			{
+				Send(768); // Carga de LCO
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 12)
+			{
+				Send(766); // Incidencias Envío SAT por Día
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 13)
+			{
+				Send(767); // Incidencias  Cancelación SAT por Día
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 14)
+			{
+				//Send(); // Número y Tipo de Incidencias en Cancelación SAT por Día
+			}
+		}
+		
+		private function deshabilitaFiltros():void
+		{
+			cuboLinea.enabled = false;
+			cuboBarra.enabled = false;
+			area.enabled = false;
+			pie.enabled = false;
+			barras.enabled = false;
+			mapaMexicoEmpresas.enabled = false;
+			cuboLinea.enabled = false;
+			cuboBarra.enabled = false;
+			fechaIni.enabled = false;
+			fechaFin.enabled = false;
+			barras.selected = false; 
+			area.selected = false;
+			pie.selected = false;
+			cuboLinea.selected = false;
+			cuboBarra.selected = false;
+			
+			
+			if(tipoIndicador.selectedItem[0].toString() == 2 || tipoIndicador.selectedItem[0].toString() == 3 || tipoIndicador.selectedItem[0].toString() == 7 || tipoIndicador.selectedItem[0].toString() == 9 || tipoIndicador.selectedItem[0].toString() == 10)
+			{
+				area.enabled = true;
+				pie.enabled = true;
+				barras.enabled = true;
+				barras.selected = true;
+			}	
+			
+			if(tipoIndicador.selectedItem[0].toString() == 7 || tipoIndicador.selectedItem[0].toString() == 8 || tipoIndicador.selectedItem[0].toString() == 11 || tipoIndicador.selectedItem[0].toString() == 12 || tipoIndicador.selectedItem[0].toString() == 13)
+			{
+				area.enabled = true;
+				pie.enabled = true;
+				barras.enabled = true;
+				fechaIni.enabled = true;
+				fechaFin.enabled = true;
+				barras.selected = true;
+			}	
+			
+			if(tipoIndicador.selectedItem[0].toString() == 4 || tipoIndicador.selectedItem[0].toString() == 5)
+			{	
+				cuboLinea.enabled = true;
+				cuboBarra.enabled = true;
+				fechaIni.enabled = true;
+				fechaFin.enabled = true;
+				cuboBarra.selected = true;
+			}	
+			
+			if(tipoIndicador.selectedItem[0].toString() == 6)
+			{
+				mapaMexicoEmpresas.enabled = true;
+				mapaMexicoEmpresas.selected = true;
+			}	
+			
+			if(tipoIndicador.selectedItem[0].toString() == 1)
+			{
+				graficasPN.title = "Numero de facturas emitidas por aplicación";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 2)
+			{
+				graficasPN.title = "Monto de facturas emitidas por aplicación";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 3)
+			{
+				graficasPN.title = "Monto de Facturas Emitidas por Cliente";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 4)
+			{
+				graficasPN.title = "Facturas Emitidas por Aplicación por Día";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 5)
+			{
+				graficasPN.title = "Clientes Registrados por Aplicación por Día";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 6)
+			{
+				graficasPN.title = "Empresas por Estado";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 7)
+			{
+				graficasPN.title = "Facturas Emitidas por Día";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 8)
+			{
+				graficasPN.title = "Clientes Registrados por Día";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 9)
+			{
+				graficasPN.title = "Facturas por Aplicación";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 10)
+			{
+				graficasPN.title = "Empresas por Aplicación";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 11)
+			{
+				graficasPN.title = "Carga de LCO por día, si esta en uno la gráfica es que fue cargada en el día indicado.";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 11)
+			{
+				graficasPN.title = "Porcentaje de Incidencias en Envío SAT por Día, no debe de rebasar 0.1% mensual.";
+			}
+			if(tipoIndicador.selectedItem[0].toString() == 11)
+			{
+				graficasPN.title = "Porcentaje de Incidencias en Cancelación SAT por Día, no debe de rebasar 0.1% mensual.";
+			}
+		}
+		
+		private function deshabilitaGraficas():void
+		{
+			myPie.visible = false;		
+			myBar.visible = false;	
+			myArea.visible = false;	
+			cuboBarras.visible = false;
+			cuboBarrasClientesRegistrados.visible = false;
+			lableMyArea.visible = false;
+			leyendaCubo.visible = false;
+			cuboLineasClientesRegistrados.visible = false;
+			cuboLineas.visible = false;
+			botonesCubosLineas.visible = false;
+			botonesCubosLineasClientesRegistradosXAplicacion.visible = false;
+			leyendaCuboClientesRegistrados.visible = false;
+		}
+		private function inicializaDF(control:String):void
+		{
+			var date:Date = new Date();
+			var d:int = date.getDate();
+			var m:int = date.month;
+			var y:int = date.fullYear;
+			
+			this[control].dayNames=['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+			this[control].monthNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+			this[control].firstDayOfWeek = 1;
+			this[control].setStyle("headerColor", 0xff0000);
+			//this[control].selectableRange = {rangeStart: new Date(y,m,1), rangeEnd: new Date(y,m,d)};
+		}
+		
+		private function defineFecha():void
+		{
+			var date:Date = new Date();
+			var d:int = date.getDate();
+			var m:int = date.month;
+			var y:int = date.fullYear;
+			fechaIni.selectedDate = new Date(y,m,1);
+			fechaFin.selectedDate = new Date(y,m,d);
+		}			
+		
+		private function zoom():void{
+			cuboBarras.zoomToIndexes(6,12);
+		}
+		
+		private function zoom2():void{
+			cuboLineas.zoomToIndexes(0,20);
+		}
+		
+		
+		private function zoom3():void{
+			cuboBarrasClientesRegistrados.zoomToIndexes(0,20);
+		}
+		
+		private function zoom4():void{
+			cuboLineasClientesRegistrados.zoomToIndexes(0,20);
+		}
+		
+		private function clearFilter():void{
+			this.filters = [];
+		}
+		
+		
+		
+		/* Funciones de Cubos lineas de facturas por aplicación por día */
+		private var _newValueAxis:ValueAxis;
+		
+		private function cubosLienasAddFacturaXion():void
+		{
+			line1.visible = true;									
+			addFacturaXion.enabled = false;
+			removeFacturaXion.enabled = true;
+		}
+		
+		private function cubosLienasRemoveFacturaXion():void
+		{				
+			line1.visible = false;
+			addFacturaXion.enabled = true;
+			removeFacturaXion.enabled = false;
+		}
+		
+		private function cubosLienasAddTimbrado():void
+		{
+			line2.visible = true;									
+			addTimbrado.enabled = false;
+			removeTimbrado.enabled = true;
+		}
+		
+		private function cubosLienasRemoveTimbrado():void
+		{				
+			line2.visible = false;
+			addTimbrado.enabled = true;
+			removeTimbrado.enabled = false;
+		}
+		
+		private function cubosLienasAddMIT():void
+		{
+			line3.visible = true;									
+			addMIT.enabled = false;
+			removeMIT.enabled = true;
+		}
+		
+		private function cubosLienasRemoveMIT():void
+		{				
+			line3.visible = false;
+			addMIT.enabled = true;
+			removeMIT.enabled = false;
+		}
+		
+		private function cubosLienasAddFacturizate():void
+		{
+			line4.visible = true;									
+			addFacturizate.enabled = false;
+			removeFacturizate.enabled = true;
+		}
+		
+		private function cubosLienasRemoveFacturizate():void
+		{				
+			line4.visible = false;
+			addFacturizate.enabled = true;
+			removeFacturizate.enabled = false;
+		}
+		
+		
+		/* Funciones de Cubos lineas de clientes por rol por día */
+		
+		private function cubosLienasAddMITClientes():void
+		{
+			lineClientesRegistrados1.visible = true;									
+			addMITClientes.enabled = false;
+			removeMITClientes.enabled = true;
+		}
+		
+		private function cubosLienasRemoveMITClientes():void
+		{				
+			lineClientesRegistrados1.visible = false;
+			addMITClientes.enabled = true;
+			removeMITClientes.enabled = false;
+		}
+		
+		private function cubosLienasAddGratuita():void
+		{
+			lineClientesRegistrados2.visible = true;									
+			addGratuita.enabled = false;
+			removeGratuita.enabled = true;
+		}
+		
+		private function cubosLienasRemoveGratuita():void
+		{				
+			lineClientesRegistrados2.visible = false;
+			addGratuita.enabled = true;
+			removeGratuita.enabled = false;
+		}
+		
+		private function cubosLienasAddTelmexAdmon():void
+		{
+			lineClientesRegistrados3.visible = true;									
+			addTelmexAdmon.enabled = false;
+			removeTelmexAdmon.enabled = true;
+		}
+		
+		private function cubosLienasRemoveTelmexAdmon():void
+		{				
+			lineClientesRegistrados3.visible = false;
+			addTelmexAdmon.enabled = true;
+			removeTelmexAdmon.enabled = false;
+		}
+		
+		private function cubosLienasAddTelmexCapturista():void
+		{
+			lineClientesRegistrados4.visible = true;									
+			addTelmexCapturista.enabled = false;
+			removeTelmexCapturista.enabled = true;
+		}
+		
+		private function cubosLienasRemoveTelmexCapturista():void
+		{				
+			lineClientesRegistrados4.visible = false;
+			addTelmexCapturista.enabled = true;
+			removeTelmexCapturista.enabled = false;
+		}	
+		
+		private function cubosLienasAddPrepago():void
+		{
+			lineClientesRegistrados5.visible = true;									
+			addPrepago.enabled = false;
+			removePrepago.enabled = true;
+		}
+		
+		private function cubosLienasRemovePrepago():void
+		{				
+			lineClientesRegistrados5.visible = false;
+			addPrepago.enabled = true;
+			removePrepago.enabled = false;
+		}
+		
+		private function cubosLienasAddFacturizateAdmon():void
+		{
+			lineClientesRegistrados6.visible = true;									
+			addFacturizateAdmon.enabled = false;
+			removeFacturizate.enabled = true;
+		}
+		
+		private function cubosLienasRemoveFacturizateAdmon():void
+		{				
+			lineClientesRegistrados6.visible = false;
+			addFacturizateAdmon.enabled = true;
+			removeFacturizateAdmon.enabled = false;
+		}
+		
+		private function cubosLienasAddFacturizateCapturista():void
+		{
+			lineClientesRegistrados7.visible = true;									
+			addFacturizate.enabled = false;
+			removeFacturizateCapturista.enabled = true;
+		}
+		
+		private function cubosLienasRemoveFacturizateCapturista():void
+		{				
+			lineClientesRegistrados7.visible = false;
+			addFacturizateCapturista.enabled = true;
+			removeFacturizateCapturista.enabled = false;
+		}
+		
+		private function cubosLienasAddPrepagoEspecialAdmon():void
+		{
+			lineClientesRegistrados8.visible = true;									
+			addPrepagoEspecialAdmon.enabled = false;
+			removePrepagoEspecialAdmon.enabled = true;
+		}
+		
+		private function cubosLienasRemovePrepagoEspecialAdmon():void
+		{				
+			lineClientesRegistrados8.visible = false;
+			addPrepagoEspecialAdmon.enabled = true;
+			removePrepagoEspecialAdmon.enabled = false;
+		}
+		
+		private function cubosLienasAddEspecialCapturista():void
+		{
+			lineClientesRegistrados9.visible = true;									
+			addPrepagoEspecialCapturista.enabled = false;
+			removePrepagoEspecialCapturista.enabled = true;
+		}
+		
+		private function cubosLienasRemoveEspecialCapturista():void
+		{				
+			lineClientesRegistrados9.visible = false;
+			addPrepagoEspecialCapturista.enabled = true;
+			removePrepagoEspecialCapturista.enabled = false;
+		}	
+		
+		private function cubosLienasAddTimbradoClientes():void
+		{
+			lineClientesRegistrados10.visible = true;									
+			addTimbradoClientes.enabled = false;
+			removeTimbradoClientes.enabled = true;
+		}
+		
+		private function cubosLienasRemoveTimbradoClientes():void
+		{				
+			lineClientesRegistrados10.visible = false;
+			addTimbradoClientes.enabled = true;
+			removeTimbradoClientes.enabled = false;
+		}	
+		
+		private function autenticar():void
+		{
+			fullScreen();
+			if(autenticado.text == "1")
+			{
+				login.visible = false;
+				mexico.visible = true;
+			}
+		}
+	
+	]]>
+</fx:Script>
+	
+	<fx:Declarations>		
+		<mx:Sequence id="glowIcon" repeatCount="100">
+			<mx:Glow duration="3000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="12.0" blurYFrom="0.0" blurYTo="12.0" color="#ffffff" /> 	
+			<mx:Glow duration="3000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="12.0" blurXTo="0.0" blurYFrom="12.0" blurYTo="0.0" color="#ffffff" /> 	
+		</mx:Sequence>	
+		
+		<mx:Sequence id="glowMexico" repeatCount="100">
+			<mx:Glow duration="1000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="20.0" blurYFrom="0.0" blurYTo="20.0" color="#ffffff" /> 	
+			<mx:Glow duration="1000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="20.0" blurXTo="0.0" blurYFrom="20.0" blurYTo="0.0" color="#ffffff" /> 	
+		</mx:Sequence>	
+		
+		<s:Fade duration="20000" alphaFrom="0" alphaTo="1" id="fadeIn" />    
+		<s:Fade duration="1000" alphaFrom="1" alphaTo="0" id="fadeOut" />        
+		<s:RadioButtonGroup id="tipoGrafica"/>
+	</fx:Declarations>
+	
+	<s:filters> 
+		<flash.filters:BevelFilter id='bevelFilter' xmlns:flash.filters='flash.filters.*' angle='60' blurX='5' blurY='5' distance='3' highlightAlpha='0.39' highlightColor='#ffffff' knockout='false' quality='1' shadowAlpha='0.27' shadowColor='#000000' strength='1' type='inner'/>
+	</s:filters>
+	
+<s:BitmapImage source="@Embed('assets/fondo1.jpg')" width="1900" height="1000"/>
+	
+<mx:Image source="assets/mexico.png" id="mexico" creationCompleteEffect="{glowMexico}" width="3800" height="1000" x="104" click="addImage(event)" visible="false"/>
+<mx:Image source="assets/logoBlanco.png" creationCompleteEffect="{glowIcon}" horizontalCenter="0" y="40"/>
+
+<mx:Image source="assets/tituloGraficas.png" creationCompleteEffect="{glowIcon}" horizontalCenter="19" bottom="40" />
+
+	<s:VGroup paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" visible="false" id="filtros">		
+		<s:HGroup verticalAlign="middle" horizontalAlign="center">
+			<s:Panel width="100%" height="100%" title="Filtros" resizeEffect="Resize">
+				<mx:Image id="myImage" source="assets/punto.png" width="240" height="400" visible="true" includeInLayout="true" showEffect="{fadeIn}" hideEffect="{fadeOut}" />
+				<s:Label text="Tipo de Gráfica" fontWeight="bold" fontSize="12" x="12" y="15"/>				
+				<s:Label text="Fecha Inicial" fontWeight="bold" fontSize="12" x="20" y="188"/>
+				<s:Label text="Fecha Final" fontWeight="bold" fontSize="12" x="20" y="237"/>
+				<s:RadioButton label="Area" value="1" groupName="tipoGrafica" x="20" y="109" id="area" enabled="false"/>
+				<s:RadioButton label="Cubos en Lineas" value="2"  groupName="tipoGrafica" x="20" y="134" id="cuboLinea" enabled="false"/>
+				<s:RadioButton label="Barras" value="3"  groupName="tipoGrafica" x="20" y="84" id="barras" enabled="false"/>
+				<s:RadioButton label="Pie" value="4"  groupName="tipoGrafica" width="58" x="20" y="58" id="pie" enabled="false"/>
+				<s:RadioButton label="Cubos en Barras" value="5"  groupName="tipoGrafica" width="114" x="20" y="33" id="cuboBarra" enabled="false"/>		
+				<s:RadioButton label="Mapa de México" value="6"  groupName="tipoGrafica" width="114" x="20" y="158" id="mapaMexicoEmpresas" enabled="false"/>
+				<s:ComboBox x="18" y="306" width="204" id="tipoIndicador" creationComplete="Send(722);" change="deshabilitaFiltros();"/>
+				<s:Label x="19" y="290" text="Tipo de Indicador" fontWeight="bold"/>
+				<mx:DateField x="19" y="206" width="204" creationComplete="inicializaDF('fechaIni');" id="fechaIni" formatString="DD/MM/YYYY" enabled="false"/>
+				<mx:DateField x="19" y="255" width="204" creationComplete="inicializaDF('fechaFin'); defineFecha();" id="fechaFin" formatString="DD/MM/YYYY" enabled="false"/>
+				<mx:Button x="18" y="343" label="Crear Gráfica" icon="@Embed(source='newIcons/edit-icon_24.png')" click="generarGrafica();" height="24" width="204" tabIndex="4" id="crearGrafíca"/>
+			</s:Panel>
+		</s:HGroup>
+	</s:VGroup>
+	<s:VGroup paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" visible="false" id="fnGraficas" y="440">		
+		<s:HGroup verticalAlign="middle" horizontalAlign="center">
+			<s:Panel width="100%" height="100%" title="Funciones Gráficas" resizeEffect="Resize">
+				<mx:Image id="myImage3" source="assets/punto.png" width="240" height="470" visible="true" includeInLayout="true" showEffect="{fadeIn}" hideEffect="{fadeOut}" />
+				
+				<s:HGroup id="botonesCubosLineas" visible="false" x="6" y="10">	
+					<s:VGroup verticalAlign="middle" horizontalAlign="left">
+						<s:Label text="FacturaXion" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Timbrado" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="MIT" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Facturizate" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+					</s:VGroup>
+					<s:VGroup verticalAlign="middle" horizontalAlign="left">
+						<mx:Button id="addFacturaXion" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddFacturaXion()}" width="30"/>						
+						<mx:Button id="addTimbrado" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddTimbrado()}" width="30"/>					
+						<mx:Button id="addMIT" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddMIT()}" width="30"/>					
+						<mx:Button id="addFacturizate" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddFacturizate()}" width="30"/>									
+									
+					</s:VGroup>
+					<s:VGroup verticalAlign="middle" horizontalAlign="left">
+						<mx:Button enabled="true" id="removeFacturaXion"  icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveFacturaXion()}" width="30"/>
+						<mx:Button enabled="true" id="removeTimbrado" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveTimbrado()}" width="30"/>	
+						<mx:Button enabled="true" id="removeMIT" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveMIT()}" width="30"/>	
+						<mx:Button enabled="true" id="removeFacturizate" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveFacturizate()}" width="30"/>							
+					</s:VGroup>		
+				</s:HGroup>
+				<s:HGroup id="botonesCubosLineasClientesRegistradosXAplicacion" visible="false" x="6" y="10">	
+					<s:VGroup verticalAlign="middle" horizontalAlign="left">
+						<s:Label text="MIT" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Gratuito" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Telmex" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Telmex Capturista" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Prepago" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Facturtizate" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Facturizate Capturista" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Prepago Especial" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Prepago Especial Capt" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+						<s:Label text="Timbrado" fontWeight="bold" fontSize="12" x="6" y="10" width="140" height="21" verticalAlign="middle"/>
+					</s:VGroup>
+					<s:VGroup verticalAlign="middle" horizontalAlign="left">
+						<mx:Button id="addMITClientes" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddMITClientes()}" width="30"/>						
+						<mx:Button id="addGratuita" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddGratuita()}" width="30"/>					
+						<mx:Button id="addTelmexAdmon" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddTelmexAdmon()}" width="30"/>					
+						<mx:Button id="addTelmexCapturista" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddTelmexCapturista()}" width="30"/>										
+						<mx:Button id="addPrepago" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddPrepago()}" width="30"/>					
+						<mx:Button id="addFacturizateAdmon" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddFacturizateAdmon()}" width="30"/>					
+						<mx:Button id="addFacturizateCapturista" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddFacturizateCapturista()}" width="30"/>					
+						<mx:Button id="addPrepagoEspecialAdmon" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddPrepagoEspecialAdmon()}" width="30"/>					
+						<mx:Button id="addPrepagoEspecialCapturista" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddEspecialCapturista()}" width="30"/>					
+						<mx:Button id="addTimbradoClientes" icon="@Embed(source='assets/mas.png')" enabled="false" label="" click="{cubosLienasAddTimbradoClientes()}" width="30"/>					
+					</s:VGroup>
+					<s:VGroup verticalAlign="middle" horizontalAlign="left">
+						<mx:Button enabled="true" id="removeMITClientes"  icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveMITClientes()}" width="30"/>
+						<mx:Button enabled="true" id="removeGratuita" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveGratuita()}" width="30"/>	
+						<mx:Button enabled="true" id="removeTelmexAdmon" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveTelmexAdmon()}" width="30"/>	
+						<mx:Button enabled="true" id="removeTelmexCapturista" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveTelmexCapturista()}" width="30"/>		
+						<mx:Button enabled="true" id="removePrepago" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemovePrepago()}" width="30"/>	
+						<mx:Button enabled="true" id="removeFacturizateAdmon" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveFacturizateAdmon()}" width="30"/>	
+						<mx:Button enabled="true" id="removeFacturizateCapturista" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveFacturizateCapturista()}" width="30"/>	
+						<mx:Button enabled="true" id="removePrepagoEspecialAdmon" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemovePrepagoEspecialAdmon()}" width="30"/>	
+						<mx:Button enabled="true" id="removePrepagoEspecialCapturista" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveEspecialCapturista()}" width="30"/>	
+						<mx:Button enabled="true" id="removeTimbradoClientes" icon="@Embed(source='assets/menos.png')" label="" click="{cubosLienasRemoveTimbradoClientes()}" width="30"/>	
+					</s:VGroup>
+					
+				</s:HGroup>
+			</s:Panel>
+		</s:HGroup>
+	</s:VGroup>
+	<s:VGroup x="250" paddingTop="10" paddingBottom="10" paddingLeft="10" paddingRight="10" visible="false"  id="graficas">		
+		<s:HGroup verticalAlign="middle" horizontalAlign="center">
+			<s:Panel width="100%" height="100%" title="Gráficas" resizeEffect="Resize" id="graficasPN">
+				<mx:Image id="myImage2" source="assets/punto.png" width="1650" height="910" visible="true" includeInLayout="true" showEffect="{fadeIn}" hideEffect="{fadeOut}" />
+				
+				<s:Group width="100%" height="100%">
+					
+					<amcharts:AmPieChart id="myPie" styleName="MyTextStyle" width="100%" height="760" valueField="1" titleField="0" angle="5"
+										 depth3D="20" innerRadius="20" groupPercent="1" gradient="radial" startDuration="1.5" startRadius="100" 
+										 marginLeft="0" marginRight="0" labelWidth="100">
+						
+						<amcharts:balloon>
+							<amcharts:AmBalloon cornerRadius="10" borderThickness="2" borderColor="#FFFFFF" borderAlpha="1"/>                
+						</amcharts:balloon>						
+					</amcharts:AmPieChart>
+					
+					
+					<amcharts:AmSerialChart id="myBar" styleName="MyTextStyle" visible="false"	width="100%" height="760" categoryField="0" startDuration="2" angle="30" depth3D="15">
+						
+						<amcharts:categoryAxis>
+							<amcharts:CategoryAxis gridCount="12" labelRotation="90"/>
+						</amcharts:categoryAxis>
+						<amcharts:graphs>						
+							<amcharts:AmGraph balloonText="[[category]]: [[value]]" id="g0" valueField="1" type="column" colorField="2" lineAlpha="0" fillAlphas="[0.8]"/>						
+						</amcharts:graphs>
+						<amcharts:balloon>
+							<amcharts:AmBalloon cornerRadius="10" borderThickness="2" borderColor="#FFFFFF" borderAlpha="1"/>				
+						</amcharts:balloon>	
+						<amcharts:chartCursor>
+							<amcharts:ChartCursor zoomable="false" cursorAlpha="0" categoryBalloonEnabled="false"/>					
+						</amcharts:chartCursor>	
+					</amcharts:AmSerialChart>
+					
+					
+					<amcharts:AmSerialChart width="100%" id="myArea" height="760" visible="false" marginTop="45" categoryField="0" plotAreaFillAlphas="[0]">
+						<amcharts:graphs>
+							<amcharts:AmGraph color="#FFFFFF" title="Ver Estadísticas"	valueField="1" type="line"	lineThickness="2" lineAlpha="1"	fillAlphas="[0.7]" showBalloon="true"/>
+						</amcharts:graphs>						
+						<amcharts:valueAxes>
+							<amcharts:ValueAxis stackType="regular" gridAlpha="0.1"/>					
+						</amcharts:valueAxes>						
+						<amcharts:categoryAxis>
+							<amcharts:CategoryAxis gridAlpha="0.1" fontWeight="bold" startOnAxis="true" position="top"/>
+						</amcharts:categoryAxis>						
+						<amcharts:chartScrollbar>
+							<amcharts:ChartScrollbar height="20"/>					
+						</amcharts:chartScrollbar>						
+						<amcharts:chartCursor>
+							<amcharts:ChartCursor/>					
+						</amcharts:chartCursor>						
+					</amcharts:AmSerialChart>
+					<amcharts:AmLegend fontWeight="bold" reversedOrder="true" rollOverGraphAlpha="0.1" dataProvider="{myArea}" width="100%"	marginLeft="300" marginRight="20" marginTop="0"  markerType="circle" switchType="v" visible="false" id="lableMyArea"/>
+					
+					
+					<amcharts:AmSerialChart width="100%" height="100%" id="cuboBarras" categoryField="0" plotAreaFillAlphas="[0]" dataUpdated="{zoom()}">
+						<amcharts:graphs>
+							<amcharts:AmGraph color="#FFFFFF" title="Facturaxion" valueField="1" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>                        
+							<amcharts:AmGraph color="#FFFFFF" title="Timbrado" valueField="2" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="MIT" valueField="3" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Facturizate" valueField="4" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+						</amcharts:graphs>
+						
+						<amcharts:valueAxes>
+							<amcharts:ValueAxis stackType="regular" gridAlpha="0.1"/>                    
+						</amcharts:valueAxes>
+						
+						<amcharts:categoryAxis>
+							<amcharts:CategoryAxis gridAlpha="0.1" fontWeight="bold"/>
+						</amcharts:categoryAxis>
+						
+						<amcharts:chartScrollbar>
+							<amcharts:ChartScrollbar hideResizeGrips="false" height="20"/>                    
+						</amcharts:chartScrollbar>
+						
+						<amcharts:chartCursor>
+							<amcharts:ChartCursor cursorAlpha=".5"/>                    
+						</amcharts:chartCursor>
+						
+					</amcharts:AmSerialChart>
+					<amcharts:AmLegend fontWeight="bold" dataProvider="{cuboBarras}" width="100%" align="center" y="50" visible="false" id="leyendaCubo"/> 
+					
+					
+					<amcharts:AmSerialChart dataUpdated="{zoom2()}" id="cuboLineas" width="100%" height="100%"  categoryField="11">
+						
+						<amcharts:graphs>
+							<amcharts:AmGraph title="FacturaXion" valueAxis="{v1}" valueField="1" type="smoothedLine" bullet="round" hideBulletsCount="30" id="line1"/>                        
+							<amcharts:AmGraph title="Timbrado" valueAxis="{v2}" valueField="2" type="smoothedLine"  bullet="square" hideBulletsCount="30"  id="line2"/>
+							<amcharts:AmGraph title="MIT" valueAxis="{v3}" valueField="3" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="line3"/>
+							<amcharts:AmGraph title="Facturizate" valueAxis="{v4}" valueField="4" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="line4"/>
+						</amcharts:graphs>
+						<amcharts:valueAxes>
+							<amcharts:ValueAxis id="v1" axisColor="#FF6600" axisThickness="2"/>                    
+							<amcharts:ValueAxis id="v2" axisColor="#FCD202" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="v3" axisColor="#B0DE09" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="v4" axisColor="#0D8ECF" gridAlpha="0" axisThickness="2"/> 
+						</amcharts:valueAxes>
+						
+						<amcharts:categoryAxis>
+							<amcharts:CategoryAxis parseDates="true" minPeriod="DD" gridCount="13"/>
+						</amcharts:categoryAxis>
+						
+						<amcharts:chartCursor>
+							<amcharts:ChartCursor cursorPosition="mouse"/>                        
+						</amcharts:chartCursor>
+						<amcharts:chartScrollbar>
+							<amcharts:ChartScrollbar height="15"/>                        
+						</amcharts:chartScrollbar>
+					</amcharts:AmSerialChart>
+					
+					
+					<amcharts:AmSerialChart width="100%" height="100%" id="cuboBarrasClientesRegistrados" categoryField="11" plotAreaFillAlphas="[0]" dataUpdated="{zoom3()}">
+						<amcharts:graphs>
+							<amcharts:AmGraph color="#FFFFFF" title="MIT" valueField="1" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>                        
+							<amcharts:AmGraph color="#FFFFFF" title="Gratuito" valueField="2" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Telmex Admon" valueField="3" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Telmex Capturista" valueField="4" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Prepago" valueField="5" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Facturizate Admon" valueField="6" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Facturizate Capturista" valueField="7" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Prepago Especial Admon" valueField="8" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Prepago Especial Usuarios" valueField="9" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+							<amcharts:AmGraph color="#FFFFFF" title="Timbrado" valueField="10" type="column" lineAlpha="0.8" fillAlphas="[0.8]" showBalloon="false" filters="{[bevelFilter]}"/>
+						</amcharts:graphs>
+						
+						<amcharts:valueAxes>
+							<amcharts:ValueAxis stackType="regular" gridAlpha="0.1"/>                    
+						</amcharts:valueAxes>
+						
+						<amcharts:categoryAxis>
+							<amcharts:CategoryAxis gridAlpha="0.1" fontWeight="bold"/>
+						</amcharts:categoryAxis>
+						
+						<amcharts:chartScrollbar>
+							<amcharts:ChartScrollbar hideResizeGrips="false" height="20"/>                    
+						</amcharts:chartScrollbar>
+						
+						<amcharts:chartCursor>
+							<amcharts:ChartCursor cursorAlpha=".5"/>                    
+						</amcharts:chartCursor>
+						
+					</amcharts:AmSerialChart>
+					<amcharts:AmLegend fontWeight="bold" dataProvider="{cuboBarrasClientesRegistrados}" width="1600" align="center" y="50" visible="false" id="leyendaCuboClientesRegistrados"/> 
+					
+					
+					<amcharts:AmSerialChart dataUpdated="{zoom4()}" id="cuboLineasClientesRegistrados" width="100%" height="100%"  categoryField="11">
+						
+						<amcharts:graphs>
+							<amcharts:AmGraph title="MIT" valueAxis="{vClientesRegistrados1}" valueField="1" type="smoothedLine" bullet="round" hideBulletsCount="30" id="lineClientesRegistrados1"/>                        
+							<amcharts:AmGraph title="Gratuito" valueAxis="{vClientesRegistrados2}" valueField="2" type="smoothedLine"  bullet="square" hideBulletsCount="30"  id="lineClientesRegistrados2"/>
+							<amcharts:AmGraph title="Telmex Admon" valueAxis="{vClientesRegistrados3}" valueField="3" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados3"/>
+							<amcharts:AmGraph title="Telmex Capturista" valueAxis="{vClientesRegistrados4}" valueField="4" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados4"/>
+							<amcharts:AmGraph title="Prepago" valueAxis="{vClientesRegistrados5}" valueField="5" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados5"/>
+							<amcharts:AmGraph title="Facturizate Admon" valueAxis="{vClientesRegistrados6}" valueField="6" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados6"/>
+							<amcharts:AmGraph title="Facturizate Capturista" valueAxis="{vClientesRegistrados7}" valueField="7" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados7"/>
+							<amcharts:AmGraph title="Prepago Especial Admon" valueAxis="{vClientesRegistrados8}" valueField="8" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados8"/>
+							<amcharts:AmGraph title="Prepago Especial Usuarios" valueAxis="{vClientesRegistrados9}" valueField="9" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados9"/>
+							<amcharts:AmGraph title="Timbrado" valueAxis="{vClientesRegistrados10}" valueField="10" type="smoothedLine"  bullet="square" hideBulletsCount="30" id="lineClientesRegistrados10"/>
+							
+						</amcharts:graphs>
+						<amcharts:valueAxes>
+							<amcharts:ValueAxis id="vClientesRegistrados1" axisColor="#FF6600" axisThickness="2"/>                    
+							<amcharts:ValueAxis id="vClientesRegistrados2" axisColor="#B0DE09" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados3" axisColor="#0D8ECF" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados4" axisColor="#F8FF01" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados5" axisColor="#FCD202" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados6" axisColor="#04D215" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados7" axisColor="#FF9E01" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados8" axisColor="#0D52D1" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados9" axisColor="#8A0CCF" gridAlpha="0" axisThickness="2"/> 
+							<amcharts:ValueAxis id="vClientesRegistrados10" axisColor="#CD0D74" gridAlpha="0" axisThickness="2"/> 
+						</amcharts:valueAxes>
+						
+						<amcharts:categoryAxis>
+							<amcharts:CategoryAxis parseDates="true" minPeriod="DD" gridCount="13"/>
+						</amcharts:categoryAxis>
+						
+						<amcharts:chartCursor>
+							<amcharts:ChartCursor cursorPosition="mouse"/>                        
+						</amcharts:chartCursor>
+						<amcharts:chartScrollbar>
+							<amcharts:ChartScrollbar height="15"/>                        
+						</amcharts:chartScrollbar>
+					</amcharts:AmSerialChart>	
+					
+					
+					<code:IFrame width="100%" height="100%" id="mapaEmpresasXEstado" visible="false" includeInLayout="false">
+						
+					</code:IFrame>
+					
+				</s:Group>
+				
+			</s:Panel>
+		</s:HGroup>
+	</s:VGroup>
+	
+	<mx:Image source="assets/cerrar.png" creationCompleteEffect="{glowIcon}" x="224" y="18" id="cerrarFiltro" visible="false" click="removeImage(event)" toolTip="Cerrar Filtros"/>
+	<mx:Image source="assets/cerrar.png" creationCompleteEffect="{glowIcon}" x="224" y="456" id="cerrarFnGraficas" visible="false" click="removeImage(event)" toolTip="Cerrar Funciones Gráficas"/>
+	<mx:Image source="assets/cerrar.png" creationCompleteEffect="{glowIcon}" x="1880" y="18" id="cerrarGrafica"  visible="false" click="removeImage(event)" toolTip="Cerrar Gráfica"/>
+	<s:Label fontWeight="bold" fontSize="22" y="88" color="#F52604" horizontalCenter="-40" id="labelGrafica" visible="false"/>
+	<mx:DataGrid id="dsGraficas" borderStyle="outset" visible="false" height="0" editable="false" valueCommit="graficaVisible();">
+		<mx:columns>
+			<mx:DataGridColumn headerText="0" dataField="0" width="200"/>
+			<mx:DataGridColumn headerText="1" dataField="1" width="100"/>
+			<mx:DataGridColumn headerText="2" visible="false" dataField="2" width="10"/>
+			<mx:DataGridColumn headerText="3" visible="false" dataField="3" width="10"/>
+			<mx:DataGridColumn headerText="4" visible="false" dataField="4" width="10"/>
+			<mx:DataGridColumn headerText="5" visible="false" dataField="5" width="10"/>
+			<mx:DataGridColumn headerText="6" visible="false" dataField="6" width="10"/>
+			<mx:DataGridColumn headerText="7" visible="false" dataField="6" width="10"/>
+			<mx:DataGridColumn headerText="8" visible="false" dataField="6" width="10"/>
+			<mx:DataGridColumn headerText="9" visible="false" dataField="6" width="10"/>
+			<mx:DataGridColumn headerText="10" visible="false" dataField="6" width="10"/>
+			<mx:DataGridColumn headerText="11" visible="false" dataField="6" width="10"/>
+		</mx:columns>
+	</mx:DataGrid>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" gap="16" visible="true" id="login" >		
+		<s:Group  id= "principalConf" width="584" height="361">						
+			<mx:Label x="74" y="180" text="Usuario" fontWeight="normal" color="#FFFFFF" fontSize="12"/>
+			<mx:Label x="247" y="180" text="Contraseña" fontWeight="normal" color="#FFFFFF" fontSize="12"/>
+			<mx:Button x="418" y="200" label="  Entrar" id="entrar" height="24" click="Send(769);" fontWeight="bold" width="100" icon="@Embed(source='assets/keys-32.png')"/>					
+			<s:TextInput x="74" y="200" width="160" id="user" maxChars="50" />
+			<s:TextInput x="247" y="200" width="160" id="pass" displayAsPassword="true" maxChars="50"/>
+			<s:TextInput x="0" y="0" width="0" id="autenticado" visible="false" valueCommit="autenticar();"/>
+		</s:Group>
+	</s:VGroup>
+	
+</s:Application>

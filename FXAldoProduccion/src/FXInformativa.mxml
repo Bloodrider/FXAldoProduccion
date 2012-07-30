@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+    backgroundAlpha=".1">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;
+			
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+					
+			private function cargaSWF(module:String):void
+			{
+				TTWFX.visible= true;
+				FXSoporte.source = module;
+			}
+			
+			private function checkMail(myCtrl:TextInput):void
+			{
+				if(expMail.test(myCtrl.text))			
+					myCtrl.errorString = "";
+
+				else 
+				{				
+					myCtrl.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+				}			
+			}
+			
+			private function onButton(btn:BorderContainer):void
+			{
+				btn.setStyle("backgroundAlpha",1.0);
+				btn.setStyle("borderVisible",true);
+				btn.setStyle("borderColor",0xcedbef);
+				btn.setStyle("backgroundColor",0xcedbef);										
+			}
+			
+			private function offButton(btn:BorderContainer):void
+			{
+				btn.setStyle("backgroundAlpha",0.0);
+				btn.setStyle("borderVisible",false);
+				btn.setStyle("borderColor",0x0);
+				btn.setStyle("backgroundColor",0x0);
+			}
+			
+			private function buscarAccount():void
+			{
+				if(txtAccount.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Ingrese la Cuenta de Acceso para continuar.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+				
+				Send(740);//Verifica si existe el Usuario
+			}
+			
+			private function existeUser():void
+			{
+				if(parseInt(txtExisteUser.text) == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cuenta no se encuentra registrada en el Sistema.","Aviso",Alert.OK,null,null, iconAlert);
+					txtExisteUser.text = "";
+					return;
+				}
+				
+				else if(parseInt(txtExisteUser.text) == 1)
+ 					Send(741); //Trae datos del Usuario	y verifica el ROL para desbloquear los botonoes		
+			}
+			
+			private function desbloquearBtn():void
+			{
+				btnAntecedentes.enabled = true;
+				btnInfo.enabled = true;
+				btnEmpSuc.enabled = true;
+				btnUserCap.enabled = true;
+				btnCreditos.enabled = true;
+				btnOperaciones.enabled = true;
+				btnUserxRol.enabled = true;
+				btnMail.enabled = true;
+				btnHistCFDI.enabled = true;
+				btnReiniciarCtrls.enabled = true;
+				btnConfigFacturaT.enabled = true; 
+			}
+			
+			private function desbloquearBtnMIT():void
+			{
+				btnAntecedentes.enabled = true;
+				btnInfo.enabled = true;
+				btnEmpSuc.enabled = true;
+				btnUserCap.enabled = true;
+				btnCreditos.enabled = false;
+				btnOperaciones.enabled = false;
+				btnUserxRol.enabled = false;
+				btnHistCFDI.enabled = false;
+				btnMail.enabled = false;
+				btnReiniciarCtrls.enabled = true;
+				btnConfigFacturaT.enabled = false; 
+			}
+			
+			private function desbloquearBtnTelmex():void
+			{
+				btnAntecedentes.enabled = true;
+				btnInfo.enabled = true;
+				btnEmpSuc.enabled = true;
+				btnUserCap.enabled = true;
+				btnCreditos.enabled = false;
+				btnOperaciones.enabled = false;
+				btnUserxRol.enabled = false;
+				btnHistCFDI.enabled = false;
+				btnMail.enabled = false;
+				btnReiniciarCtrls.enabled = true;
+				btnConfigFacturaT.enabled = false; 
+			}
+			
+			private function desbloquearBtnSoporteAdminFX():void
+			{
+				btnAntecedentes.enabled = true;
+				btnInfo.enabled = true;
+				btnEmpSuc.enabled = true;
+				btnUserCap.enabled = true;
+				btnCreditos.enabled = false;
+				btnOperaciones.enabled = true;
+				btnUserxRol.enabled = true;
+				btnHistCFDI.enabled = true;
+				btnMail.enabled = true;
+				btnReiniciarCtrls.enabled = true;
+				btnConfigFacturaT.enabled = false; 
+			}
+			
+			private function desbloquearBtnSoporteFX():void
+			{
+				btnAntecedentes.enabled = true;
+				btnInfo.enabled = true;
+				btnEmpSuc.enabled = true;
+				btnUserCap.enabled = true;
+				btnCreditos.enabled = false;
+				btnOperaciones.enabled = true;
+				btnUserxRol.enabled = true;
+				btnHistCFDI.enabled = true;
+				btnMail.enabled = false;
+				btnReiniciarCtrls.enabled = true;
+				btnConfigFacturaT.enabled = false; 
+			}
+			
+			private function desbloquearBtnVentasFX():void
+			{
+				btnAntecedentes.enabled = true;
+				btnInfo.enabled = true;
+				btnEmpSuc.enabled = true;
+				btnUserCap.enabled = true;
+				btnCreditos.enabled = true;
+				btnOperaciones.enabled = true;
+				btnUserxRol.enabled = true;
+				btnHistCFDI.enabled = true;
+				btnMail.enabled = true;
+				btnReiniciarCtrls.enabled = true;
+				btnConfigFacturaT.enabled = true; 
+			}
+			
+			private function bloquearBtn():void
+			{
+				btnAntecedentes.enabled = false;
+				btnInfo.enabled = false;
+				btnEmpSuc.enabled = false;
+				btnUserCap.enabled = false;
+				btnCreditos.enabled = false;
+				btnOperaciones.enabled = false;
+				btnUserxRol.enabled = false;
+				btnMail.enabled = false;
+				btnHelp.enabled = false;
+				btnHistCFDI.enabled = false;
+				btnReiniciarCtrls.enabled = false;
+				btnConfigFacturaT.enabled = false; 
+			}
+						
+			private function cleanCtrls():void
+			{
+				txtAccount.text = "";
+				txtIdRol.text = "";
+				txtRolUser.text = "";
+				lblNombre.text = ""; 
+				lblEmail.text = ""; 
+				lblRol.text = "";
+				txtExisteUser.text = "";
+				txtIdUser.text = "";
+				
+				DGEmpresasUserCap.dataProvider = null; 
+				DGUserCapturistas.dataProvider = null; 
+				DGEmpresas.dataProvider = null;
+				DGSucursales.dataProvider = null; 
+				DGAntecedentes.dataProvider = null;
+				
+				groupInfo.visible = false;
+				groupInfoCFDI.visible = false;
+				groupAyuda.visible = false;
+				groupMail.visible = false;
+				groupEditSucursal.visible = false;
+				groupAddAntecedentes.visible = false;
+				
+				groupUsuariosCapturistas.visible = false;
+				groupEmpresasSucursales.visible = false;
+				groupAntecedentes.visible = false;
+				groupFondo.visible = true;
+				
+				btnBusca.enabled = true;
+				txtAccount.enabled = true;
+				txtAccount.editable = true;
+				
+				bloquearBtn();
+			}
+			
+			private function muestraGInfo():void
+			{
+				groupInfo.visible = true;
+				groupInfoCFDI.visible = false;
+				groupAyuda.visible = false;
+				groupMail.visible = false;
+				groupEditSucursal.visible = false;
+				groupAddAntecedentes.visible = false;
+			}
+			
+			private function muestraGInfoCFDI():void
+			{
+				groupInfoCFDI.visible = true;
+				groupInfo.visible = false;
+				groupAyuda.visible = false;
+				groupMail.visible = false;
+				groupEditSucursal.visible = false;
+				groupAddAntecedentes.visible = false;
+			}
+		
+			private function muestraGMail():void
+			{
+				groupMail.visible = true;
+				groupInfo.visible = false;
+				groupInfoCFDI.visible = false;
+				groupAyuda.visible = false;
+				groupEditSucursal.visible = false;
+				groupAddAntecedentes.visible = false;
+				
+				txtEmail.text = lblEmail.text;
+			}
+			
+			private function muestraGEmpresas():void
+			{
+				txtIdEmpresa.text = "";
+				txtIdSucursal.text = "";
+				
+				DGEmpresas.dataProvider = null; 
+				DGSucursales.dataProvider = null;
+				
+				lblCFDIEmitidos.text = "";
+				lblCFDICancelados.text = "";
+				lblCFDIGen.text = "";
+				
+				Send(744); // Llena DGEmpresas
+				
+				groupEmpresasSucursales.visible = true;
+				groupUsuariosCapturistas.visible = false;
+				groupAntecedentes.visible = false;
+				groupFondo.visible = false;
+				
+				groupInfoCFDI.visible = true;
+				groupMail.visible = false;
+				groupInfo.visible = false;
+				groupAyuda.visible = false;
+				groupEditSucursal.visible = false;
+				groupAddAntecedentes.visible = false;
+			}
+			
+			private function muestraGEditSucursal():void
+			{
+				groupEditSucursal.visible = true;
+				groupInfo.visible = false;
+				groupInfoCFDI.visible = false;
+				groupAyuda.visible = false;
+				groupMail.visible = false;
+				groupAddAntecedentes.visible = false;
+			}
+			
+			private function muestraGUserCap():void
+			{
+				txtIdEmpresa.text = "";
+				
+				DGEmpresasUserCap.dataProvider = null; 
+				DGUserCapturistas.dataProvider = null;
+				
+				Send(749); // Llena DGEmpresasUserCap
+				
+				groupUsuariosCapturistas.visible = true;
+				groupEmpresasSucursales.visible = false;
+				groupAntecedentes.visible = false;
+				groupFondo.visible = false;
+				
+				groupEditSucursal.visible = false;
+				groupAddAntecedentes.visible = false;
+				groupInfoCFDI.visible = false;
+			}
+			
+			private function muestraGAntecedentes():void
+			{
+				Send(751); // Llena DGAntecedentes
+				
+				groupAntecedentes.visible = true;
+				groupUsuariosCapturistas.visible = false;
+				groupEmpresasSucursales.visible = false;
+				groupFondo.visible = false;
+				
+				groupAddAntecedentes.visible = true;
+				groupEditSucursal.visible = false;
+				groupInfo.visible = false;
+				groupInfoCFDI.visible = false;
+				groupAyuda.visible = false;
+				groupMail.visible = false;
+			}
+			
+			private function muestraAddGAntecedentes():void
+			{
+				txtAntecedente.text = "";
+				
+				groupAddAntecedentes.visible = true;
+				groupEditSucursal.visible = false;
+				groupInfo.visible = false;
+				groupInfoCFDI.visible = false;
+				groupAyuda.visible = false;
+				groupMail.visible = false;
+			}
+			
+			private function guardarEmail():void
+			{
+				if(txtEmail.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Inserte el nuevo Correo Electrónico del Usuario.","Aviso",Alert.OK,null,null, iconAlert);	
+					return;
+				}
+				
+				if(!expMail.test(txtEmail.text))
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato de Correo Electrónico es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEmail.errorString = "Correo Electrónico Incorrecto.\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+					return;
+				}
+				Send(742); //Actualiza correo electrónico del Usuario
+			}
+			
+			private function selecEmpresa(option:int):void
+			{
+				if(option == 1)
+				{
+					if(DGEmpresas.selectedIndex >= 0)
+					{
+						txtIdEmpresa.text = DGEmpresas.selectedItem[0].toString();
+						Send(745); //Llena DGSucursales
+						Send(755);//Trae datos de CFDI x Empresa
+						
+						muestraGInfoCFDI();
+					}
+				}
+				
+				else if(option == 2)
+				{
+					if(DGEmpresasUserCap.selectedIndex >= 0)
+					{
+						txtIdEmpresa.text = DGEmpresasUserCap.selectedItem[0].toString();
+						Send(748); //Llena DGUserCapturistas
+					}
+				}
+			}
+			
+			private function selecSucursal():void
+			{
+				if(DGSucursales.selectedIndex >= 0)
+				{
+					txtIdSucursal.text = DGSucursales.selectedItem[0].toString();
+					Send(746); //Trae datos de la Sucursal
+					muestraGEditSucursal();
+				}
+			}
+			
+			private function actualizaSucursal():void
+			{
+				if(calle.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Calle es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					calle.errorString = "La Calle es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if(numExt.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Número Exterior es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					numExt.errorString = "El Número Exterior es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if(cp.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Código Postal es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					cp.errorString = "El Código Postal es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if(cp.text.length < 5)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Código Postal debe ser de cinco digitos como mínimo.","Aviso",Alert.OK,null,null, iconAlert);
+					cp.errorString = "El Código Postal es incorrecto, favor de verificar.";
+					return;
+				}
+				
+				if(txtEstado.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Estado es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtEstado.errorString = "Estado es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+
+				if(txtCiudad.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Ciudad es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtCiudad.errorString = "Ciudad es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				if(txtMunicipio.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Municipio es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtMunicipio.errorString = "Municipio es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}	  
+			
+				if(txtColonia.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Otra Colonia es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtColonia.errorString = "Otra Colonia es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				Send(747); //Actualiza Sucursal
+				Send(745); //Actualiza DGSucursales
+			}
+			
+			private function guardarAntecedente():void
+			{
+				if(txtAntecedente.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Ingrese la descripción para continuar.","Aviso",Alert.OK,null,null, iconAlert);
+					txtAntecedente.errorString = "Descripción es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				Send(752); //Ingresa Antecedente
+				Send(751); //Actualiza DGAntecedentes
+				
+				txtAntecedente.text = "";
+			}
+			
+			private function verificaRol():void
+			{
+				if(txtIdRol.text.length > 0)
+				{
+					var userRol:int = parseInt(txtRolUser.text); //Rol Usuario de Soporte / Sesion
+					var accountRol:int = parseInt(txtIdRol.text); //Rol Usuario Busqueda / Busqueda
+					
+					if(userRol == 31) //Rol Usuarios Soporte MIT
+					{
+						if(accountRol == 15) //Rol MIT
+							desbloquearBtnMIT();
+						
+						else
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("El Usuario " + txtAccount.text + " no pertenece al rol de MIT(Mercadotecnia, Ideas y Tecnología). Intente con otro Usuario.","Aviso",Alert.OK,null,null, iconAlert);
+							cleanCtrls();
+							return;
+						}
+					}
+						
+					else if(userRol == 30) //Rol Usuarios Soporte Telmex
+					{
+						if(accountRol == 17 || accountRol == 18) //Rol Administrador Telmex > 17; Capturista Telmex > 18  
+							desbloquearBtnTelmex();
+						
+						else
+						{
+							Alert.okLabel = "Aceptar";
+							Alert.show("El Usuario " + txtAccount.text + " no pertenece al rol de TELMEX/PYMES. Intente con otro Usuario.","Aviso",Alert.OK,null,null, iconAlert);
+							cleanCtrls();
+							return;
+						}
+					}
+					
+					else if(userRol == 29) //Rol Usuarios Soporte Limitado FX
+						desbloquearBtnSoporteFX();
+					
+					else if(userRol == 33) //Rol Usuarios Soporte Administrador FX
+						desbloquearBtnSoporteAdminFX();
+					
+					else if(userRol == 21)// Rol Usuarios Ventas FX
+						desbloquearBtnVentasFX();
+					
+					btnBusca.enabled = false;
+					txtAccount.enabled = false;
+					txtAccount.editable = false;
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Información Usuarios" width="100%" height="100%">
+			
+			<s:HGroup x="0" y="0" width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+				<s:VGroup height="100%" top="10" right="10" left="10" bottom="10">
+					<s:VGroup id="btnAntecedentes" height="78" horizontalAlign="center" verticalAlign="top" y="139" x="473" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="Antecedentes" click="muestraGAntecedentes();" rollOver="onButton(Antecedentes);" rollOut="offButton(Antecedentes);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="newIcons/Folder_68.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Antecedentes" fontWeight="bold"/>
+					</s:VGroup>
+					
+					<s:VGroup id="btnInfo" height="78" horizontalAlign="center" verticalAlign="top" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="info" click="muestraGInfo();" rollOver="onButton(info);" rollOut="offButton(info);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="newIcons/documents_68.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Información" fontWeight="bold"/>
+					</s:VGroup>
+					
+					<s:VGroup id="btnEmpSuc" height="88" horizontalAlign="center" verticalAlign="top" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="empSuc" click="muestraGEmpresas();" rollOver="onButton(empSuc);" rollOut="offButton(empSuc);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="newIcons/2278-64.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Empresas - Sucursales" fontWeight="bold" width="90" textAlign="center"/>
+					</s:VGroup>
+					
+					<s:VGroup id="btnUserCap" height="88" horizontalAlign="center" verticalAlign="top" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="userCap" click="muestraGUserCap();" rollOver="onButton(userCap);" rollOut="offButton(userCap);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="newIcons/usuarios_60.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Usuarios Capturistas" fontWeight="bold" width="90" textAlign="center"/>
+					</s:VGroup>
+				</s:VGroup>
+				
+				<s:VGroup width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+					<s:HGroup width="100%" horizontalAlign="left" height="235">
+						<s:BorderContainer width="400" height="100%" dropShadowVisible="true" borderVisible="false" backgroundAlpha="0.0">
+							<s:TextInput x="139" y="20" id="txtAccount" width="180" tabIndex="1"/> 
+							<s:TextInput x="371" y="207" id="txtExisteUser" width="19" valueCommit="existeUser();"  editable="false" enabled="false" visible="false"/>
+							<s:TextInput x="325" y="207" id="txtIdUser" width="35" editable="false" enabled="false" visible="false"/>
+							<s:TextInput x="370" y="177" id="txtIdRol" width="19" editable="false" enabled="false" visible="false" valueCommit="verificaRol();"/>
+							<s:TextInput x="370" y="147" id="txtRolUser" width="19" editable="false" enabled="false" visible="false"/>
+							
+							<s:Label text="*Cuenta de Acceso:" x="19" y="25" fontWeight="bold"/>
+							<s:Label text="Rol:" x="27" y="110" fontWeight="bold"/>
+							<s:Label id="lblRol" text="" x="54" y="110" fontWeight="normal"/>
+							<s:Label text="Nombre:" x="25" y="60" fontWeight="bold"/>
+							<s:Label id="lblNombre" text="" x="82" y="60" fontWeight="normal"/>
+							<s:Label text="Email:" x="26" y="85" fontWeight="bold"/>
+							<s:Label id="lblEmail" text="" x="73" y="85" fontWeight="normal"/> 
+							
+							<s:VGroup id="btnReiniciarCtrls" height="78" horizontalAlign="center" verticalAlign="top" y="139" x="210" enabled="false">				
+								<s:HGroup>
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+													   id="btnReiniciar" click="cleanCtrls();" rollOver="onButton(btnReiniciar);" rollOut="offButton(btnReiniciar);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+											<mx:Image source="assets/recargar_58.png"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+								<s:Label text="Reiniciar" fontWeight="bold"/>
+							</s:VGroup>
+							
+							<s:VGroup id="btnBusca" height="74" horizontalAlign="center" verticalAlign="top" y="9" x="333" width="56">				
+								<s:HGroup>
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+													   id="btnBuscar" click="buscarAccount();" rollOver="onButton(btnBuscar);" rollOut="offButton(btnBuscar);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+											<mx:Image source="assets/binoculars.png"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+								<s:Label text="Buscar" fontWeight="bold"/>
+							</s:VGroup>
+							
+							<s:VGroup id="btnHelp" height="78" horizontalAlign="center" verticalAlign="top" y="139" x="116" enabled="false">				
+								<s:HGroup>
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+													   id="btnAyuda" rollOver="onButton(btnAyuda);" rollOut="offButton(btnAyuda);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+											<mx:Image source="newIcons/Help_48.png"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+								<s:Label text="Ayuda" fontWeight="bold"/>
+							</s:VGroup>
+							
+							<s:VGroup id="btnMail" height="78" horizontalAlign="center" verticalAlign="top" y="139" x="23" enabled="false">				
+								<s:HGroup>
+									<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+													   id="btnEmail" click="muestraGMail();" rollOver="onButton(btnEmail);" rollOut="offButton(btnEmail);">
+										<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+											<mx:Image source="newIcons/Email_68.png"/>
+										</s:HGroup>
+									</s:BorderContainer>
+								</s:HGroup>
+								<s:Label text="Email" fontWeight="bold"/>
+							</s:VGroup>
+						</s:BorderContainer>
+						
+						<s:BorderContainer width="100%" height="100%" dropShadowVisible="true" borderVisible="false" backgroundAlpha="0.0">
+							<s:Group id="groupInfo" width="100%" height="100%" visible="false">
+								<s:Label text="Creditos Disponibles:" x="30" y="153" fontWeight="bold"/>
+								<s:Label text="Inicio Plan:" x="30" y="185" fontWeight="bold"/>
+								<s:Label id="lblIniPlan" text="" x="100" y="185" fontWeight="normal"/>
+								<s:Label text="Fin Plan:" x="260" y="185" fontWeight="bold"/>
+								<s:Label id="lblFinPlan" text="" x="314" y="185" fontWeight="normal"/>
+								<s:Label id="lblCreditosDisp" text="" x="155" y="153" fontWeight="normal"/>
+								<s:Label text="Timbres Disponibles:" x="260" y="153" fontWeight="bold"/>
+								<s:Label id="lblTimbresDisp" text="" x="385" y="153" fontWeight="normal"/>
+								<s:Label text="Teléfono:" x="30" y="89" fontWeight="bold"/>
+								<s:Label text="Información" x="120" y="26" fontWeight="bold"/>
+								<s:Label id="lblTelefono" text="" x="90" y="89" fontWeight="normal"/>
+								<s:Label text="Número de Factura Registrado:" x="30" y="121" fontWeight="bold"/>
+								<s:Label id="lblNumFact" text="" x="210" y="121" fontWeight="normal"/>
+								<mx:Image source="newIcons/documents_68.png" x="28" y="6"/>
+							</s:Group>
+							
+							<s:Group id="groupInfoCFDI" width="100%" height="100%" visible="false">
+								<s:Label text="CFDI por Empresa:" x="110" y="37" fontWeight="bold"/>
+								<s:Label text="Ultimo CFDI Generado:" x="30" y="87" fontWeight="bold"/>
+								<s:Label text="CFDI Emitidos:" x="32" y="154" fontWeight="bold"/>
+								<s:Label id="lblCFDIEmitidos" text="" x="120" y="154" fontWeight="normal"/>
+								<s:Label text="CFDI Cancelados:" x="30" y="121" fontWeight="bold"/>
+								<s:Label id="lblCFDICancelados" text="" x="133" y="121" fontWeight="normal"/>
+								<s:Label id="lblCFDIGen" text="" x="165" y="87" fontWeight="normal"/>
+								<mx:Image source="newIcons/2278-64.png" x="28" y="6"/>
+							</s:Group>
+							
+							<s:Group id="groupAyuda" width="100%" height="100%" visible="false">
+								<s:Label text="Ayuda" x="88" y="23" fontWeight="bold"/>
+								<s:Label text="La Página esta en mantenimiento." x="210" y="89" fontWeight="normal"/>
+								<mx:Image source="newIcons/Help_48.png" x="28" y="6"/>
+							</s:Group>
+							
+							<s:Group id="groupMail" width="100%" height="100%" visible="false">
+								<s:Label text="Cambio de Correo Electrónico" x="116" y="30" fontWeight="bold"/>
+								<s:Label text="Correo Eléctronico:" x="20" y="119" fontWeight="bold"/>
+								
+								<s:TextInput width="183" id="txtEmail" height="24" x="137" y="112" change="if(txtEmail.text.length != 0) checkMail(txtEmail);"/>
+								
+								<mx:Image source="newIcons/Email_68.png" x="28" y="6"/>
+								
+								<mx:Button x="263" y="169" icon="@Embed(source='newIcons/accept_24.png')" label="Actualizar" click="guardarEmail();" height="24" width="115" toolTip="Guardar Correo Electrónico"/>
+							</s:Group>
+							
+							<s:Group id="groupAddAntecedentes" width="100%" height="100%" visible="false">
+								<s:Label text="Antecedentes" x="106" y="30" fontWeight="bold"/>
+								<s:Label text="Descripción:" x="20" y="108" fontWeight="bold"/>
+								
+								<s:TextInput width="383" id="txtAntecedente" height="24" x="97" y="101" change="if(txtAntecedente.text.length != 0) txtAntecedente.errorString = '';"/>
+								
+								<mx:Image source="newIcons/Folder_68.png" x="28" y="6"/>
+								
+								<mx:Button x="203" y="159" icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="guardarAntecedente();" height="24" width="115" toolTip="Guardar Antecedente"/>
+							</s:Group>
+							
+							<s:Group id="groupEditSucursal" width="100%" height="100%" visible="false">
+								<s:Label text="Cambio de Dirección de Sucursal" x="116" y="30" fontWeight="bold"/>
+								
+								<s:Label x="36" y="67" text="*Nombre Sucursal" fontWeight="bold"/>
+								<s:Label x="21" y="94" text="*Calle" fontWeight="bold"/>
+								<s:Label x="199.2" y="94" text="*Número Ext" fontWeight="bold"/>
+								<s:Label x="313.7" y="94" text="Número Int"/>
+								<s:Label x="401" y="93" text="*Código Postal" fontWeight="bold"/>
+								<s:Label x="23" y="140" text="*Estado" fontWeight="bold"/>
+								<s:Label x="189.2" y="140" text="*Ciudad" fontWeight="bold"/>
+								<s:Label x="351" y="138.5" text="*Delegación/Municipio" fontWeight="bold"/>
+								<s:Label x="191" y="186.5" text="*Campos obligatorios" fontWeight="bold"/>
+								<s:Label x="26" y="185.5" text="*Colonia" fontWeight="bold"/>
+								
+								<s:TextInput x="147" y="59"  id="nomSucursal" name="Nombre de Sucursal" width="359" height="24" maxChars="350" tabIndex="20" enabled="false"/>
+								<s:TextInput x="21" y="107"  id="calle" name="Calle" width="170" height="24" maxChars="350"  tabIndex="22" focusOut="if(calle.text.length > 0) calle.errorString='';"/>
+								<s:TextInput x="199.2" y="107" id="numExt" name="Número Exterior" width="105" height="24" maxChars="50"  tabIndex="23" focusOut="if(numExt.text.length > 0) numExt.errorString='';"/>
+								<s:TextInput x="311.7" y="107" id="numInt" name="Número Interior" width="80" height="24" maxChars="50"  tabIndex="24"/>	
+								<s:TextInput id="cp" name="Código Postal" x="401" y="106"  width="105" restrict="0-9" maxChars="5" height="24"  tabIndex="26" focusOut="if(cp.text.length == 5) cp.errorString='';"/>
+								<s:TextInput x="23" y="153" width="155" id="txtEstado" name="Estado" height="24" maxChars="250" focusOut="if(txtEstado.text.length > 0) txtEstado.errorString='';"/>
+								<s:TextInput x="187.2" y="152" width="155" id="txtCiudad" name="Ciudad" height="24" maxChars="250" focusOut="if(txtCiudad.text.length > 0) txtCiudad.errorString='';"/>
+								<s:TextInput x="351" y="152" width="155" id="txtMunicipio" name="Municipio" height="24" maxChars="250" focusOut="if(txtMunicipio.text.length > 0) txtMunicipio.errorString='';"/>
+								<s:TextInput x="25" y="200" width="153" id="txtColonia" name="Colonia" height="24" maxChars="250"  tabIndex="31" focusOut="if (txtColonia.text.length > 0) txtColonia.errorString='';"/>								
+								
+								<mx:Image source="newIcons/2278-64.png" x="28" y="6"/>
+								
+								<mx:Button x="456" y="193" icon="@Embed(source='newIcons/accept_24.png')" label="Actualizar" click="actualizaSucursal();" height="24" width="115" toolTip="Actualizar Sucursal"/>
+								<mx:LinkButton x="182" y="201" label="Para mas información, ir a SEPOMEX" click="navigateToURL(new URLRequest('http://www.sepomex.gob.mx/ServiciosLinea/Paginas/ccpostales.aspx/'), '_blank');" fontSize="12" fontWeight="bold" textDecoration="underline"/>
+							</s:Group>
+						</s:BorderContainer>
+					</s:HGroup>
+					
+					<s:Group width="100%" height="100%">
+						<s:HGroup id="groupFondo" width="100%" height="100%" visible="true" horizontalAlign="center">
+							<mx:Image source="newIcons/Encabezado-FActuraxion.png" x="0" y="0"/>
+						</s:HGroup>
+						
+						<s:Group id="groupUsuariosCapturistas" width="100%" height="100%" visible="false">
+							<s:VGroup width="100%" horizontalAlign="left" height="100%">
+								<s:Group width="100%">
+									<mx:Image source="newIcons/usuarios_60.png" x="28" y="6"/>
+									<s:Label text="Usuarios Capturistas" fontWeight="bold" x="115" y="30"/>
+								</s:Group>
+								
+								<s:HGroup width="100%" horizontalAlign="left" height="70%">
+									<mx:DataGrid width="250" id="DGEmpresasUserCap" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="selecEmpresa(2);">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idEmpresa" 				dataField="0" visible="false"/>	
+											<mx:DataGridColumn headerText="RFC"						dataField="1" width="80"/>
+											<mx:DataGridColumn headerText="Nombre Empresa" 			dataField="2"/>
+										</mx:columns>
+									</mx:DataGrid>
+									
+									<mx:DataGrid width="100%" id="DGUserCapturistas" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idUser" 				dataField="0" visible="false"/>	
+											<mx:DataGridColumn headerText="Account"				dataField="1" width="80"/>
+											<mx:DataGridColumn headerText="Nombre" 				dataField="2" width="100"/>
+											<mx:DataGridColumn headerText="Mail" 				dataField="3" width="80"/>
+											<mx:DataGridColumn headerText="Nombre Sucursal" 	dataField="4" width="100"/>
+											<mx:DataGridColumn headerText="Direccion" 			dataField="5" width="100"/>
+										</mx:columns>
+									</mx:DataGrid>
+								</s:HGroup>
+							</s:VGroup>
+						</s:Group>
+						
+						<s:Group id="groupEmpresasSucursales" width="100%" height="100%" visible="false">
+							<s:VGroup width="100%" horizontalAlign="left" height="100%">
+								<s:Group width="100%">
+									<mx:Image source="newIcons/2278-64.png" x="28" y="6"/>
+									<s:Label text="Empresas - Sucursales" fontWeight="bold" x="102" y="32"/>
+									<s:TextInput x="320" y="27" id="txtIdEmpresa" width="19" editable="false" enabled="false" visible="false"/>
+									<s:TextInput x="350" y="27" id="txtIdSucursal" width="19" editable="false" enabled="false" visible="false"/>
+								</s:Group>
+								
+								<s:HGroup width="100%" horizontalAlign="left" height="70%">
+									<mx:DataGrid width="250" id="DGEmpresas" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="selecEmpresa(1);">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idEmpresa" 				dataField="0" visible="false"/>	
+											<mx:DataGridColumn headerText="RFC"						dataField="1" width="110"/>
+											<mx:DataGridColumn headerText="Nombre Empresa" 			dataField="2"/>
+										</mx:columns>
+									</mx:DataGrid>
+									
+									<mx:DataGrid width="100%" id="DGSucursales" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="selecSucursal();">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idSucursal" 				dataField="0" visible="false"/>	
+											<mx:DataGridColumn headerText="Nombre Sucursal"			dataField="1" width="130"/>
+											<mx:DataGridColumn headerText="Matriz"					dataField="3" width="50"/>
+											<mx:DataGridColumn headerText="Serie" 					dataField="4" width="50"/>
+											<mx:DataGridColumn headerText="Folio Inicial" 			dataField="5" width="50"/>
+											<mx:DataGridColumn headerText="Folio Final" 			dataField="6" width="50"/>
+											<mx:DataGridColumn headerText="Folio Actual" 			dataField="7" width="50"/>
+											<mx:DataGridColumn headerText="Dirección" 				dataField="2"/>
+										</mx:columns>
+									</mx:DataGrid>
+								</s:HGroup>
+							</s:VGroup>
+						</s:Group>
+						
+						<s:Group id="groupAntecedentes" width="100%" height="100%" visible="false">
+							<s:VGroup width="100%" horizontalAlign="left" height="100%">
+								<s:Group width="100%">
+									<mx:Image source="newIcons/Folder_68.png" x="28" y="6"/>
+									<s:Label text="Antecedentes" fontWeight="bold" x="102" y="32"/>
+								</s:Group>
+								
+								<s:HGroup width="100%" horizontalAlign="left" height="70%">
+									<mx:DataGrid width="100%" id="DGAntecedentes" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" click="muestraAddGAntecedentes();">
+										<mx:columns>
+											<mx:DataGridColumn headerText="idAntecedente" 			dataField="0" visible="false"/>	
+											<mx:DataGridColumn headerText="idUser" 					dataField="1" visible="false"/>	
+											<mx:DataGridColumn headerText="Usuario"					dataField="2" width="100"/>
+											<mx:DataGridColumn headerText="Rol" 					dataField="3" width="120"/>
+											<mx:DataGridColumn headerText="Fecha" 					dataField="4" width="120"/>
+											<mx:DataGridColumn headerText="Descripción" 			dataField="5" width="100"/>
+										</mx:columns>
+									</mx:DataGrid>
+								</s:HGroup>
+							</s:VGroup>
+						</s:Group>
+					</s:Group>
+				</s:VGroup>
+				
+				<s:VGroup height="100%" top="10" right="10" left="10" bottom="10">
+					<s:VGroup id="btnCreditos" height="78" horizontalAlign="center" verticalAlign="top" y="149" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="creditos" click="cargaSWF('catCreditosxEmpresa.swf');" rollOver="onButton(creditos);" rollOut="offButton(creditos);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="newIcons/Excel_60.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Créditos" fontWeight="bold"/>
+					</s:VGroup>
+					
+					<s:VGroup id="btnOperaciones" height="78" horizontalAlign="center" verticalAlign="top" y="149" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="operaciones" click="cargaSWF('FXcatOperaciones.swf');" rollOver="onButton(operaciones);" rollOut="offButton(operaciones);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="newIcons/mundo_60.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Operaciones" fontWeight="bold"/>
+					</s:VGroup>
+					
+					<s:VGroup id="btnUserxRol" height="78" horizontalAlign="center" verticalAlign="top" y="149" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="userxRol" click="cargaSWF('FXcatUsuarios.swf');" rollOver="onButton(userxRol);" rollOut="offButton(userxRol);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="assets/3830-64.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Usuarios x Rol" fontWeight="bold"/>
+					</s:VGroup>
+					
+					<s:VGroup id="btnHistCFDI" height="78" horizontalAlign="center" verticalAlign="top" y="149" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="histCFDI" click="cargaSWF('FXCFDIGenerados.swf');" rollOver="onButton(histCFDI);" rollOut="offButton(histCFDI);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="newIcons/descarga_60.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Historial CFDI" fontWeight="bold"/>
+					</s:VGroup>
+					
+					<s:VGroup id="btnConfigFacturaT" height="78" horizontalAlign="center" verticalAlign="top" y="149" enabled="false">				
+						<s:HGroup>
+							<s:BorderContainer backgroundAlpha="0" dropShadowVisible="false" borderVisible="false" height="55"  cornerRadius="3" width="80" 
+											   id="bcFacturaT" click="cargaSWF('configFacturaT.swf');" rollOver="onButton(bcFacturaT);" rollOut="offButton(bcFacturaT);">
+								<s:HGroup x="0" y="0" width="100%" height="100%" verticalAlign="middle" horizontalAlign="center" paddingRight="4" paddingLeft="4">
+									<mx:Image source="assets/1211806079.png"/>
+								</s:HGroup>
+							</s:BorderContainer>
+						</s:HGroup>
+						<s:Label text="Config.Factura-T" fontWeight="bold"/>
+					</s:VGroup>
+				</s:VGroup>
+				
+			</s:HGroup>
+		</s:Panel>
+	</s:VGroup>
+	
+	<s:TitleWindow width="95%" height="95%" visible="false" id="TTWFX" close="TTWFX.visible = false;" backgroundAlpha="1.0" horizontalCenter="0" verticalCenter="0">
+		<mx:SWFLoader height="100%" id="FXSoporte" width="100%"/> 
+	</s:TitleWindow>
+</s:Application>

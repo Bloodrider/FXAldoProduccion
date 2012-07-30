@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	pageTitle="Cancelación"
+	applicationComplete="validateUser('cfdiCancelacion.swf');">
+	
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+
+		import mx.events.*;
+		private function cargaCancelar():void
+		{
+			try
+			{
+				if(gridCCFE.selectedItem!=null)
+				{
+					idGridCCFE.text=gridCCFE.selectedItem["0"].toString();
+					//Send(330);
+				}
+			}
+			catch(Err:Error)
+			{
+				
+			}	
+		
+		}
+		private function cancelarFactura():void
+		{			
+			if(observaciones.text !="")
+			{
+				Alert.yesLabel="Si";
+				Alert.noLabel="No";
+				Alert.show("¿Realmente quiere cancelar esta factura?","Confirmar",Alert.YES|Alert.NO, null, doCandelar, iconAlert);
+			}
+			else 
+			{
+				Alert.show("Debe ingresar un motivo por el cual desea cancelar la factura.","Alerta",Alert.OK);
+			}
+		}
+				
+		
+		private function doCandelar(eventObj:CloseEvent):void{
+			if (eventObj.detail==Alert.YES) 
+			{
+					Send(287);//CANCELAR LA FACTURA
+					pnCancelar.visible =false;
+					Send(575);
+			}
+		}
+		
+		private function limpiar():void
+		{
+			gridCCFE.dataProvider = null;
+			rfcReceptorFilter.text = "";
+			fechaFinFilter.text = "";
+			fechaIniFilter.text = "";
+			nombreReceptorFilter.text = "";
+			serieFilter.text = "";
+			folioFilter.value = 0;
+		}
+		
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{
+			if (date != null)
+			{
+				cntlH.selectedDate = null;
+				cntlH.selectableRange = {
+					rangeStart:new Date(
+						date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()+1))
+				};
+			}
+		}
+		
+		private function validFilter():void
+		{
+			if(monedaFilter.selectedIndex < 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El tipo de moneda es inválido.","Mensaje r3Take",Alert.OK,null,null, iconAlert);				
+				monedaFilter.setFocus();
+				monedaFilter.errorString = "Seleccione una modena.";
+				return;
+			}
+			else
+			{
+				monedaFilter.errorString = "";
+				Send(575);
+			}		
+		}
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Cancelar Documento Electrónico" width="100%" height="100%" >
+		
+		<s:VGroup x="0" y="0" width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+			<s:HGroup width="100%" height="20">
+			</s:HGroup>
+			<s:HGroup width="100%" horizontalAlign="right" >
+				<s:Label text="RFC Receptor" width="124" fontWeight="bold"/>
+				<s:Label text="Nombre Receptor" width="127" fontWeight="bold" x="244"/>
+				<s:Label text="Fecha Inicial" width="123" fontWeight="bold" x="377"/>
+				<s:Label text="Fecha Final" width="126" fontWeight="bold" x="506"/>
+				<s:Label text="Serie" width="125" fontWeight="bold" x="638"/>
+				<s:Label text="Folio" width="64" fontWeight="bold" x="769"/>
+				<s:Label text="Moneda" width="347" fontWeight="bold" x="1199"/>
+			</s:HGroup>
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+				<s:TextInput width="125" id="rfcReceptorFilter"  height="24" restrict="0-9A-Za-z&amp;" typographicCase="uppercase" maxChars="13"/>
+				<s:TextInput width="125" id="nombreReceptorFilter" height="24" maxChars="40"/>
+				<mx:DateField id="fechaIniFilter" width="125" height="24" creationComplete="DCInit('fechaIniFilter');" change="dateControl(fechaIniFilter,fechaFinFilter, DateField(event.target).selectedDate)"/>
+				<mx:DateField id="fechaFinFilter" width="125" height="24" creationComplete="DCInit('fechaFinFilter');"/>
+				<s:TextInput width="125" id="serieFilter" height="24" restrict="0-9A-NM-Za-nm-z" typographicCase="uppercase" maxChars="25"/>
+				<s:NumericStepper id="folioFilter" width="65" maximum="50000000" height="24"/>
+				<s:ComboBox id="monedaFilter" width="125" creationComplete="Send(188);" height="24"></s:ComboBox>
+				<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" click="validFilter();" width="100"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="100"/>
+			</s:HGroup>
+			
+			<s:TextInput width="179" id="idGridCCFE" visible="false" valueCommit="if(idGridCCFE.text.length > 0){pnCancelar.visible = true;}"/>
+			
+			<mx:DataGrid width="100%" id="gridCCFE" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+				<mx:click>cargaCancelar();</mx:click>
+				<mx:columns>
+					<mx:DataGridColumn headerText="#" dataField="0" width="50" visible="false"/>
+					<mx:DataGridColumn headerText="RFC Receptor" dataField="1" width="40"/>
+					<mx:DataGridColumn headerText="Nombre Receptor" dataField="2" width="50"/>
+					<mx:DataGridColumn headerText="Fecha" dataField="3" width="50"/>
+					<mx:DataGridColumn headerText="Serie" dataField="4" width="50"/>
+					<mx:DataGridColumn headerText="Folio" dataField="5" width="50"/>
+					<mx:DataGridColumn headerText="Total Impuestos" dataField="6" width="50"/>
+					<mx:DataGridColumn headerText="Total Factura" dataField="7" width="50"/>
+					<mx:DataGridColumn headerText="Estado" dataField="8" width="75"/>
+				</mx:columns>
+			</mx:DataGrid>
+			
+			
+		</s:VGroup>
+	</s:Panel>
+	
+	<s:TitleWindow width="500" height="200" title="Cancelar Facturas" id="pnCancelar" borderAlpha=".95" visible="false" close="pnCancelar.visible = false; idGridCCFE.text = '';"  horizontalCenter="0" verticalCenter="0">
+		<mx:Label x="8" y="8" text="*Motivo por el cual se desea cancelar la factura" width="280" fontWeight="bold" enabled="true" fontSize="11"/>
+		<mx:Button x="387" y="136" label="Cancelar"  width="100" height="24" click="cancelarFactura();" icon="@Embed(source='newIcons/accept_24.png')"/>
+		<s:TextArea id="observaciones" x="8" y="25" width="480" height="100"/>
+	
+	</s:TitleWindow>
+	
+</s:Application>

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" width="1260" height="54" applicationComplete="getDate();">
+	<fx:Style source="timeStepper.css"/>
+	<fx:Script source="r3Take.as" />
+	<fx:Script>
+		<![CDATA[
+			
+			import mx.controls.Alert;
+			import mx.events.*;		
+			
+			private function incrementaHora():void
+			{
+				if(hora.text == "23")
+				{
+					hora.text = "00"
+				}
+				else
+				{
+					var val:int = int(hora.text) + 1;
+					if(val < 10)
+					{
+						hora.text = "0" + val.toString();
+					}
+					else
+					{
+						hora.text = val.toString();
+					}
+				}
+				estado.text = "h"
+				pasoValor.text = hora.text;
+				getDate();
+			}
+			
+			private function incrementaMinuto():void
+			{
+				
+				if(minuto.text == "59")
+				{
+					minuto.text = "00"
+				}
+				else
+				{
+					var val:int = int(minuto.text) + 1;
+					if(val < 10)
+					{
+						minuto.text = "0" + val.toString();
+					}
+					else
+					{
+						minuto.text = val.toString();
+					}
+				}
+				estado.text = "m"
+				pasoValor.text = minuto.text;
+				getDate();
+			}
+			
+			private function incrementaSegundo():void
+			{
+				if(segundo.text == "59")
+				{
+					segundo.text = "00"
+				}
+				else
+				{
+					var val:int = int(segundo.text) + 1;
+					if(val < 10)
+					{
+						segundo.text = "0" + val.toString();
+					}
+					else
+					{
+						segundo.text = val.toString();
+					}
+				}
+				estado.text = "s"
+				pasoValor.text = segundo.text;
+				getDate();
+			}
+			
+			private function decrementaHora():void
+			{
+				if(int(hora.text) == 1)
+				{
+					hora.text = "23"
+				}
+				else
+				{
+					var val:int = int(hora.text) - 1;
+					if(val < 10)
+					{
+						hora.text = "0" + val.toString();
+					}
+					else
+					{
+						hora.text = val.toString();
+					}
+				}
+				estado.text = "h"
+				pasoValor.text = hora.text;
+				getDate();
+			}
+			
+			private function decrementaMinuto():void
+			{
+				if(int(minuto.text) == 1)
+				{
+					minuto.text = "59"
+				}
+				else
+				{
+					var val:int = int(minuto.text) - 1;
+					if(val < 10)
+					{
+						minuto.text = "0" + val.toString();
+					}
+					else
+					{
+						minuto.text = val.toString();
+					}
+				}
+				estado.text = "m"
+				pasoValor.text = minuto.text;
+				getDate();
+			}
+			
+			private function decrementaSegundo():void
+			{
+				if(int(segundo.text) == 1)
+				{
+					segundo.text = "59"
+				}
+				else
+				{
+					var val:int = int(segundo.text) - 1;
+					if(val < 10)
+					{
+						segundo.text = "0" + val.toString();
+					}
+					else
+					{
+						segundo.text = val.toString();
+					}
+				}
+				estado.text = "s"
+				pasoValor.text = segundo.text;
+				getDate();
+			}
+			
+			private function incrementa():void
+			{
+				
+				if(estado.text == "h")
+				{
+					incrementaHora();
+				}	
+				if(estado.text == "m")
+				{
+					incrementaMinuto();	
+				}
+				if(estado.text == "s")
+				{
+					incrementaSegundo();
+				}
+			}	
+			
+			private function decrementa():void
+			{
+				
+				if(estado.text == "h")
+				{
+					decrementaHora();
+				}	
+				if(estado.text == "m")
+				{
+					decrementaMinuto();	
+				}
+				if(estado.text == "s")
+				{
+					decrementaSegundo();
+				}
+			}
+			
+			private function decideIncDec():void
+			{
+				if(int(ultimoValor.text) >= numStepper.value)
+				{
+					decrementa();
+				}
+				else
+				{
+					incrementa();
+				}				
+				ultimoValor.text = numStepper.value.toString();
+			}
+			
+			private function checkRangeHora():void
+			{				
+				if(int(hora.text) > 23 )
+				{
+					hora.text = pasoValor.text;
+					getDate();
+					Alert.okLabel = "Aceptar";
+					Alert.show("La hora ingresada no puede ser mayor a 59.","Aviso",Alert.OK,null,null, iconAlert);					
+					return;
+				}
+				
+				if(int(hora.text) < 0 )
+				{
+					hora.text = pasoValor.text;
+					getDate();
+					Alert.okLabel = "Aceptar";
+					Alert.show("La hora ingresada no puede ser menor a 0.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}	
+				pasoValor.text = hora.text;
+			}
+			
+			private function checkRangeMinuto():void
+			{
+				
+				if(int(minuto.text) > 59 )
+				{
+					minuto.text = pasoValor.text;
+					getDate();
+					Alert.okLabel = "Aceptar";
+					Alert.show("El minuto ingresada no puede ser mayor a 59.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if(int(minuto.text) < 0 )
+				{
+					minuto.text = pasoValor.text;
+					getDate();
+					Alert.okLabel = "Aceptar";
+					Alert.show("El minuto ingresado no puede ser menor a 0.","Aviso",Alert.OK,null,null, iconAlert);					
+					return;
+				}
+				pasoValor.text = minuto.text;
+				
+			}
+			
+			private function checkRangeSegundo():void
+			{
+				
+				if(int(segundo.text) > 59 )
+				{
+					segundo.text = pasoValor.text;
+					getDate();
+					Alert.okLabel = "Aceptar";
+					Alert.show("El segundo ingresado no puede ser mayor a 59.","Aviso",Alert.OK,null,null, iconAlert);					
+					return;
+				}
+				
+				if(int(segundo.text) < 0 )
+				{
+					segundo.text = pasoValor.text;
+					getDate();
+					Alert.okLabel = "Aceptar";
+					Alert.show("El segundo ingresado no puede ser menor a 0.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}				
+			}
+			
+			private function getDate():void
+			{
+				dateValue.text = fecha.text + " " + hora.text + ":" + minuto.text + ":" + segundo.text;
+			}
+		]]>
+	</fx:Script>
+		<s:TextInput width="0" visible="false" id="ultimoValor" text="0"/>
+		<s:TextInput width="0" visible="false" id="pasoValor" text="0"/>
+		<s:TextInput width="0" visible="false" id="estado"/>
+		<s:TextInput width="180" visible="true" id="dateValue" x="200"/>
+		<mx:DateField id="fecha" width="127" valueCommit="getDate();" creationComplete="DCInit('fecha');"/>
+		<s:NumericStepper width="126" height="24" id="numStepper" click="decideIncDec();" maximum="99999" minimum="0" y="30"/>
+		
+		<s:HGroup width="100%" height="100%" x="0" y="30" verticalAlign="middle">			
+			<s:TextInput width="24" text="00" borderVisible="false" click="incrementaHora();" id="hora" valueCommit="checkRangeHora();"/><s:Label text=":" height="20" verticalAlign="middle"/><s:TextInput width="24" text="00" borderVisible="false" click="incrementaMinuto();" id="minuto" valueCommit="checkRangeMinuto();"/><s:Label text=":" height="20" verticalAlign="middle"/><s:TextInput width="24" text="00" borderVisible="false" click="incrementaSegundo();" id="segundo" valueCommit="checkRangeSegundo();"/>					
+		</s:HGroup>					
+	
+	
+</s:Application>

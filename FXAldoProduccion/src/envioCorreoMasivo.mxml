@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	width="100%" height="100%" 
+	xmlns:local="*" backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1" 
+	pageTitle="Envío Correo Masivo"
+	applicationComplete="validateUser('envioCorreoMasivo.swf');">
+
+<fx:Declarations>
+	<mx:Sequence id="glowIcon" repeatCount="100">
+		<mx:Glow duration="5000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="12.0" blurYFrom="0.0" blurYTo="12.0" color="#ffffff" /> 	
+		<mx:Glow duration="5000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="12.0" blurXTo="0.0" blurYFrom="12.0" blurYTo="0.0" color="#ffffff" /> 	
+	</mx:Sequence>	
+	<mx:Sequence id="glowButton" repeatCount="100">
+		<mx:Glow duration="4000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="10.0" blurYFrom="0.0" blurYTo="10.0" color="#054a95" /> 	
+		<mx:Glow duration="4000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="10.0" blurXTo="0.0" blurYFrom="10.0" blurYTo="0.0" color="#054a95" /> 	
+	</mx:Sequence>
+</fx:Declarations>
+	
+<fx:Script source="r3Take.as"/>
+<fx:Script source="validateIsEmptyTELMEX.as"/>
+<fx:Style source="fx.css" />
+<fx:Style>
+	@namespace s "library://ns.adobe.com/flex/spark";
+	@namespace mx "library://ns.adobe.com/flex/mx";
+
+	global
+	{
+		fontFamily: "Verdana";
+		fontWeight: normal;
+		fontStyle: normal;
+
+	}
+	
+	Application
+	{
+
+		fontSize: 11;	
+		fontFamily: "Verdana";
+	}
+	
+    mx|FormItem {
+        paddingLeft: 4;
+        paddingRight: 4;
+        paddingTop: 4;
+        paddingBottom: 4;
+    }
+	DataGrid {
+		headerStyleName: "mydataGridHeaderStyle";
+	}
+	
+	.mydataGridHeaderStyle {
+		color: #FFFFFF;
+		fontWeight: bold;
+		fontStyle: normal;
+		textDecoration: none;
+		fontFamily: Verdana;
+		textAlign: center;
+	}
+</fx:Style>
+
+	
+<fx:Script>
+	<![CDATA[
+		import com.Captcha;
+		import flash.external.ExternalInterface;
+		import flash.utils.setTimeout;
+		import mx.controls.Alert;
+		import mx.managers.PopUpManager;
+		import mx.printing.*;
+		import spark.components.*;
+		import mx.core.IFlexDisplayObject;
+		import mx.controls.dataGridClasses.DataGridItemRenderer;
+		import mx.controls.dataGridClasses.DataGridColumn;
+		import mx.managers.PopUpManager;
+		import mx.events.*;
+		import mx.collections.ArrayCollection;
+		import mx.effects.*;
+		private var arrColl:ArrayCollection = new ArrayCollection();
+			
+		
+		[Embed(source="assets/accept-icon_24.png")]	[Bindable]	public var iconAcp:Class;
+		//[Embed(source="assets/delete-icon_24.png")]	[Bindable]	public var iconDel:Class;
+		[Embed(source="assets/2519-32.png")]		[Bindable]	public var iconNot:Class;
+		[Embed(source="assets/userOK2.png")]		[Bindable]	public var imgOK:Class;
+		[Embed(source="assets/userFail2.png")]		[Bindable]	public var imgFail:Class;
+		
+		public function doIfSelected(idAndSelected:String):void{
+			
+			var val:Array = idAndSelected.split(",");
+			
+			if(val[1]=="true"){
+				addItemToDataProvider(val[0]);
+			}else if(val[1]=="false"){
+				removeItemFromDataProvider(val[0]);
+			}
+		}
+		private function removeItemFromDataProvider(id:String):void {
+			if (arrColl.length == 0) {
+				return;
+			}
+			//var idx:int = Math.max(list.selectedIndex, 0);
+			var idx:int = arrColl.getItemIndex(id); 
+			//list.scrollToIndex(idx);
+			arrColl.removeItemAt(idx);
+			idSolToSend.text = "";
+			
+		}
+		
+		private function addItemToDataProvider(id:String):void {
+			var obj:Object = {label:new Date().toTimeString()};
+			var idx:int = Math.max(list.selectedIndex, 0);
+			//list.scrollToIndex(idx);
+			arrColl.addItemAt(id, idx);
+		}
+		
+		public function makeArrayToSend():void{
+			if(arrColl.length>0){
+			
+				var nItems:int = arrColl.length;
+				var strArrayID:String = "";
+				
+				for(var i:int=0;i<nItems;i++){
+					
+					strArrayID+=arrColl.getItemAt(i).toString()+",";
+					
+				}
+				
+				var strArrayIDLen:int = strArrayID.length;
+				//idArrayToCancel.text =strArrayID.substr(0,(strArrayID.length-1));
+				idArrayToSend.text =strArrayID.substring(0,strArrayIDLen-1);
+				
+				enviarCorreo();
+			}
+			else{
+				Alert.show("No se ha seleccionado ningún elemento",
+					"Aviso");
+			}
+			
+			
+		}
+		
+		private function enviarCorreo():void{	
+			if(list.dataProvider.length > 0){
+				Alert.yesLabel="Si";
+				Alert.noLabel="No";
+				Alert.show(
+					"¿Realmente quiere enviar el(los) correo(s) seleccionado(s)?",
+					"Confirmar",Alert.YES|Alert.NO, 
+					null, doSend, iconDel);
+			}
+			else
+			{
+				
+				Alert.show("No se ha seleccionado ningún elemento",
+					"Aviso");
+			}
+						
+			
+		}
+		
+		private function doSend(eventObj:CloseEvent):void{
+			if (eventObj.detail==Alert.YES) 
+			{
+				
+				Send(625);//ENVIAR CORREO
+				Send(622);//LLENAR EL GRIDVIEW AL FILTRAR
+				idArrayToSend.text="";
+				idSolToSend.text = "";
+			}
+		}
+		
+		private function formatScreen():void
+		{
+			msgSolicitud.visible=true;
+			
+			if(result.text == "0")
+			{
+				messageTextWrong.visible = true;
+				imageWrong.visible = true;
+				messageTextTrue.visible = false;
+				imageTrue.visible = false;
+				
+			}	
+			else
+			{
+				messageTextTrue.visible = true;
+				imageTrue.visible = true;
+				messageTextWrong.visible = false;
+				imageWrong.visible = false;
+			}
+		}
+		
+		
+	]]>
+</fx:Script>
+<!--https://200.57.141.95:443/services/validacion/validate?IdAliado=FRI001&telefono=5555231647&monto=9999.99&folio=070111020027211&item=FI01-->
+
+<mx:HSlider maximum="60" allowTrackClick="true" minimum="0" id="tra" visible="false" />
+
+
+<s:VGroup width="100%" paddingBottom="10" gap="-1" paddingLeft="10" paddingRight="10" paddingTop="10" height="100%">
+	<s:Group id="wGFE"  width="100%" height="100%" >
+		<s:VGroup height="100%"  gap="0" horizontalAlign="center" width="100%">
+			<s:HGroup width="100%" verticalAlign="middle" gap="0" paddingBottom="5">
+				<s:VGroup width="100%" horizontalAlign="center" verticalAlign="middle" gap="10"  paddingBottom="10">
+					<mx:Image source="assets/logoFX.png"/>
+					<s:Label text=" " fontWeight="bold" fontSize="7"/>	
+					<s:Label text="Envío de Correo Electrónico Masivo" color="#054A95" fontWeight="bold" fontSize="17"/>
+				</s:VGroup>
+			</s:HGroup>
+			<s:HGroup width="100%" height="100%" horizontalAlign="center" gap="1">
+				<s:Group width="100%" height="100%">	
+					<s:VGroup width="100%" height="100%">					
+						<mx:DataGrid width="100%" id="dgEmail" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%"
+									 creationComplete="Send(622);" x="23" y="19" >
+							<mx:columns>
+								<mx:DataGridColumn headerText="#" dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Cuenta" dataField="1" width="40"/>
+								<mx:DataGridColumn headerText="Email" dataField="2" width="50"/>
+								<mx:DataGridColumn headerText="Nombre" dataField="3" width="50"/>
+								<mx:DataGridColumn headerText="Razón Social" dataField="4" width="50"/>
+								<mx:DataGridColumn headerText="Telefono" dataField="5" width="50"/>
+								<mx:DataGridColumn headerText="Selección" dataField="checked" width="75" editorDataField="selected" rendererIsEditor="true" > 
+									<mx:itemRenderer>                        
+										<fx:Component>                                
+											<mx:CheckBox  change="onChange(event)" >
+												<fx:Script>                            
+													<![CDATA[                                
+														private  var _myData:Object;                                                                
+														public override function set data(o:Object):void
+														{
+															_myData = o;                                    
+															//selected = o.checked;		
+														}       
+														
+														public function onChange(evt:Event):void
+														{ 
+															//_myData.checked = selected; 
+															evt.currentTarget.outerDocument.idSolToSend.text =_myData[0]+","+selected;;
+															
+															
+															//this.document.idToCancel.text = myDGTI+","+selected;
+															
+														}
+													]]>
+												</fx:Script>
+											</mx:CheckBox> 
+										</fx:Component>     
+									</mx:itemRenderer> 
+								</mx:DataGridColumn>
+							</mx:columns>
+						</mx:DataGrid>
+						<s:HGroup width="100%" horizontalAlign="right" verticalAlign="middle">
+							<s:TextInput id="idSolToSend" visible="false" valueCommit="doIfSelected(idSolToSend.text);" x="78" y="0" width="71"/>
+							<s:TextInput id="idArrayToSend" visible="false"  width="70" />
+							<s:List id="list" dataProvider="{arrColl}"  height="52" visible="false" width="299" x="157"/>
+							<mx:Button label="Enviar Correo(s)" click="makeArrayToSend();" x="24" y="267" height="24" width="150" icon="@Embed(source='assets/mailIcon_32.png')"/>
+						</s:HGroup>
+					</s:VGroup>
+				</s:Group>
+			</s:HGroup>
+		</s:VGroup>
+	</s:Group>
+</s:VGroup>
+<s:TitleWindow id="msgSolicitud" width="550" height="230"  backgroundColor="#FFFFFF" close="msgSolicitud.visible= false"
+				visible="false" title="Menssaje del Sistema" horizontalCenter="0" borderAlpha=".95" verticalCenter="-52" >
+			
+	
+	<s:TextInput id="result"  width="338" x="0" y="0" valueCommit="formatScreen();" visible="false"/>
+	<s:TextInput id="resultMsg"  width="338" x="200" y="30" valueCommit="messageTextWrong.htmlText = resultMsg.text; messageTextTrue.htmlText = resultMsg.text;" visible="false"/>
+	<mx:Text x="100" y="50" fontWeight="normal" fontSize="12" width="400" id="messageTextWrong" height="116" color="#FF0000" visible="false"/>
+	<mx:Text x="100" y="50" fontWeight="normal" fontSize="12" width="400" id="messageTextTrue" height="116" color="#006699" visible="false" />
+	<mx:Image source="assets/delete-icon_64.png" id="imageWrong" x="10" y="50" visible="false"/>
+	<mx:Image source="assets/accept-icon_64.png" id="imageTrue" x="10" y="50" visible="false"/>
+	<!--<mx:Image x="516.25" y="10" source="assets/logo_new.png"/>-->
+		
+	<mx:Button x="210" y="140" icon="@Embed(source='assets/accept-icon_24.png')" creationCompleteEffect="{glowButton}" label=" Aceptar  " 
+			   click="msgSolicitud.visible= false" height="38" fontSize="12" width="129"/>
+	
+</s:TitleWindow>
+</s:Application>

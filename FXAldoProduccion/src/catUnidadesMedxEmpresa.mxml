@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	applicationComplete="validateUser('catUnidadesMedxEmpresa.swf');" 
+	pageTitle="Catálogo de Unidades de Medida">
+
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.Captcha;	
+			import mx.controls.Alert;
+			import mx.events.*;
+			
+			private function selectUnidMedxEmp():void
+			{
+				if (gvwUnidMedxEmp.selectedItem != null)
+					txtUnidMedxEmp.text = gvwUnidMedxEmp.selectedItem["0"].toString();
+			} 
+			
+			private function validaEmpresa():void
+			{
+				if (cmbSelectEmpresa.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione una empresa.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				Send(631);//carga Data Grid
+			}
+			
+			private function selectUnidadMed():void
+			{
+				if(txtUnidMedxEmp.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Seleccione la unidad de medida a eliminar.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+			
+					Alert.yesLabel = "Si";
+					Alert.noLabel = "No";
+					Alert.show("¿Desea eliminar la unidad de medida de su empresa?","Aviso",Alert.YES|Alert.NO, null, eliminarUniMed, iconAlert);
+			}
+			
+			private function eliminarUniMed(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(601); //Elimina Unidad de Medida
+					Send(631); //Actualiza GridView Unidad de Medida
+				}	
+			}
+
+			private function guardarUnidMed():void
+			{
+				if(txtUnidMed.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Unidad de Medida es un campo obligatorio, favor de ingresarlo.","Aviso",Alert.OK,null,null, iconAlert);
+					txtUnidMed.errorString = "Unidad de Medida es un campo obligatorio, favor de ingresarlo.";
+					return;
+				}
+				
+				Send(600); //Inserta Unida de Medida x Empresa
+				Send(631); //Actualiza GridView Unidad de Medida
+				ttwAgregarUnidMed.visible = false;
+			}
+			
+			private function cleanCtrls():void
+			{
+				gvwUnidMedxEmp.dataProvider = null;
+				cmbSelectEmpresa.selectedIndex = 0;
+				txtUnidMedxEmp.text = "";
+			}
+			
+			private function muestraTtwAddMedxSuc():void
+			{
+				if (cmbSelectEmpresa.selectedIndex == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para poder agregar Unidades de Medida seleccione una empresa.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				txtUnidMed.text = "";
+				ttwAgregarUnidMed.visible = true;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Unidades de Medida" width="100%" height="100%">
+			<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="15" paddingBottom="5">
+				
+				<s:VGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">	
+					<s:HGroup width="100%" horizontalAlign="left" verticalAlign="middle">
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" verticalAlign="bottom" paddingRight="10" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<s:HGroup horizontalAlign="left" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="UNIDADES DE MEDIDA" fontWeight="bold"/>
+						</s:HGroup>
+						
+						<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5" verticalAlign="middle">
+							<s:Label text="*Seleccione Empresa" fontWeight="bold" verticalAlign="middle"/>
+							<s:ComboBox creationComplete="Send(584);" id="cmbSelectEmpresa" width="325" tabIndex="1" height="24" x="185"/>
+							<mx:Button icon="@Embed(source='newIcons/01.png')" label="Buscar" click="validaEmpresa();" height="24" tabIndex="3" width="100"/>
+							<mx:Button icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" label="Limpiar" click="cleanCtrls();" height="24" tabIndex="4" width="100"/>
+						</s:HGroup>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" height="100%" horizontalAlign="left" paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+						<mx:DataGrid id="gvwUnidMedxEmp" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%" width="100%" click="selectUnidMedxEmp();" >
+							<mx:columns>
+								<mx:DataGridColumn headerText="idUniMedxEmp" 			dataField="0" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="idEmpresa" 				dataField="1" width="50" visible="false"/>
+								<mx:DataGridColumn headerText="Unidad de Medida" 		dataField="2" width="50" visible="true"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</s:HGroup>
+					
+					<s:HGroup width="100%" horizontalAlign="right" paddingRight="10" paddingLeft="10" paddingTop="5" paddingBottom="5">
+						<s:TextInput id="txtUnidMedxEmp" width="38" maxChars="50" visible="false" enabled="false"/>
+						
+						<mx:Button icon="@Embed(source='newIcons/delete_24.png')" label="Eliminar" click="selectUnidadMed();" height="24" tabIndex="7" width="100" toolTip="Eliminar Unidad de Medida"/>
+						<mx:Button icon="@Embed(source='newIcons/add_24.png')" label="Agregar" click="muestraTtwAddMedxSuc();" height="24" tabIndex="5" width="100" x="673" toolTip="Agregar Unidad de Medida"/>
+					</s:HGroup>
+				</s:VGroup>
+				
+			</s:VGroup>
+		</s:Panel>
+	</s:VGroup>
+	
+	<s:TitleWindow width="454" height="176" title="Agregar Unidad de Medida" id="ttwAgregarUnidMed" visible="false" close="ttwAgregarUnidMed.visible=false;" horizontalCenter="0" verticalCenter="-37">
+		<s:Group width="100%" height="100%">
+			
+			<s:Label x="37" y="36" text="* Unidad de Medida" fontWeight="bold"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="37" y="113" fontWeight="bold"/>
+			
+			<s:TextInput x="37" y="50"  id="txtUnidMed" name="Unidad de Medida" width="250" height="24" maxChars="50" tabIndex="20"  focusOut="if(txtUnidMed.text.length > 0) txtUnidMed.errorString='';"/>
+			
+			<mx:Button id="btnGuardaUnidMed" x="305" y="50" icon="@Embed(source='newIcons/add_24.png')" label="Guardar" click="guardarUnidMed();" height="24" tabIndex="41" width="115" toolTip="Guardar Unidad de Medida" visible="true"/>
+	
+		</s:Group>
+	</s:TitleWindow>	
+</s:Application>

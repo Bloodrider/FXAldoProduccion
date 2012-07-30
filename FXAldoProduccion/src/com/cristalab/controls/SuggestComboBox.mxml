@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:ComboBox  editable="true" xmlns:mx="http://www.adobe.com/2006/mxml"
+	 change="onChange()"
+	  open="{onOpen ()}" close="{onClose()}"
+	   openDuration="{openTime}" text="''" closeDuration="{closeTime}"
+	    enter="{tmp = this.text; closeTime = 0}" initialize="init()" 
+	    >
+	<mx:Script>
+		<![CDATA[
+			import flash.utils.setTimeout;
+			import mx.collections.Sort;
+			
+			/**Variable que indica cuánto tiempo, en milisegundos, tardan en 
+			mostrarse las sugerencias*/
+			public var showDelay:Number = 0;
+			
+			/**Variable que indica el número mínimo de carácteres que tiene que
+			haber para que se muestre la sugerencia*/
+			public var minChars:int = 1;
+			
+			/**Variable que indica si se tienen o no en cuenta las minúsculas
+			y mayúsculas*/
+			public var caseInsensitive : Boolean = true;
+			
+			/**Variable que indica si se filtrarán internamente los resultados.
+			La mayoría del tiempo, no hay razón para no dejarla en true, pero
+			es posible que requieran filtrar desde el servidor y seguir
+			utilizando las funciones del componente*/
+			public var filterDataProvider : Boolean = true;
+			
+			[Bindable]
+			private var openTime:Number = 250;
+		
+			
+			[Bindable]
+			private var closeTime:Number = 250;
+			
+			private var tmp:String;
+			
+			private var timeOutExists:Boolean = false;
+			
+			
+			private function init () : void
+			{
+				//this.dataProvider.addItemAt ("", 0);
+			
+				this.text = ""
+				
+			}
+			
+			private function onChange () : void
+			{
+				if ( !timeOutExists )
+				{
+					flash.utils.setTimeout(getResults , showDelay);
+					timeOutExists = true;
+				}
+				
+			}
+			private function getResults () : void
+			{
+				this.dataProvider.refresh();
+				if ( this.dataProvider.length > 0 ) {
+					this.open ();
+				}
+				tmp = this.text;
+				timeOutExists = false;
+			}
+			
+			public override function set dataProvider(value:Object):void
+			{
+				
+				super.dataProvider = value;
+				value = this.dataProvider;
+				if (filterDataProvider)
+				{
+					this.dataProvider.filterFunction = filter;
+				}
+				var sort:Sort = new Sort ();
+				sort.compareFunction = sortFunction;
+				this.dataProvider.sort = sort;
+				this.dataProvider.refresh ();
+				this.text = "";
+				//this.dataProvider.refresh ();
+			}
+		
+		
+			private function filter (item:Object):Boolean
+			{
+				var textStr:String = this.text
+				
+				if (textStr.length < minChars){
+					return false;
+				}
+				
+				var labelStr:String = this.itemToLabel(item).substr(0 , textStr.length);
+				
+				if (caseInsensitive)
+				{
+					textStr = textStr.toLowerCase();
+					labelStr = labelStr.toLowerCase();
+				}
+				return textStr == labelStr;
+				
+			}
+			
+			private function sortFunction(a:Object , b:Object , fields:Array=null):int
+			{
+		        var nA:String = this.itemToLabel( a );
+		        var nB:String = this.itemToLabel( b );
+		        if (nA < nB){
+		            return -1;
+		        }else if (nA > nB){
+		            return 1;
+		        }else {
+		            return 0;
+		        }
+		    }
+		    
+		    private function onOpen () :void
+		    {
+		    	openTime = 0;
+		    	
+		    }
+		    
+		    private function onClose () : void
+		    {
+		    	this.text  = tmp
+		    	try {
+		    		var ln:int = this.text.length;
+		    	} catch (e:Error) 
+		    	{
+		    		ln = 0;
+		    	}
+		    	this.textInput.selectionBeginIndex = ln;
+		    	this.textInput.selectionEndIndex = ln;
+		    	openTime = 250;
+		    	closeTime = 250;
+		    	
+		    }
+		 
+		    
+		    
+		]]>
+	</mx:Script>
+</mx:ComboBox>

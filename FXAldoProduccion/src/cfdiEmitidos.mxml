@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	applicationComplete="validateUser('cfdiEmitidos.swf');">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+		import com.ExcelExports;
+		
+		import mx.events.*;
+		
+		private function exportXLS():void
+		{
+			if(gridCCFE.dataProvider != null)
+				com.ExcelExports.fromGrid(this.gridCCFE,"FacturasEmitidas.xls", new Object());
+			
+			else
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("No existen registros para exportar.","Aviso",Alert.OK,null,null, iconAlert);	
+				return;
+			}
+		}
+		
+		private function cargaDetalle():void
+		{
+			try
+			{
+				pnVisorDetalle.isPopUp = true;				
+				idGridCCFE.text=gridCCFE.selectedItem["0"].toString();			
+				Send(190);
+			}
+			catch(Err:Error)
+			{
+				
+			}	
+		}
+		
+		private function openPDF():void
+		{
+			navigateToURL(new URLRequest(rutaPDF.text), "_blank");
+		}
+		
+		private function openXML():void
+		{
+			navigateToURL(new URLRequest(rutaXML.text), "_blank");
+		}
+		
+		private function limpiar():void
+		{
+			gridCCFE.dataProvider = null;
+			rfcReceptorFilter.text = "";
+			fechaFinFilter.text = "";
+			fechaIniFilter.text = "";
+			nombreReceptorFilter.text = "";
+			serieFilter.text = "";
+			folioFilter.value = 0;
+			cmbSucursalesFilter.selectedIndex = 0;
+			topQuery.value = 200;
+		}
+
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{		
+			var rol:int = parseInt(idRol.text);
+
+			if(date!= null)
+			{
+				//Rol 16 > Gratuito
+				if(rol == 16)
+				{
+					var hoy:Date = new Date();
+					var diaBloqueo:int = hoy.date;
+					var mesBloqueo:int = hoy.month-3;
+					var añoBloqueo:int = hoy.fullYear;
+					var fBloquear:Date = new Date(añoBloqueo,mesBloqueo,diaBloqueo);
+
+					if (date < fBloquear) 
+					{
+						date = hoy;
+						
+						cntlP.selectedDate = null;
+						cntlP.selectableRange = {rangeStart:new Date(date.getFullYear().toString(),date.getMonth()-3,(date.getDate()))};
+						
+						cntlH.selectedDate = null;
+						cntlH.selectableRange = {rangeStart:new Date(date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()))};
+						
+						cntlP.data = hoy;
+						cntlP.text = "";
+						cntlH.text = "";
+						
+						Alert.okLabel = "Aceptar";
+						Alert.show("Visualizar CFDI generados tres meses atrás sólo está disponible para la solución de prepago. Para más información llame a nuestra área de ventas.","Aviso",Alert.OK,null,null, iconAlert);	
+						return;
+					}
+					
+					else
+					{
+						cntlH.selectedDate = null;
+						cntlH.selectableRange = {rangeStart:new Date(date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()))};
+					}
+				}
+				
+				else
+				{
+					if (date != null)
+					{
+						cntlH.selectedDate = null;
+						cntlH.selectableRange = {rangeStart:new Date(date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()))};
+					}
+				}
+			}
+		}
+		
+		private function validFilter():void
+		{
+			if(monedaFilter.selectedIndex < 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El tipo de moneda es inválido.","Aviso",Alert.OK,null,null, iconAlert);				
+				monedaFilter.setFocus();
+				monedaFilter.errorString = "Seleccione una modena.";
+				return;
+			}
+			else
+			{
+				monedaFilter.errorString = "";
+				Send(189);
+			}		
+		}
+		
+		/* private function desbloqueaBtn():void
+		{
+			var rol:int = parseInt(idRol.text);
+			if(rol == 18 || rol == 23 ||rol == 25)
+			{
+				rfcReceptorFilter.visible = false;
+				nombreReceptorFilter.visible = false;
+				lblRFCReceptor.visible = false;
+				lblNombreReceptor.visible = false;
+			}
+			else
+			{
+				rfcReceptorFilter.visible = true;
+				nombreReceptorFilter.visible = true;
+				lblRFCReceptor.visible = true;
+				lblNombreReceptor.visible = true;
+			}
+		} */
+
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Consulta de CFDI emitidos" width="100%" height="100%" >
+		<s:VGroup x="0" y="0" width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+			<s:HGroup width="100%" horizontalAlign="right" paddingTop="10">
+				<s:Label id="lblRFCReceptor" text="RFC Receptor" width="124" fontWeight="bold" visible="true"/>
+				<s:Label id="lblNombreReceptor" text="Nombre Receptor" width="127" fontWeight="bold" x="244" visible="true"/>
+				<s:Label text="Sucursal" width="242" fontWeight="bold" x="680"/>
+				<s:Label text="Fecha Inicial" width="123" fontWeight="bold" x="377"/>
+				<s:Label text="Fecha Final" width="133" fontWeight="bold" x="1057"/>
+			</s:HGroup>
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="7" paddingRight="10">
+				<s:TextInput width="125" id="rfcReceptorFilter"  height="24" restrict="0-9A-Za-z&amp;" typographicCase="uppercase" maxChars="13" visible="true"/>
+				<s:TextInput width="125" id="nombreReceptorFilter" height="24" maxChars="40" visible="true"/>
+				<s:ComboBox id="cmbSucursalesFilter" creationComplete="Send(681);" width="240" x="678"/>
+				<mx:DateField id="fechaIniFilter" width="125" height="24" creationComplete="DCInit('fechaIniFilter');" change="dateControl(fechaIniFilter,fechaFinFilter, DateField(event.target).selectedDate)" />
+				<mx:DateField id="fechaFinFilter" width="125" height="24" creationComplete="DCInit('fechaFinFilter');"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" >
+				<s:Label text="Serie" width="125" fontWeight="bold" x="638"/>
+				<s:Label text="Folio" width="64" fontWeight="bold" x="769"/>
+				<s:Label text="Moneda" width="127" fontWeight="bold" x="482"/>
+				<s:Label text="Mostrar Registros" width="480" fontWeight="bold" x="581"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+				<s:TextInput width="50" id="idGridCCFE" visible="false" valueCommit="pnVisorDetalle.visible = true;"/>
+				<s:TextInput width="20" id="idRol" visible="false" x="437"/> <!--valueCommit="desbloqueaBtn();"-->
+				<s:TextInput width="125" id="serieFilter" height="24" restrict="0-9A-NM-Za-nm-z" typographicCase="uppercase" maxChars="25"/>
+				<s:NumericStepper id="folioFilter" width="65" maximum="50000000" height="24"/>
+				<s:ComboBox id="monedaFilter" width="125" creationComplete="Send(188);" height="24"></s:ComboBox>
+				<s:NumericStepper id="topQuery" width="96" maximum="50000000" height="24" x="581" value="200"/>
+				<mx:Spacer width="50"/>
+				
+				<mx:Button label="Buscar" icon="@Embed(source='newIcons/01.png')" height="24" click="validFilter();" width="100"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="100"/>
+				<mx:Button label="Exportar" icon="@Embed(source='assets/Exel_24.png')" height="24" click="exportXLS();" width="100"/>
+			</s:HGroup>
+			<mx:DataGrid width="100%" id="gridCCFE" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+				<mx:click>cargaDetalle();</mx:click>
+				<mx:columns>
+					<mx:DataGridColumn headerText="#" 				dataField="0" width="50" visible="false"/>
+					<mx:DataGridColumn headerText="RFC Receptor" 	dataField="1" width="120"/>
+					<mx:DataGridColumn headerText="Nombre Receptor" dataField="2" width="200"/>
+					<mx:DataGridColumn headerText="Sucursal" 		dataField="3" width="80"/>
+					<mx:DataGridColumn headerText="Fecha" 			dataField="4" width="80"/>
+					<mx:DataGridColumn headerText="Serie" 			dataField="5" width="100"/>
+					<mx:DataGridColumn headerText="Folio" 			dataField="6" width="30"/>
+					<mx:DataGridColumn headerText="Total Impuestos" dataField="7" width="100" textAlign="right"/>
+					<mx:DataGridColumn headerText="Total Factura" 	dataField="8" width="100" textAlign="right"/>
+					<mx:DataGridColumn headerText="Estado" 			dataField="9" width="60" textAlign="center"/>
+					<mx:DataGridColumn headerText="UG" 				dataField="11" width="60" textAlign="center"/>
+					<mx:DataGridColumn headerText="UUID" 			dataField="12" width="60" visible="false"/>
+				</mx:columns>
+			</mx:DataGrid>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+			</s:HGroup>
+		</s:VGroup>
+	</s:Panel>
+	<s:TitleWindow width="880" height="500" title="Detalle" id="pnVisorDetalle" visible="false" close="pnVisorDetalle.visible=false;"  horizontalCenter="0" verticalCenter="0">
+	
+		<s:Label x="14" y="15" text="Serie y Folio: " width="98" fontWeight="bold" enabled="true" fontSize="11"/>
+		<s:Label x="13" y="65" text="EMISOR" width="71" fontWeight="bold" fontSize="14" color="#006699"/>
+		<s:Label x="15" y="91" text="RFC:" width="36" fontWeight="bold" fontSize="11"/>
+		<s:Label x="470" y="88" text="RFC:" width="36" fontWeight="bold" fontSize="11"/>
+		<s:Label x="603" y="88" text="Nombre:" width="62" fontWeight="bold" fontSize="11"/>
+		<s:Label x="473" y="137" text="Dirección:" width="71" fontWeight="bold" fontSize="11"/>
+		<s:Label x="149" y="90" text="Nombre:" width="62" fontWeight="bold" fontSize="11"/>
+		<s:Label x="643" y="291" text="SubTotal:" width="67" fontWeight="bold" fontSize="11"/>
+		<s:Label x="643" y="319" text="Impuesto" width="71" fontWeight="bold" fontSize="11"/>
+		<s:Label x="666" y="345" text="Total:" width="47" fontWeight="bold" fontSize="11"/>
+		<s:Label x="17" y="139" text="Dirección:" width="71" fontWeight="bold" fontSize="11"/>
+		<s:Label x="14" y="290" text="Cantidad con Letra:" width="131" fontWeight="bold" fontSize="11"/>
+		<s:Label x="153" y="290" id="cantLetra" text="&lt;&lt; Bookmark Cantidad &gt;&gt;" width="476" fontWeight="bold" fontSize="11"/>
+		<s:Label x="14" y="309" text="Sello Digital:" width="90" fontWeight="bold" fontSize="11"/>
+		<s:Label x="468" y="64" text="RECEPTOR" width="85" fontWeight="bold" fontSize="14" color="#006699"/>
+		<s:TextInput width="125" id="folio"  x="14" y="27" height="24" editable="false"/>
+		<s:TextInput width="125" id="rfcEmpresa"  x="14" y="103" height="24" editable="false"/>
+		<s:TextInput width="250" id="nombreEmpresa"  x="149" y="102" height="24" editable="false"/>
+		<s:TextInput width="384" id="DEmp"  x="15" y="151" height="24" editable="false"/>
+		<s:TextInput width="125" id="rfcCliente"  x="470" y="101" height="24" editable="false"/>
+		<s:TextInput width="250" id="nombreCliente"  x="604" y="101" editable="false"/>
+		<s:TextInput width="382" id="DCli"  x="472" y="150" height="24" editable="false"/>
+		<s:Label x="14" y="413" text="Obervaciones:" width="115" fontWeight="bold" fontSize="11"/>
+		<s:Label x="14" y="361" text="Cadena Original:" width="115" fontWeight="bold" fontSize="11"/>
+		<s:TextInput width="135" id="subTotal"  x="718" y="290" editable="false"/>
+		<s:TextInput width="135" id="iva"  x="718" y="317" editable="false"/>
+		<mx:Button x="670" y="20" label="Descarga XML" icon="@Embed(source='newIcons/NetByte Design Studio - 0796 copia.png')" width="180" height="24" click="openXML();"/>
+		<mx:Button x="467" y="20" label="Descarga PDF" icon="@Embed(source='assets/pdf-64X64.png')" height="24" click="openPDF();"  width="180"/>
+		<mx:DataGrid width="840" id="gridCCFEDetalle" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100" y="186" x="13">			
+			<mx:columns>				
+				<mx:DataGridColumn headerText="Cantidad" dataField="0" width="50"/>
+				<mx:DataGridColumn headerText="Descripción" dataField="1" width="200"/>
+				<mx:DataGridColumn headerText="Precio Unitario" dataField="2" width="50"/>
+				<mx:DataGridColumn headerText="SubTotal" dataField="3" width="50"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<s:TextInput width="135" id="total"  x="718" y="344"/>
+		<s:TextArea x="14" y="426" id="observaciones" width="838" height="30" editable="false"/>
+		<s:TextArea x="15" y="373" id="cadenaOriginal" width="838" height="34" editable="false"/>
+		<s:TextArea x="14" y="321" id="selloDigital" width="385" height="34" editable="false"/>
+		<s:TextInput x="594" y="59" width="154" id="rutaPDF" editable="false" enabled="false" visible="false"/>
+		<s:TextInput x="778" y="59" width="154" id="rutaXML" editable="false" enabled="false" visible="false"/>
+			
+
+	</s:TitleWindow>
+	
+	
+</s:Application>

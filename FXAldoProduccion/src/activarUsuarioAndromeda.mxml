@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="350" height="180"
+	backgroundColor="#FFFFFF" 
+	backgroundAlpha=".1"
+	initialize="application1_initializeHandler(event)">
+	
+	<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			private function activar():void
+			{
+				if(txtRFCEmisor.text.length == 0)
+				{
+					txtRFCEmisor.setFocus();
+					Alert.okLabel = "Aceptar";
+					Alert.show("El RFC es requerido.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				var rfcPM:RegExp = /([a-zA-Z|ñÑ|&]{3,4})(([0-9]{2})([0][13456789]|[1][012])([0][1-9]|[12][\d]|[3][0])|([0-9]{2})([0][13578]|[1][02])([0][1-9]|[12][\d]|[3][01])|([02468][048]|[13579][26])([0][2])([0][1-9]|[12][\d])|([0-9]{2})([0][2])([0][1-9]|[12][0-9]))([a-zA-Z|0-9|ñÑ]{2}[a-zA-Z|0-9|ñÑ]{1})/;
+				
+				txtRFCEmisor.text.toUpperCase();
+				if(!rfcPM.test(txtRFCEmisor.text))
+				{
+					txtRFCEmisor.setFocus();
+					Alert.okLabel = "Aceptar";
+					Alert.show("El RFC no es válido.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if(txtTimbres.text.length == 0)
+				{
+					txtTimbres.setFocus();
+					Alert.okLabel = "Aceptar";
+					Alert.show("El número de timbres es requerido.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				Send(839);
+			}
+
+			protected function application1_initializeHandler(event:FlexEvent):void
+			{
+				txtResultado.visible = false;
+			}
+
+
+			protected function txtResultado_valueCommitHandler(event:FlexEvent):void
+			{
+				if (txtResultado.text.length == 0)
+					return;
+				
+				Alert.okLabel = "Aceptar";
+				if (txtResultado.text == "1")
+				{
+					Alert.show("La empresa no existe en producción.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+				
+				if (txtResultado.text == "2")
+				{
+					Alert.show("La empresa no existe en pruebas.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+				
+				if (txtResultado.text == "3")
+				{
+					Alert.show("El RFC ya esta dado de alta en producción como un proveedor autorizado.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+				
+				if (txtResultado.text == "4")
+				{
+					Alert.show("El RFC no esta dado de alta en pruebas como un proveedor autorizado.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+				
+				if (txtResultado.text == "5")
+				{
+					Alert.show("El RFC fue activado como proveedor autorizado.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+				
+				txtResultado.text = "";
+			}
+
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:VGroup x="0" y="0" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+		<s:Panel visible="true" title="Activación de cliente Andromeda" width="100%" height="100%" x="0" y="0">
+			<mx:Button icon="@Embed(source='newIcons/edit-icon_24.png')" label="Activar" click="activar()" toolTip="Activar cliente" x="217" y="111" width="114"/>
+			<s:TextInput x="121" y="14" width="210" id="txtRFCEmisor" maxChars="13"/>
+			<s:Label text="RFC del emisor:"  height="24" verticalAlign="middle" fontWeight="bold" x="26" y="12"/>
+			<s:TextInput x="122" y="73" width="31" id="txtResultado" valueCommit="txtResultado_valueCommitHandler(event)"/>
+			<s:Label text="Timbres:"  height="24" verticalAlign="middle" fontWeight="bold" x="26" y="48"/>
+			<s:TextInput x="121" y="48" width="210" id="txtTimbres" maxChars="13" restrict="0-9"/>
+			</s:Panel>
+		</s:VGroup>
+			
+</s:Application>

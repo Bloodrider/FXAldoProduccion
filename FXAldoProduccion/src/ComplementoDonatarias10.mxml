@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="0" minHeight="0" width="446" pageTitle="Complemento Donatarias 1.0" height="269" backgroundColor="#FFFFFF">
+	<fx:Script>
+		<![CDATA[
+			import com.Captcha;
+			
+			import flash.events.*;
+			import flash.utils.setTimeout;
+			
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.managers.PopUpManager;
+			
+			public var addendaValor:String;
+			//public var stringData:String;
+			public var xmlData:XML;
+			private var bandera:int;
+			private var addField:String;
+			
+			/*protected function setParametros(data:String)
+			{
+				xmlData=new XML(data);
+			}*/
+			
+			protected function agregar_clickHandler(event:MouseEvent):void
+			{
+				Alert.okLabel = "Aceptar";
+				bandera=0;
+				addField="";
+				var errorRespuesta:String;
+				errorRespuesta="Los siguientes campos requeridos se encuentran vacíos, favor de capturarlos:";
+				addField+=((noAutorizacion.text.length==0)? "\n - No. autorización":"");
+				bandera+=((addField.length>0)?1:0);
+				addField+=((fechaAutorizacion.text.length==0)? "\n - Fecha de autorización":"");
+				bandera+=((addField.length>0)?1:0);
+				errorRespuesta+=addField;
+				if(bandera>0)
+				{
+					Alert.show(errorRespuesta,"Error",Alert.OK,null,null,null);
+				}
+				else
+				{
+					addendaValor="donat|1.1|"+noAutorizacion.text+"|"+fechaAutorizacion.text+"|"+leyenda.text;
+					root.dispatchEvent(new Event("complete",true,false));
+				}
+			}
+			public function setParametros(data:XML):void
+			{
+					xmlData=data;	
+			}
+			public function quitPipes(changeEvt:Event):void
+			{
+				changeEvt.target.text=changeEvt.target.text.toString().replace("|","");
+			}
+
+
+		]]>
+	</fx:Script>
+
+
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+<!--	<s:Panel height="298" title="Addenda de PEMEX" horizontalCenter="0" verticalCenter="2" width="435">-->
+		<s:Label x="35" y="52" text="No. Autorización" width="130" height="15"/>
+		<s:Label x="35" y="77" text="Fecha Autorización" width="115"/>
+		<s:Label x="35" y="113" text="Leyenda" width="225"/>
+		<s:TextInput x="281" y="47" id="noAutorizacion" change="quitPipes(event)"/>
+		<mx:Button id="agregar" width="100" height="24" label="Agregar"  click="agregar_clickHandler(event)" icon="@Embed(source='newIcons/edit-icon_24.png')" x="50" y="238"/>
+		<mx:HRule x="185" y="21" width="261"/>
+		<s:Label x="9" y="15" text="Complemento Donatarias 1.1" width="179"/>
+		<s:TextArea x="35" y="133" text="Este comprobante ampara un donativo, el cual será destinado por la donataria a los fines propios de su objeto social. En el caso de que los bienes donados hayan sido deducidos previamente para los efectos del impuesto sobre la renta, este donativo no es deducible. La reproducción no autorizada de este comprobante constituye un delito en los términos de las disposiciones fiscales."  width="374" height="97" id="leyenda" />
+		<!--<mx:DateField x="281" width="128" id="fechaAutorizacion" height="23" y="77"/>-->
+	    <mx:DateField id="fechaAutorizacion" x="281" y="77" width="128" height="23" formatString="DD/MM/YYYY"
+				  dayNames="['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']"
+				  monthNames="['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']" 
+				  />
+
+<!--	</s:Panel>-->
+	
+	
+	
+	
+</s:Application>

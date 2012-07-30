@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:mx2="library://ns.adobe.com/flex/halo"
+			   backgroundAlpha="0" creationComplete="initValid();" width="100%" height="100%"
+			   pageTitle="Activar Cuenta"
+			   applicationComplete="validateUser('activaGratis.swf');">
+	
+<fx:Script source="r3Take.as"/>
+<fx:Style source="fx.css" />
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		
+		global
+		{
+			fontFamily: "Verdana";
+			fontWeight: normal;
+			fontStyle: normal;
+			
+		}
+		
+		Application
+		{
+			
+			fontSize: 11;	
+			fontFamily: "Verdana";
+		}
+		
+		mx|FormItem
+		{
+			paddingLeft: 4;
+			paddingRight: 4;
+			paddingTop: 4;
+			paddingBottom: 4;
+		}
+		DataGrid
+		{
+			headerStyleName: "mydataGridHeaderStyle";
+		}
+		
+		.mydataGridHeaderStyle
+		{
+			color: #FFFFFF;
+			fontWeight: bold;
+			fontStyle: normal;
+			textDecoration: none;
+			fontFamily: Verdana;
+			textAlign: center;
+		}
+	</fx:Style>
+<fx:Script>
+	<![CDATA[
+		import mx.controls.Alert;
+		
+		[Embed(source="assets/accept-icon_24.png")]	[Bindable]	public var iconAcp:Class;
+		[Embed(source="assets/2519-32.png")]		[Bindable]	public var iconNot:Class;
+		[Embed(source="assets/userOK2.png")]		[Bindable]	public var imgOK:Class;
+		[Embed(source="assets/userFail2.png")]		[Bindable]	public var imgFail:Class;
+					
+		private function initValid():void
+		{
+			if(mx.core.Application!=null)
+			{
+				if(mx.core.Application.application!=null)
+				{
+					if(mx.core.Application.application.parameters!=null)
+					{
+						if(mx.core.Application.application.parameters.userGuid!=null)
+						{
+							userGuid.text = mx.core.Application.application.parameters.userGuid;
+							Send(624);//LLAMA A LA CLSE QUE ACTIVA EL REGISTRO Gratuito
+						}		
+					}	
+				}
+			}
+		}
+		
+		private function formatScreen():void
+		{
+			if(result.text == "0")
+			{
+				messageTextWrong.visible = true;
+				imageWrong.visible = true;
+				messageTextTrue.visible = false;
+				imageTrue.visible = false;
+			}	
+			else
+			{
+				messageTextTrue.visible = true;
+				imageTrue.visible = true;
+				messageTextWrong.visible = false;
+				imageWrong.visible = false;
+			}
+		}		
+	]]>
+</fx:Script>
+<s:VGroup width="100%" height="100%" paddingBottom="10" paddingTop="10" paddingLeft="10" paddingRight="10">
+	<s:Panel title="Activación de Cuenta" id="wGFE"  color="#282323" width="100%" height="100%">
+		<s:TextInput id="result"  width="338" x="311" y="455" valueCommit="formatScreen();" visible="false"/>
+		<s:TextInput id="userGuid"  width="338" x="311" y="386" visible="false"/>
+		<s:TextInput id="resultMsg"  width="338" x="311" y="521" valueCommit="messageTextWrong.htmlText = resultMsg.text; messageTextTrue.htmlText = resultMsg.text;" visible="false"/>
+		<mx:Text fontWeight="normal" fontSize="15" width="855" id="messageTextWrong" height="116" color="#FF0000" visible="false" fontFamily="Verdana" x="253.9" y="220.5"/>
+		<mx:Text fontWeight="normal" fontSize="15" width="785" id="messageTextTrue" height="116" color="#006699" visible="false"  fontFamily="Verdana" x="253.9" y="220.5"/>
+		
+		<mx:Image source="assets/delete-icon_64.png" id="imageWrong" visible="false" left="158.9" top="217.5"/>
+		<mx:Image source="assets/accept-icon_64.png" id="imageTrue" left="158.9" top="217.5" visible="false"/>
+		<mx:Image source="assets/logo_new.png" horizontalCenter="52" top="10.5"/>
+		<s:Label text="Activación de Cuenta de Factura Electrónica" fontWeight="bold" fontSize="24" fontFamily="Verdana" top="155.5" horizontalCenter="51"/>
+	</s:Panel>
+</s:VGroup>
+</s:Application>

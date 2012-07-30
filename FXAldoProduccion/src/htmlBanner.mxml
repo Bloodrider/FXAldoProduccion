@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="gob.mx.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="120" height="500"
+	backgroundColor="#FFFFFF" pageTitle="Banners"
+	applicationComplete="validateUser('htmlBanner.swf');">
+	
+<fx:Script source="r3Take.as"/>
+<fx:Style source="fx.css" />
+<fx:Script>
+	<![CDATA[
+		
+		import flash.utils.Timer;
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		
+		private var acBanners:ArrayCollection;
+		private var valsBanners:Array = new Array();
+		private var a:int;
+		private var numeroBanner:int = 0;
+		
+		
+		private function loadBanner():void
+		{			
+			setInterval(getBanners, 6000);
+		}
+		
+				
+		private function getBanners():void
+		{
+			acBanners = new ArrayCollection(ArrayUtil.toArray(banners.dataProvider.source));
+			var acNumBanners:int = acBanners.length;				
+			
+			if(numeroBanner < acNumBanners)
+			{
+				valsBanners = acBanners[a][0].toString().replace("https://fx.facturaxion.net/repositorio/banners/","").split(".");			
+				if(valsBanners[1].toString() == "swf")
+				{
+					swfBanner.source = acBanners[numeroBanner][0].toString();
+					swfBanner.toolTip = acBanners[numeroBanner][1].toString();
+					imageBanner.visible = false;
+					swfBanner.visible = true;
+					swfBannerClick.visible = true;
+				}else
+				{
+					imageBanner.source = acBanners[numeroBanner][0].toString();
+					imageBanner.toolTip = acBanners[numeroBanner][1].toString();
+					swfBanner.visible = false;
+					imageBanner.visible = true;
+					swfBannerClick.visible = false;
+				}	
+			}
+			if(numeroBanner == acNumBanners - 1)
+			{
+				numeroBanner = 0;
+			}	
+			numeroBanner = numeroBanner + 1;
+		}
+		
+		
+		private function navegatePageSWF()
+		{
+			var urlRequest:URLRequest = new URLRequest(swfBanner.toolTip);
+			navigateToURL(urlRequest,"_blank");
+		}
+		
+		private function navegatePageImage()
+		{
+			var urlRequest:URLRequest = new URLRequest(imageBanner.toolTip);
+			navigateToURL(urlRequest,"_blank");
+		}
+
+		
+	]]>
+</fx:Script>
+
+	<mx:DataGrid x="0" y="0" width="1" height="1" id="banners" visible="false" creationComplete="Get(292);">
+		<mx:columns>
+			<mx:DataGridColumn  headerText="" dataField="0"/>
+			<mx:DataGridColumn  headerText="" dataField="1"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:SWFLoader x="0" y="0" width="120" height="500" id="swfBanner"/>
+	<mx:Label x="0" y="0" width="120" height="500" id="swfBannerClick" click="navegatePageSWF();" />
+	<mx:Image x="0" y="0" width="120" height="500" id="imageBanner" click="navegatePageImage();"/>
+	<s:TextInput id="fillDataGrid" visible="false" x="0" y="0" width="100" height="20" valueCommit="getBanners();loadBanner();"/>
+</s:Application>

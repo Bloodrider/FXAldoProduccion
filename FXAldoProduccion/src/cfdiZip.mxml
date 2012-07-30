@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" 
+	applicationComplete="validateUser('cfdiZip.swf');" pageTitle="CFDI Zip">
+
+<fx:Script source="r3Take.as"/>
+	
+	<fx:Script>
+	<![CDATA[
+				
+		import mx.events.*;
+		
+		private function descargaZip():void
+		{
+			if(monedaFilter.selectedIndex < 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El tipo de moneda es inválido.","Aviso",Alert.OK,null,null, iconAlert);				
+				monedaFilter.setFocus();
+				monedaFilter.errorString = "Seleccione una modena.";
+				return;
+			}
+			else
+			{
+				monedaFilter.errorString = "";
+				Send(811);
+			}		
+		}
+		
+		private function limpiar():void
+		{
+			gridCCFE.dataProvider = null;
+			rfcReceptorFilter.text = "";
+			fechaFinFilter.text = "";
+			fechaIniFilter.text = "";
+			nombreReceptorFilter.text = "";
+			serieFilter.text = "";
+			folioFilter.value = 0;
+			cmbSucursalesFilter.selectedIndex = 0;
+		}
+		
+		private function dateControl(cntlP:DateField, cntlH:DateField, date:Date):void 
+		{
+			if (date != null)
+			{
+				cntlH.selectedDate = null;
+				cntlH.selectableRange = {
+					rangeStart:new Date(
+						date.getFullYear().toString(),date.getMonth().toString(),(date.getDate()+1))
+				};
+			}
+		}
+		
+		private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+		
+		private function checkMail(myCtrl:spark.components.TextInput):void
+		{
+			if(expMail.test(myCtrl.text))
+			{
+				myCtrl.errorString = "";
+			}
+			else
+			{				
+				myCtrl.errorString = "Correo electrónico Incorrecto\n\n" +
+					"Formato “cuenta1.cuenta2@dominio.com ” \n" +
+					"“El campo Para sólo permite un Destinatario, si necesita enviar a más destinatarios utilice el campo CC y CCo”";
+			}			
+		}
+		
+		private function enviarPassZip():void
+		{
+			if(correoVPara.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("Para enviar el password del archivo Zip es necesario ingresar un correo electrónico, favor de ingresarlo.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+				correoVPara.setFocus();
+				correoVPara.errorString = "Debe especificar un correo electrónico.";
+				return;
+			}
+			
+			if(!expMail.test(correoVPara.text))
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El formato de correo electrónico no es correcto.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+				correoVPara.setFocus();
+				correoVPara.errorString = "El formato de correo electrónico no es correcto.";
+				return;
+			} 	
+			
+			Send(812);//Envía password de Archivo Zip
+		}
+		
+		private function validFilter():void
+		{
+			if(monedaFilter.selectedIndex < 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El tipo de moneda es inválido.","Aviso",Alert.OK,null,null, iconAlert);				
+				monedaFilter.setFocus();
+				monedaFilter.errorString = "Seleccione una modena.";
+				return;
+			}
+			else
+			{
+				monedaFilter.errorString = "";
+				Send(810);
+			}		
+		}
+		
+		private function viewTWZip():void
+		{
+			if(rutaZIP.text.length > 0)
+			{
+				Alert.show("Derivado del proceso de enzipado de sus CFDI se le descontaron "  + creditosDescontar.text + " credito(s)","Mensaje FacturaXion",Alert.OK,null,null, iconOk);
+				twZip.visible=true;
+				twZip.isPopUp = true;
+			}
+		}
+		
+		private function closeTWZip():void
+		{
+			twZip.isPopUp = false;
+			twZip.visible = false;			
+		}
+		
+		private function navegarZip():void
+		{
+			var request:URLRequest = new URLRequest(rutaZIP.text);
+			request.contentType = "application/zip";
+			var fileRef:FileReference = new FileReference();
+			navigateToURL(request, '_blank');	
+		}
+		
+		private function validSendEmail():void
+		{
+			if(correoEnviado.text == "1")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.yesLabel = "Sí";
+				Alert.noLabel = "No";
+				Alert.show("El Password del Archivo Zip se ha enviado de manera correcta.", "Mensaje FacturaXion",Alert.OK, null, doReNew, iconOk);
+			}
+			else if(correoEnviado.text == "0")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Password del Archivo Zip no se pudo enviar de manera correcta, intente nuevamente.", "Mensaje FacturaXion",Alert.OK,null, null, iconDel);
+			}
+			
+			correoEnviado.text="";
+		}
+		
+		private function doReNew(eventObj:CloseEvent):void
+		{
+			if (eventObj.detail==Alert.YES) 
+			{
+				closeTWZip()();
+			}
+		}
+	]]>
+	</fx:Script>
+	<s:Panel visible="true" title="Generación de Archivo Zip de CFDI" width="100%" height="100%" >
+		<s:TextInput x="34" y="272" width="318" visible="false" enabled="false" editable="false" id="rutaZIP" valueCommit="viewTWZip();"/>
+		<s:TextInput x="34" y="272" width="318" visible="false" enabled="false" editable="false" id="passwordZIP"/>
+		<s:TextInput x="34" y="272" width="318" visible="false" enabled="false" editable="false" id="creditosDescontar"/>
+		<s:TextInput x="34" y="313" width="318" visible="false" id="correoEnviado" valueCommit="validSendEmail();" />
+		
+		<s:VGroup x="0" y="0" width="100%" height="100%" top="10" right="10" left="10" bottom="10">
+			<s:HGroup width="100%" horizontalAlign="right" paddingTop="10">
+				<s:Label id="lblRFCReceptor" text="RFC Receptor" width="124" fontWeight="bold" visible="false"/>
+				<s:Label id="lblNombreReceptor" text="Nombre Receptor" width="127" fontWeight="bold" x="244" visible="false"/>
+				<s:Label text="Sucursal" width="242" fontWeight="bold" x="680"/>
+				<s:Label text="Fecha Inicial" width="123" fontWeight="bold" x="377"/>
+				<s:Label text="Fecha Final" width="133" fontWeight="bold" x="1057"/>
+			</s:HGroup>
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="7" paddingRight="10">
+				<s:TextInput width="125" id="rfcReceptorFilter"  height="24" restrict="0-9A-Za-z&amp;" typographicCase="uppercase" maxChars="13" visible="false"/>
+				<s:TextInput width="125" id="nombreReceptorFilter" height="24" maxChars="40" visible="false"/>
+				<s:ComboBox id="cmbSucursalesFilter" creationComplete="Send(681);" width="240" x="678"/>
+				<mx:DateField id="fechaIniFilter" formatString="DD/MM/YYYY" width="125" height="24" creationComplete="DCInit('fechaIniFilter');" change="dateControl(fechaIniFilter,fechaFinFilter, DateField(event.target).selectedDate)" />
+				<mx:DateField id="fechaFinFilter" formatString="DD/MM/YYYY" width="125" height="24" creationComplete="DCInit('fechaFinFilter');"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" >
+				<s:Label text="Serie" width="125" fontWeight="bold" x="638"/>
+				<s:Label text="Folio" width="64" fontWeight="bold" x="769"/>
+				<s:Label text="Moneda" width="537" fontWeight="bold" x="579"/>
+			</s:HGroup>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingBottom="10" paddingRight="10">
+				<s:TextInput width="20" id="idRol" visible="false" x="437"/>
+				<s:TextInput width="125" id="serieFilter" height="24" restrict="0-9A-NM-Za-nm-z" typographicCase="uppercase" maxChars="25"/>
+				<s:NumericStepper id="folioFilter" width="65" maximum="50000000" height="24"/>
+				<s:ComboBox id="monedaFilter" width="125" creationComplete="Send(188);" height="24"></s:ComboBox>
+				<mx:Spacer width="50"/>
+				<mx:Button label="Filtrar" icon="@Embed(source='newIcons/01.png')" height="24" click="validFilter();" width="110"/>
+				<mx:Button label="Limpiar" icon="@Embed(source='newIcons/NetByte Design Studio - 0236.png')" height="24" click="limpiar();" width="110"/>
+				<mx:Button label="Generar Zip" icon="@Embed(source='assets/zip-icon.png')" height="24" click="descargaZip();" width="110"/>
+			</s:HGroup>
+			<mx:DataGrid width="100%" id="gridCCFE" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="100%">
+				<mx:columns>
+					<mx:DataGridColumn headerText="#" 				dataField="0" width="50" visible="false"/>
+					<mx:DataGridColumn headerText="RFC Receptor" 	dataField="1" width="120"/>
+					<mx:DataGridColumn headerText="Nombre Receptor" dataField="2" width="200"/>
+					<mx:DataGridColumn headerText="Sucursal" 		dataField="3" width="80"/>
+					<mx:DataGridColumn headerText="Fecha" 			dataField="4" width="80"/>
+					<mx:DataGridColumn headerText="Serie" 			dataField="5" width="100"/>
+					<mx:DataGridColumn headerText="Folio" 			dataField="6" width="30"/>
+					<mx:DataGridColumn headerText="Total Impuestos" dataField="7" width="100" textAlign="right"/>
+					<mx:DataGridColumn headerText="Total Cfdi" 	dataField="8" width="100" textAlign="right"/>
+					<mx:DataGridColumn headerText="Estado" 			dataField="9" width="60" textAlign="center"/>
+					<mx:DataGridColumn headerText="UG" 				dataField="11" width="60" textAlign="center"/>
+				</mx:columns>
+			</mx:DataGrid>
+			
+			<s:HGroup width="100%" horizontalAlign="right" paddingTop="10" paddingBottom="10" paddingRight="10">
+				<s:Label text="* NOTA: Se descontará un crédito cada 200 archivos enzipados" width="371" textAlign="right" fontWeight="bold" x="735"/>
+			</s:HGroup>
+		</s:VGroup>
+
+		<s:TitleWindow id="twZip" width="580" height="310" backgroundColor="#ffffff" visible="false" title="Enzipado de CFDI" close="closeTWZip();" horizontalCenter="-35" y="150" >
+			<s:Label x="30.5" y="23" visible="true" text="Descarga y Envío de Password de Archivo CFDI Zip"  fontSize="17" fontWeight="bold"/>		
+			
+			<s:TextInput x="30.5" y="80" width="250"   id="correoVPara" change="if(correoVPara.text!=&quot;&quot;){checkMail(correoVPara);}"  height="24" toolTip="Agregue sólo una dirección de correo"/>
+			<s:TextInput x="30.5" y="124" width="250"   id="correoVCC"  height="24" toolTip="Agregue una o varias cuentas de correo separadas con punto y coma (;)"/>
+			<s:TextInput x="30.5" y="168" width="250"   id="correoVCCo" height="24"  toolTip="Agregue una o varias cuentas de correo separadas con punto y coma (;)"/>
+			<s:TextArea  x="297"  y="79" width="250" id="correoVMSG"  height="113"/>
+			
+			<s:Label x="30.5" y="67" visible="true" text="Para : "/>
+			<s:Label x="299" y="66" visible="true" text="Mensaje : "/>
+			<s:Label x="30.5" y="111" visible="true" text="Cc : "/>
+			<s:Label x="30.5" y="155" visible="true" text="CCo : "/>
+			
+			<mx:Button x="29.5" y="221" click="navegarZip();" label="      Descargar Zip" height="24" fontWeight="bold"  width="215" icon="@Embed(source='assets/zip-64X64.png')"/>
+			<mx:Button x="297" y="221" click="enviarPassZip();" label="  Enviar Password por Correo" height="24" fontWeight="bold"  width="250" icon="@Embed(source='assets/mail-64X64.png')" id="enviaCfdiXMail"/>
+			
+		</s:TitleWindow>
+		
+	</s:Panel>
+</s:Application>

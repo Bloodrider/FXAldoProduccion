@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Panel title="Búsqueda para Estatus de Liberación" fontSize="14" color="#0B5798" width="1043" height="680" y="0" horizontalCenter="0">
+		<s:Group x="10" y="10" width="1021" height="555">
+		
+		<s:Label x="21" y="75" text="Por favor ingrese los Criterios de Selección para su Búsqueda:" fontFamily="Courier New" color="#000000" width="515"/>
+		<s:Group x="0" y="95" width="1021" height="232">
+			<s:Label x="55" y="16" text="Manifiesto:" width="83" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:TextInput x="132" y="10"/>
+			<s:Label x="325" y="16" text="BL:" width="40" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:TextInput x="422" y="10" width="167"/>
+			<s:Label x="55" y="46" text="Solicitud:" width="83" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:TextInput x="132" y="40"/>
+			<s:Label x="326" y="46" text="Agente Aduanal:" width="98" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:ComboBox x="423" y="42"/>
+			<s:Label x="55" y="76" text="Archivo:" width="83" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:TextInput x="132" y="70"/>
+			<s:Label x="326" y="76" text="Naviera:" width="98" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:ComboBox x="423" y="72"/>
+			<mx:DateField x="132" y="105"/>
+			<mx:DateField x="284" y="105"/>
+			<s:Label x="55" y="111" text="Liberado del:" color="#000000" fontSize="12" fontWeight="bold"/>
+			<s:Label x="259" y="112" text="al:" fontSize="12" color="#000000" fontWeight="bold"/>
+			<mx:Button id="ubicaActaConstitutiva" width="117" height="24" icon="@Embed(source='assets/search_24.png')" x="472" y="104" label="Buscar"/>
+			<mx:DataGrid x="55" y="137" width="839" height="84">
+				<mx:columns>
+					
+					<mx:DataGridColumn width="60" headerText="BL" dataField="col1" fontSize="11"/>
+					<mx:DataGridColumn width="90" headerText="Manifiesto" dataField="col2" fontSize="11"/>
+					<mx:DataGridColumn width="70" headerText="Naviera" dataField="col3" fontSize="11"/>
+					<mx:DataGridColumn width="120" headerText="Agencia Aduanal" dataField="col1" fontSize="11"/>
+					<mx:DataGridColumn width="130" headerText="Número de Solicitud" dataField="col2" fontSize="11"/>
+					<mx:DataGridColumn width="140" headerText="Nombre del Archivo" dataField="col3" fontSize="11"/>
+					<mx:DataGridColumn width="150" headerText="Fecha de Solicitud" dataField="col1" fontSize="11"/>
+					<mx:DataGridColumn width="60" headerText="Estatus" dataField="col2" fontSize="11"/>
+					
+					
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Image x="811" y="6" source="iconDesktop/2978-64.png"/>
+		</s:Group>
+		<mx:HRule x="0" y="95" width="1021"/>
+		<s:Label x="21" y="335" text="Por favor ingrese los Criterios para Búsqueda por Solicitud:" fontFamily="Courier New" color="#000000" width="515"/>
+		<s:Group x="0" y="355" width="1021" height="200">
+			<s:Label x="55" y="16" text="País de Origen:" width="89" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:Label x="341" y="16" text="RFC:" width="40" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:ComboBox x="154" y="9"/>
+			<s:Label x="53" y="48" text="Puerto de Arribo:" width="102" fontSize="12" color="#000000" fontWeight="bold"/>
+			<s:ComboBox x="154" y="41"/>
+			<s:ComboBox x="432" y="9" width="157"/>
+			<mx:Button id="ubicaActaConstitutiva0" width="117" height="24" icon="@Embed(source='assets/search_24.png')" x="472" y="41" label="Buscar"/>
+			<mx:DataGrid x="53" y="74" width="839" height="84">
+				<mx:columns>
+					<mx:DataGridColumn width="130" headerText="Número de Solicitud" dataField="col2" fontSize="11"/>
+					<mx:DataGridColumn width="60" headerText="BL" dataField="col1" fontSize="11"/>
+					<mx:DataGridColumn width="90" headerText="Manifiesto" dataField="col2" fontSize="11"/>
+					<mx:DataGridColumn width="70" headerText="Naviera" dataField="col3" fontSize="11"/>
+					<mx:DataGridColumn width="120" headerText="Agencia Aduanal" dataField="col1" fontSize="11"/>
+					<mx:DataGridColumn width="130" headerText="Puerto de Arribo" dataField="col2" fontSize="11"/>
+					<mx:DataGridColumn width="140" headerText="Nombre del Archivo" dataField="col3" fontSize="11"/>
+					<mx:DataGridColumn width="150" headerText="Fecha de Solicitud" dataField="col1" fontSize="11"/>
+					<mx:DataGridColumn width="130" headerText="RFC" dataField="col2" fontSize="11"/>
+					<mx:DataGridColumn width="60" headerText="Estatus" dataField="col2" fontSize="11"/>
+	
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:HRule x="0" y="0" width="1021"/>
+			<mx:Button id="ubicaActaConstitutiva1" width="117" height="24" icon="@Embed(source='assets/back-icon_32.png')" x="432" y="167" label="Regresar"/>
+			<mx:Image x="811" y="6" source="iconDesktop/2978-64.png"/>
+		</s:Group>
+		<s:Group x="0" y="0" width="1021" height="65">
+		</s:Group>
+		</s:Group>
+	</s:Panel>
+</s:Application>

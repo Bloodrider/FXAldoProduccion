@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="0" minHeight="0" width="956" pageTitle="Addenda Super Neto" height="468" backgroundColor="#FFFFFF">
+	<fx:Script source="r3Take.as"/>
+	<fx:Style source="fx.css" />
+	<fx:Script>
+		<![CDATA[
+			import com.Captcha;
+			
+			import flash.events.*;
+			import flash.utils.setTimeout;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			
+			import spark.events.IndexChangeEvent;
+			
+			public var addendaValor:String;
+			public var stringData:String;
+			private var xmlData:XML;
+			private var bandera:int;
+			private var addField:String;
+			private var tiposDocumentos:ArrayCollection;
+			private var monedas:ArrayCollection;
+			private var tDescuento:ArrayCollection;
+			private var numFtrCnt:NumberFormatter = new NumberFormatter;
+			private var numFtrImp:NumberFormatter = new NumberFormatter;
+			private var conceptos:ArrayCollection= new ArrayCollection();
+			private var totalDescuentos:Number=0;
+			private var totalTraslados:Number=0;
+			private var totalRetenciones:Number=0;
+			private var impuestosGb:ArrayCollection=new ArrayCollection();
+			private var subTotal:Number=0;
+			private var hayTraslados:Boolean=false;
+			private var hayRetenciones:Boolean=false;
+			private var importeConLetra:String;
+			
+			/*protected function setParametros(data:String)
+			{
+				xmlData=new XML(data);
+			}*/
+			
+			protected function agregar_clickHandler(event:MouseEvent):void
+			{
+				if(folio.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el Folio.","Error",Alert.OK,null,null, null);
+					return;					
+				}
+				
+				if(noProveedor.text.length==0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar su Número de Proveedor.","Error",Alert.OK,null,null, null);
+					return;
+				}
+
+				if(plantaEntrega.textInput.text.length==0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el ID de la Planta.","Error",Alert.OK,null,null, null);
+					return;
+				}
+
+				if(tipoDescuento.textInput.text.length==0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el Tipo de Descuento.","Error",Alert.OK,null,null, null);
+					return;
+				}
+				
+				addendaValor="";
+				addendaValor+='<mabe:Factura xmlns:mabe="http://recepcionfe.mabempresa.com/cfd/addenda/v1" xsi:schemaLocation="http://recepcionfe.mabempresa.com/cfd/addenda/v1 http://recepcionfe.mabempresa.com/cfd/addenda/v1/mabev1.xsd"';
+				addendaValor+=' version="1.0" tipoDocumento="';
+				addendaValor+=tipoComprobante.selectedItem.label; // Obligatorio
+				addendaValor+='" folio="';
+				addendaValor+=folio.text;// Obligatorio
+				addendaValor+='" fecha="';
+				addendaValor+=fecha.text;// Obligatorio
+				addendaValor+='"';
+				if(noOrdComp.text.length>0)
+				{
+					addendaValor+=' ordenCompra="';
+					addendaValor+=noOrdComp.text;
+					addendaValor+='"';
+				}
+				if(referencia1.text.length>0)
+				{
+					addendaValor+=' referencia1="';
+					addendaValor+=referencia1.text;
+					addendaValor+='"';
+				}
+				if(referencia2.text.length>0)
+				{
+					addendaValor+=' referencia2="';
+					addendaValor+=referencia2.text;
+					addendaValor+='"';
+				}
+				addendaValor+='><mabe:Moneda tipoMoneda="';
+				addendaValor+=moneda.selectedItem[0];// Obligatorio
+				addendaValor+='"';
+				if(tipoCambio.text.length>0)
+				{
+					addendaValor+=' tipoCambio="';
+					addendaValor+=tipoCambio.text;
+					addendaValor+='"';
+					addendaValor+=' importeConLetra="';
+					// obtenr importe con letra
+					addendaValor+=importeConLetra;
+					addendaValor+='"';
+				}
+				addendaValor+='/><mabe:Proveedor codigo="';
+				addendaValor+=noProveedor.text;// Obligatorio
+				addendaValor+='"/>';
+				addendaValor+='<mabe:Entrega plantaEntrega="';
+				addendaValor+=plantaEntrega.textInput.text;// Obligatorio
+				addendaValor+='"';
+				if(callePlanta.text.length>0)
+				{
+					addendaValor+=' calle="';
+					addendaValor+=callePlanta.text;
+					addendaValor+='"';
+				}
+				if(noExtPlanta.text.length>0)
+				{
+					addendaValor+=' noExterior="';
+					addendaValor+=noExtPlanta.text;
+					addendaValor+='"';
+				}
+				if(noIntPlanta.text.length>0)
+				{
+					addendaValor+=' noInterior="';
+					addendaValor+=noIntPlanta.text;
+					addendaValor+='"';
+				}
+				if(cpPlanta.text.length>0)
+				{
+					addendaValor+=' codigoPostal="';
+					addendaValor+=cpPlanta.text;
+					addendaValor+='"';
+				}
+				addendaValor+='/><mabe:Detalles>';
+				var numPar:int=0;
+				numPar = conceptos.length;
+				for(var det:int=0; det < numPar; det++)
+				{            
+					if(conceptos[det][1].toString().length>0 && conceptos[det][1].toString().length<48)
+					{
+						addendaValor+='<mabe:Detalle noLineaArticulo="';
+						addendaValor+=conceptos[det][0].toString();// Obligatorio
+						addendaValor+='" codigoArticulo="';
+						addendaValor+=conceptos[det][1].toString().substr(0,47);// Obligatorio
+						addendaValor+='" descripcion="';
+						addendaValor+=conceptos[det][2].toString().substr(0,50);// Obligatorio
+						addendaValor+='" unidad="';
+						addendaValor+=conceptos[det][3].toString().substr(0,3);// Obligatorio
+						addendaValor+='" cantidad="';
+						addendaValor+=conceptos[det][4].toString();// Obligatorio
+						addendaValor+='" precioSinIva="';
+						addendaValor+=conceptos[det][5].toString();// Obligatorio
+						addendaValor+='" precioConIva="';
+						addendaValor+=conceptos[det][6].toString();
+						addendaValor+='" importeSinIva="';
+						addendaValor+=conceptos[det][7].toString();// Obligatorio
+						addendaValor+='" importeConIva="';
+						addendaValor+=conceptos[det][8].toString();
+						addendaValor+='"/>';
+					}
+					else
+					{
+						Alert.show("No se ha capturado el código de producto en la línea "+conceptos[det][0].toString(),"Error",Alert.OK,null,null, null);
+						return;
+					}
+				}
+				addendaValor+='</mabe:Detalles>';
+				if(totalDescuentos>0)
+				{
+					addendaValor+='<mabe:Descuentos tipo="';
+					addendaValor+=tipoDescuento.textInput.text;// Obligatorio
+					if (descripcionDescuento.text.length>0)
+					{
+						addendaValor+='" descripcion="';
+						addendaValor+=descripcionDescuento.text;
+					}
+					addendaValor+='" importe="';
+					addendaValor+=impDescuento.text;// Obligatorio
+					addendaValor+='"/>';
+				}
+				
+				
+				addendaValor+='<mabe:Subtotal importe="';
+				addendaValor+=impSubtotal.text;// Obligatorio
+				addendaValor+='"/>';
+				
+				if(hayTraslados==true)
+				{
+					addendaValor+='<mabe:Traslados>';
+					for(var idxTraslados:int=0;idxTraslados<impuestosGb.length;idxTraslados++)
+					{
+						if(impuestosGb[idxTraslados][0]=="T")
+						{
+							addendaValor+='<mabe:Traslado tipo="';
+							addendaValor+=impuestosGb[idxTraslados][1];// Obligatorio
+							addendaValor+='" tasa="';
+							addendaValor+=impuestosGb[idxTraslados][2];// Obligatorio
+							addendaValor+='" importe="';
+							addendaValor+=impuestosGb[idxTraslados][3];// Obligatorio
+							addendaValor+='"/>';
+						}
+					}
+					addendaValor+='</mabe:Traslados>';
+				}
+				
+				if(hayRetenciones==true)
+				{
+					addendaValor+='<mabe:Retenciones>';
+					for(var idxRetenciones:int=0;idxRetenciones<impuestosGb.length;idxRetenciones++)
+					{
+						if(impuestosGb[idxRetenciones][0]=="R")
+						{
+							addendaValor+='<mabe:Retencion tipo="';
+							addendaValor+=impuestosGb[idxRetenciones][1];// Obligatorio
+							addendaValor+='" tasa="';
+							addendaValor+=impuestosGb[idxRetenciones][2];// Obligatorio
+							addendaValor+='" importe="';
+							addendaValor+=impuestosGb[idxRetenciones][3];// Obligatorio
+							addendaValor+='"/>';
+						}
+					}
+					addendaValor+='</mabe:Retenciones>';
+				}
+				
+				addendaValor+='<mabe:Total importe="';
+				addendaValor+=impTotal.text;// Obligatorio
+				addendaValor+='"/>';
+				addendaValor+='</mabe:Factura>';
+				
+				//var addendaXml:XML=new XML(addendaValor);
+				trace(addendaValor.toString());
+				root.dispatchEvent(new Event("complete",true,false));
+			}
+			
+			private function rellenaDatosPlanta()
+			{
+				if (plantaEntrega.selectedIndex>-1)
+				{
+					callePlanta.text=plantaEntrega.selectedItem[1];
+					noExtPlanta.text=plantaEntrega.selectedItem[2];
+					noIntPlanta.text=plantaEntrega.selectedItem[3];
+					cpPlanta.text=plantaEntrega.selectedItem[4];
+				}
+				else
+				{
+					callePlanta.text="";
+					noExtPlanta.text="";
+					noIntPlanta.text="";
+					cpPlanta.text="";
+				}
+			}
+			
+			public function setParametros(data:XML):void
+			{
+					numFtrCnt.precision = 2;
+					numFtrCnt.useThousandsSeparator = false;
+					numFtrCnt.useNegativeSign = true;
+					numFtrCnt.rounding = "none";
+					
+					numFtrImp.precision = 6;
+					numFtrImp.useThousandsSeparator = false;
+					numFtrImp.useNegativeSign = true;
+					numFtrImp.rounding = "none";
+					
+					xmlData=data;
+					
+					if (xmlData.@['tipoComprobante']=="ingreso")
+					{
+						tiposDocumentos=new ArrayCollection([{label:"FACTURA"}]);
+					}
+					else if(xmlData.@['tipoComprobante']=="egreso")
+					{
+						tiposDocumentos=new ArrayCollection([{label:"NOTA CREDITO"},{label:"NOTA CARGO"}]);
+					}
+					
+					tipoComprobante.dataProvider=tiposDocumentos;
+					tipoComprobante.selectedIndex=0;
+					
+					importeConLetra=xmlData.@['importeTotalLetra'];
+					
+					folio.text=xmlData.@['serie']+xmlData.@['folio'];
+					folio.text=folio.text.substr(0,20);
+					
+					noOrdComp.text=xmlData.@['numeroOrdenCompra'];
+					noOrdComp.text=noOrdComp.text.substr(0,15);
+					
+					
+					monedas=new ArrayCollection([	{0:"MXN"},
+													{0:"USD"},
+													{0:"XEU"}]);
+					
+					moneda.dataProvider=monedas;
+					var nombreMoneda:String=xmlData.@['nombreMoneda'];
+					moneda.enabled=false;
+					switch(nombreMoneda)
+					{
+						case "PESOS":
+								moneda.selectedIndex=0;
+								//setOnTipoCambio();
+							break;
+						case "DOLARES":
+								moneda.selectedIndex=1;
+								//setOnTipoCambio();
+							break;
+						case "EUROS":
+								moneda.selectedIndex=2;
+								//setOnTipoCambio();
+							break;
+						default:
+							moneda.enabled=true;
+							break;
+					}
+					
+					tipoCambio.text=numFtrImp.format(Number(xmlData.@['tipoCambio']));
+										
+					var plantasEntrega:ArrayCollection= new ArrayCollection(
+						[	{0:"210",1:"Manzana 10 Eje 128",		2:"S/N",	3:"",		4:"78395"},
+							{0:"220",1:"Oriente162",				2:"296",	3:"",		4:"15530"},
+							{0:"240",1:"Av Productividad",			2:"125",	3:"",		4:"25169"},
+							{0:"270",1:"Acceso 11",					2:"21",		3:"",		4:"76130"},
+							{0:"310",1:"5 de Febrero",				2:"1325",	3:"",		4:"76120"},
+							{0:"330",1:"Carr Federal 51",			2:"K 110",	3:"",		4:"38158"},
+							{0:"420",1:"Carr Miguel Aleman Km 5",	2:"S/N",	3:"",		4:"67128"},
+							{0:"720",1:"Ave. Industrias",			2:"3835",	3:"",		4:"78395"},
+							{0:"520",1:"Ave. Palmas",				2:"100",	3:"",		4:"11000"},
+							{0:"560",1:"Carr Federal 51",			2:"K 110",	3:"",		4:"38158"},
+							{0:"510",1:"Ave. Palmas",				2:"100",	3:"",		4:"11000"},
+							{0:"650",1:"",							2:"",		3:"",		4:""},
+							{0:"005",1:"Insurgentes Sur",			2:"664",	3:"Pso 3",	4:"31000"},
+							{0:"110",1:"Ingenieros Militares",		2:"156",	3:"",		4:"11210"},
+							{0:"920",1:"Ingenieros Militares",		2:"156",	3:"",		4:"11210"},
+							{0:"922",1:"Ingenieros Militares",		2:"156",	3:"",		4:"11210"},
+							{0:"924",1:"Ave. Palmas",				2:"100",	3:"",		4:"11000"}	]);
+					plantaEntrega.dataProvider=plantasEntrega;
+						
+					//var conceptos:ArrayCollection= new ArrayCollection();
+					for(var idxConceptos:int=0; idxConceptos<xmlData.child("partidas").elements("*").length();idxConceptos++)
+					{
+						var precioUnitario:Number=Number(xmlData.child("partidas").elements("*")[idxConceptos].@['dato2']);
+						var tmpImpuestos:String=xmlData.child("partidas").elements("*")[idxConceptos].@['dato6'];
+						var impuestos:Array=tmpImpuestos.split("#");
+						var idxImpuestos:int=0;
+						var incluyeIVA:Boolean=false;
+						var impuesto:Array;
+						var precioConIVA:Number;
+						var cantidad:Number;
+						var precioUnitario:Number;
+						var idxImpuesto:int=0;
+						cantidad=Number(xmlData.child("partidas").elements("*")[idxConceptos].@['dato1']);
+						precioUnitario=Number(xmlData.child("partidas").elements("*")[idxConceptos].@['dato2']);
+						
+						while(idxImpuestos<impuestos.length && incluyeIVA==false)
+						{
+							impuesto=impuestos[idxImpuesto].split("|");
+							if((impuesto[0]=="IVA")&&(Number(impuesto[1])>=0))
+							{
+								incluyeIVA=true;	
+							}
+							else
+							{
+								incluyeIVA=false;
+								idxImpuestos++;
+							}
+						}
+						
+						if(incluyeIVA==true)
+						{
+							precioConIVA=Number(xmlData.child("partidas").elements("*")[idxConceptos].@['dato2'])*(1+Number(impuesto[1])/100);
+						}
+						else
+						{
+							precioConIVA=Number(xmlData.child("partidas").elements("*")[idxConceptos].@['dato2']);
+						}
+						
+						conceptos.addItem({
+											0:int(xmlData.child("partidas").elements("*")[idxConceptos].@['numero'])+1,	//numero de partida
+											1:"",																		//Código de producto
+											2:xmlData.child("partidas").elements("*")[idxConceptos].@['dato0'],			//Descripción
+											3:xmlData.child("partidas").elements("*")[idxConceptos].@['dato14'],		//Unidad de medida
+											4:numFtrCnt.format(cantidad),												//Cantidad
+											5:numFtrImp.format(precioUnitario),											//Precio neto
+											6:numFtrImp.format(precioConIVA),													//Precio con IVA
+											7:numFtrImp.format(cantidad*precioUnitario),										//Importe sin IVA
+											8:numFtrImp.format(cantidad*precioConIVA)											//Importe con IVA
+											});
+						totalDescuentos+=Number(xmlData.child("partidas").elements("*")[idxConceptos].@['dato5']);
+						subTotal+=Number(xmlData.child("partidas").elements("*")[idxConceptos].@['dato3']);
+					}
+					detalle.dataProvider=conceptos;
+					
+                    impDescuento.text=numFtrImp.format(Math.abs(totalDescuentos).toString());
+					
+					tDescuento=new ArrayCollection([	{0:"CARGO"},
+														{0:"DESCUENTO"}]);
+					tipoDescuento.dataProvider=tDescuento;
+					tipoDescuento.selectedIndex=(totalDescuentos>0)?1:0;
+					descripcionDescuento.enabled=(totalDescuentos>0)?true:false;
+										
+					var idxImpuestosGb:int;
+					for(idxImpuestosGb=0; idxImpuestosGb<xmlData.child("totales").elements("*").length(); idxImpuestosGb++)
+					{
+						if(	xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato0']!="Subtotal" &&
+							xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato0']!="Total"
+							)
+						{
+							if(Number(xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato1'])>=0)
+							{
+								totalTraslados+=Number(xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato1']);
+							}
+							else
+							{
+								totalRetenciones+=Number(xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato1']);
+							}
+								
+							impuestosGb.addItem({
+												0:(Number(xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato1'])>=0)?"T":"R",
+												1:xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato4'],
+												2:xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato5'],
+												3:numFtrImp.format(Math.abs(Number(xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato1'])))
+												});
+							if(Number(xmlData.child("totales").elements("*")[idxImpuestosGb].@['dato1'])>=0)
+							{
+								hayTraslados=true;
+							}
+							else
+							{
+								hayRetenciones=true;
+							}
+							
+						}
+						
+					}
+					totalTraslado.text=numFtrImp.format(Math.abs(totalTraslados).toString());
+					totalRetencion.text=numFtrImp.format(Math.abs(totalRetenciones).toString());
+					impSubtotal.text=numFtrImp.format(Math.abs(Number(xmlData.child("totales").elements("*")[0].@['dato1'])).toString());
+					impTotal.text=numFtrImp.format(Math.abs(Number(xmlData.child("totales").elements("*")[idxImpuestosGb-1].@['dato1'])).toString());
+			}
+
+
+		]]>
+	</fx:Script>
+
+
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<!--<s:Panel height="185" title="Addenda Super Neto (Servicios)" horizontalCenter="0" verticalCenter="0" width="435">-->
+		<s:Label x="24" y="48" text="Tipo de Documento" width="128" height="15"/>
+		<s:Label x="301" y="79" text="Referencia 1" width="76"/>
+		<s:ComboBox x="144" y="40" id="tipoComprobante" width="128" maxChars="15" enabled="false" tabIndex="1"/>
+		<s:TextInput x="376" y="71" id="referencia1" maxChars="20" tabIndex="5"/>
+		<s:TextInput x="279" y="154" id="callePlanta" maxChars="35" tabIndex="11"/>
+		<s:TextInput x="471" y="154" id="noExtPlanta" width="36" maxChars="5" tabIndex="12"/>
+		<s:TextInput x="584" y="156" id="noIntPlanta" width="36" maxChars="5" tabIndex="13"/>
+		<s:TextInput x="676" y="155" id="cpPlanta" width="72" maxChars="5" tabIndex="14"/>
+		<s:Label x="522" y="79" text="Referencia 2" width="74"/>
+		<s:TextInput x="617" y="71" id="referencia2" maxChars="20" tabIndex="6"/>
+		
+		<mx:Button id="agregar" width="100" height="24" label="Agregar"  click="agregar_clickHandler(event)" icon="@Embed(source='newIcons/edit-icon_24.png')" x="27" y="426"/>
+		<mx:HRule x="119" y="20" width="827"/>
+		<s:Label x="8" y="15" text="Addenda de Mabe" width="176" height="16"/>
+		<s:TextInput x="376" y="41" maxChars="20"  id="folio" tabIndex="2"/>
+		<s:TextInput x="144" y="71" maxChars="15"  id="noOrdComp" width="126" enabled="true" tabIndex="4"/>
+		<s:TextInput x="376" y="111" maxChars="20"  id="tipoCambio" width="72" restrict="0-9." enabled="false" tabIndex="8"/>
+		<s:TextInput x="617" y="111" maxChars="9"  id="noProveedor" width="86" tabIndex="9"/>
+		<s:Label x="522" y="118" text="No. Proveedor" width="74"/>
+		<s:Label x="24" y="151" text="Entrega de Mercancía:" width="80"/>
+		<s:Label x="104" y="163" text="Planta" width="44"/>
+		<s:Label x="239" y="161" text="Calle" width="32"/>
+		<s:Label x="419" y="153" text="No. Exterior" width="44"/>
+		<s:Label x="528" y="153" text="No. Interior" width="44"/>
+		<s:Label x="637" y="163" text="C.P." width="35"/>
+		<s:Label x="302" y="118" text="Tpo. Cambio" width="74"/>
+		<s:Label x="24" y="118" text="Moneda" width="88"/>
+		<s:Label x="300" y="48" text="Folio&#xd;" width="35"/>
+		<s:Label x="522" y="48" text="Fecha" width="43"/>
+		<s:Label x="24" y="78" text="No. Ord. Comp." width="88"/>
+		<mx:DateField id="fecha" x="617" y="40" width="124" formatString="YYYY-MM-DD"
+				creationComplete="fecha.selectedDate = new Date();"
+				dayNames="['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']"
+				monthNames="['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']" 
+				enabled="false" tabIndex="3" />
+		<s:ComboBox x="144" y="110" id="moneda" width="128" maxChars="15" enabled="true" labelField="0" tabIndex="7"/>
+
+	<mx:DataGrid editable="true" width="909" id="detalle" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="158" x="24" y="205" tabChildren="true" tabIndex="15">
+		<mx:columns>
+			<mx:DataGridColumn 	textAlign="right" 	headerText="No."			dataField="0" editable="false" width="30" visible="true"/>
+			<mx:DataGridColumn id="codigos" 		headerText="Código"			dataField="1" editable="true" width="100" />
+			<mx:DataGridColumn 						headerText="Descripción" 	dataField="2" editable="false" width="200"/>
+			<mx:DataGridColumn 						headerText="Unidad" 		dataField="3" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="right" 	headerText="Cantidad" 		dataField="4" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="right" 	headerText="Precio S/IVA" 	dataField="5" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="right" 	headerText="Precio C/IVA" 	dataField="6" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="right" 	headerText="Importe S/IVA"	dataField="7" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="right" 	headerText="Importe C/IVA"	dataField="8" editable="false" width="80"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<s:ComboBox x="144" y="152" id="plantaEntrega" width="77" maxChars="15" enabled="true" labelField="0" change="rellenaDatosPlanta();" tabIndex="10"/>
+	<s:TextInput x="392" y="384" maxChars="35"  id="descripcionDescuento" width="367" tabIndex="17"/>
+	<s:TextInput x="840" y="384" maxChars="20"  id="impDescuento" width="93" restrict="0-9." textAlign="right" editable="false" tabIndex="18"/>
+	<s:Label x="787" y="391" text="Importe" width="45"/>
+	<s:Label x="318" y="391" text="Descripción" width="74"/>
+	<s:TextInput x="666" y="433" maxChars="20"  id="impSubtotal" width="93" restrict="0-9." textAlign="right" editable="false" tabIndex="20"/>
+	<s:TextInput x="840" y="432" maxChars="20"  id="impTotal" width="93" restrict="0-9." textAlign="right" editable="false" tabIndex="21"/>
+	<s:TextInput x="299" y="433" maxChars="20"  id="totalTraslado" width="93" restrict="0-9." textAlign="right" editable="false" tabIndex="18"/>
+	<s:TextInput x="483" y="433" maxChars="20"  id="totalRetencion" width="93" restrict="0-9." textAlign="right" editable="false" tabIndex="19"/>
+	<s:Label x="404" y="431" text="Total de Retenciones" width="71"/>
+	<s:Label x="229" y="430" text="Total de Traslados" width="61"/>
+	<s:Label x="787" y="440" text="Total" width="45"/>
+	<s:Label x="613" y="440" text="Subtotal" width="45"/>
+	<s:Label x="24" y="391" text="Descuento:         Tipo" width="117"/>
+	<s:ComboBox x="168" y="382" id="tipoDescuento" width="128" maxChars="15" labelField="0" tabIndex="16"/>		
+	<!--</s:Panel>-->
+	
+</s:Application>

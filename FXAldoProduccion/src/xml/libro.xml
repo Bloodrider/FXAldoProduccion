@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<libro>
+	<config>
+		<cover>
+			<img>images/portada1.png</img>
+		</cover>
+		<background>
+			<img>images/wood_pine.jpg</img>
+		</background>
+	</config>
+	<book>
+		<page>images/page-1.png</page>
+		<page>images/page-2.png</page>
+		<page>images/page-3.png</page>
+		<page>images/page-4.png</page>
+		<page>images/page-5.png</page>
+		<page>images/page-6.png</page>
+		<page>images/page-7.png</page>
+		<page>images/page-8.png</page>
+		<page>images/page-9.png</page>
+		<page>images/page-10.png</page>
+		<page>images/page-11.png</page>
+	</book>
+</libro>

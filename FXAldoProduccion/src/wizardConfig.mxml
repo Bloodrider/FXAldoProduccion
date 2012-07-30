@@ -1,0 +1,1506 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow  
+	name="wizardNewConfig" title="Administrador de Configuración" 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns2="com.flashdev.file.*" 
+	close="closeTW(event);" 
+	height="430" width="100%">
+	
+<s:states>
+	<s:State name="INIT"/>
+	<s:State name="CORP"/>
+	<s:State name="EMPS"/>
+	<s:State name="SUCR"/>
+	<s:State name="CERT"/>
+	<s:State name="FOLS"/>
+	<s:State name="SMIT"/>
+</s:states>
+
+<fx:Script>
+<![CDATA[
+	import mx.events.FlexEvent;
+	import mx.events.ListEvent;
+	
+	private function myEasingFunction(t:Number, b:Number, c:Number, d:Number):Number 
+	{
+		if ((t /= d) < (1 / 2.75)) {
+			return c * (7.5625 * t * t) + b;
+		}
+		else if (t < (2 / 2.75)) {
+			return c * (7.5625 * (t-=(1.5/2.75)) * t + .75) + b;
+		}
+		else if (t < (2.5 / 2.75)) {
+			return c * (7.5625 * (t-=(2.25/2.75)) * t + .9375) + b;
+		}
+		else {
+			return c * (7.5625 * (t-=(2.625/2.75)) * t + .984375) + b;
+		}
+	}
+]]>
+</fx:Script>
+	
+<fx:Declarations>
+	<s:RadioButtonGroup id="tipoPersona"/>
+	
+	<mx:Sequence id="glowButton" repeatCount="100">
+		<mx:Glow duration="4000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="10.0" blurYFrom="0.0" blurYTo="10.0" color="#054a95" /> 	
+		<mx:Glow duration="4000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="10.0" blurXTo="0.0" blurYFrom="10.0" blurYTo="0.0" color="#054a95" /> 	
+	</mx:Sequence>
+	
+	<mx:Move id="showEffect" 
+			 yFrom="-25" xTo="0" yTo="0" 
+			 duration="2500" 
+			 easingFunction="myEasingFunction"/>	
+	
+	<mx:EmailValidator
+		source="{correoEmp}" property="text" requiredFieldError="El correo electrónico es un campo es obligatorio"  
+		invalidCharError="El formato de correo electrónico es incorrecto."		
+		invalidDomainError="El formato del dominio del correo electrónico es incorrecto."
+		invalidPeriodsInDomainError="El formato del dominio del correo electrónico es incorrecto."
+		missingPeriodInDomainError="El correo electrónico no contiene un dominio."
+		missingUsernameError="El correo electrónico no contiene un usuario de dominio."
+		missingAtSignError="La cuenta de correo electrónico no contiene el carácter @"
+	 	tooManyAtSignsError="La cuenta de correo electrónico contiene el carácter @ más de una vez"
+		valid="validNextMAILEMP.text = '1';" 
+		invalid="validNextMAILEMP.text = '0'" trigger="{correoEmp}" triggerEvent="change"/>
+	
+	<mx:EmailValidator
+		source="{correoSuc}" property="text" requiredFieldError="El correo electrónico es un campo es obligatorio" 
+		invalidCharError="El formato de correo electrónico es incorrecto."		
+		invalidDomainError="El formato del dominio del correo electrónico es incorrecto."
+		invalidPeriodsInDomainError="El formato del dominio del correo electrónico es incorrecto."
+		missingPeriodInDomainError="El correo electrónico no contiene un dominio."
+		missingUsernameError="El correo electrónico no contiene un usuario de dominio."
+		missingAtSignError="La cuenta de correo electrónico no contiene el carácter @" 
+		tooManyAtSignsError="La cuenta de correo electrónico contiene el carácter @ más de una vez"
+		valid="validNextMAILSUC.text = '1';" 
+		invalid="validNextMAILSUC.text = '0'" trigger="{correoSuc}" triggerEvent="change"/>
+		
+</fx:Declarations>
+<fx:Script source="r3Take.as"/>
+<fx:Script source="validateIsEmpty.as"/>
+<fx:Style source="fx.css"/>
+<fx:Script>
+<![CDATA[
+	import mx.controls.Alert;
+	import mx.core.IFlexDisplayObject;
+	import mx.events.CloseEvent;
+	import mx.managers.PopUpManager;
+	
+	import spark.components.*;
+	
+	[Embed(source="assets/num/1.gif")]	[Bindable]	public var icon1:Class;
+	[Embed(source="assets/num/2.gif")]	[Bindable]	public var icon2:Class;
+	[Embed(source="assets/num/3.gif")]	[Bindable]	public var icon3:Class;
+	[Embed(source="assets/num/4.gif")]	[Bindable]	public var icon4:Class;
+	[Embed(source="assets/num/5.gif")]	[Bindable]	public var icon5:Class;
+	
+	[Embed(source="assets/corporativo-64.png")]		[Bindable]	public var iconCorp:Class;
+	[Embed(source="assets/empresa-64.png")]			[Bindable]	public var iconEmps:Class;
+	[Embed(source="assets/sucursal-64.png")]		[Bindable]	public var iconSucl:Class;
+	[Embed(source="assets/certificados-64.png")]	[Bindable]	public var iconCert:Class;
+	[Embed(source="assets/folios-64.png")]			[Bindable]	public var iconFols:Class;
+	private var validALL:int = 26148247;
+	
+	private function omitrConfigHandler():void
+	{
+		if(omititConfiguracion.selected)
+		{
+			PopUpManager.addPopUp(omitConfig, contentCTLS, true);
+			PopUpManager.centerPopUp(omitConfig);	 
+			omitConfig.visible = true;
+			omitConfig.isPopUp = true;
+		}
+		else
+		{
+			PopUpManager.removePopUp(omitConfig);	 
+			omitConfig.visible = false;
+			omitConfig.isPopUp = false;
+		}
+	}
+	
+	private function msgUpload(op:int):void
+	{
+		if(op == 1)
+		{
+			if(rutaLogo.text.length > 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Logotipo se adjuntó de manera correcta.", "Aviso", Alert.OK, null, null, iconOk);
+			}
+			else if (rutaLogo.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Logotipo no adjuntó de manera exitosa.", "Aviso", Alert.OK, null, null, iconAlert);
+			}
+		}
+		else if (op == 2)
+		{
+			if(rutaCert.text.length > 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Certificado se adjuntó de manera correcta.", "Aviso", Alert.OK, null, null, iconOk);
+			}
+			else if (rutaCert.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Certificado no se adjuntó de manera exitosa.", "Aviso", Alert.OK, null, null, iconAlert);
+			}
+		}
+		else if (op == 3)
+		{
+			if(rutaKey.text.length > 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El archivo Llave Privada se adjuntó de manera correcta.", "Aviso", Alert.OK, null, null, iconOk);
+			}
+			else if (rutaKey.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("EL archivo Llave Privada no se adjuntó de manera exitosa.", "Aviso", Alert.OK, null, null, iconAlert);
+			}
+		}
+		else if(op == 4)
+		{
+			if(rutaLogoMIT.text.length > 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Logotipo se adjuntó de manera correcta.", "Aviso", Alert.OK, null, null, iconOk);
+			}
+			else if (rutaLogoMIT.text.length == 0)
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("El Logotipo no adjuntó de manera exitosa.", "Aviso", Alert.OK, null, null, iconAlert);
+			}
+		}
+	}
+	
+	private function upComplete(op:int):void
+	{
+		if(op == 1)
+		{
+			Send(567);
+		}
+		else if (op == 2)
+		{
+			Send(738);
+		}
+		else if (op == 3)
+		{
+			Send(568);
+		}
+	}
+	
+	private function dataCombosInsert():void 
+	{	
+		var valsPais:Array = new Array();
+		var valsEstado:Array = new Array();
+		var valsCiudad:Array = new Array();
+		var valsMunicipio:Array = new Array();
+		var valsColonia:Array = new Array();
+		
+		if (pais.dataProvider.source.length > 0 &&
+			estado.dataProvider.source.length > 0 &&
+			ciudad.dataProvider.source.length > 0 &&
+			municipio.dataProvider.source.length > 0)
+		{
+			valsPais	  = pais.selectedItem.valueOf().toString().split(",");
+			valsEstado    = estado.selectedItem.valueOf().toString().split(",");
+			valsCiudad    = ciudad.selectedItem.valueOf().toString().split(",");
+			valsMunicipio = municipio.selectedItem.valueOf().toString().split(",");
+			
+			txtPais.text      = valsPais[1].toString();
+			txtEstado.text    = valsEstado[1].toString();
+			txtCiudad.text    = valsCiudad[1].toString();
+			txtMunicipio.text = valsMunicipio[1].toString();
+		}
+		if(colonia.selectedLabel != "Otra Colonia" && colonia.selectedLabel != "")
+		{
+			valsColonia   = colonia.selectedItem.valueOf().toString().split(",");
+			idColonia.text   = valsColonia[0].toString();
+			txtColonia.text   = valsColonia[1].toString();
+		}
+	}
+	
+	private function checkEnableCB(CB:mx.controls.ComboBox, TX:TextInput, CBM:mx.controls.ComboBox, TXM:TextInput):void
+	{
+		if (CB.dataProvider.length > 0)
+		{
+			CB.visible = true;
+			TX.visible = false;
+			
+			CBM.visible = true;
+			TXM.visible = false;
+			TXM.x = 436;
+		} 
+		else
+		{   
+			CB.visible = false;
+			TX.visible = true;
+			
+			CBM.visible = false;
+			TXM.visible = true;
+			TXM.x = 218;
+		}
+	}
+	
+	protected function handlerPais():void
+	{
+		if (pais.dataProvider != null)
+		{
+			var valsPais:Array = new Array();
+			valsPais = pais.selectedItem.valueOf().toString().split(",");
+			
+			if(valsPais[1] == "México")
+			{
+				txtPais.text = pais.selectedItem.valueOf(1).toString();
+				cp.enabled = true;
+				cp.text = "";
+				
+				estado.visible = true;
+				ciudad.visible = true;
+				municipio.visible = true;
+				colonia.visible = true;
+				
+				txtEstado.visible = false;
+				txtCiudad.visible = false;
+				txtMunicipio.visible = false;
+				txtColonia.visible = false;
+				txtColonia.x = 436;
+			}
+			else
+			{
+				cp.text = "00000";
+				cp.enabled = false;
+				
+				estado.visible = false;
+				ciudad.visible = false;
+				municipio.visible = false;
+				colonia.visible = false;
+				
+				txtEstado.visible = true;
+				txtCiudad.visible = true;
+				txtMunicipio.visible = true;
+				txtColonia.visible = true;
+				txtColonia.x = 218;
+			}
+		}
+	}
+	
+	private function dataCombos():void 
+	{	
+		var valsColonia:Array = new Array();
+		
+		if (colonia.dataProvider.length > 0 )
+		{
+			valsColonia   = colonia.selectedItem.valueOf().toString().split(",");
+			
+			if(valsColonia[1].toString() == "Otra Colonia")
+			{
+				txtColonia.visible = true;
+				lbOtraCol.visible = true;
+				txtColonia.text   = "";
+				idColonia.text   = "0";
+			}
+			else
+			{
+				txtColonia.visible = false;
+				lbOtraCol.visible = false;
+			}
+		}
+	}
+	
+	private function cpDir():void
+	{
+		if(cp.text.length == 5)
+		{
+			Send(159);//Carga datos de dirección si existe el CP.
+		}
+		else
+		{
+			cleanCombos();
+		}
+	}
+	
+	private function cleanCombos():void 
+	{
+		estado.dataProvider  = null;
+		ciudad.dataProvider  = null;
+		municipio.dataProvider  = null;
+		colonia.dataProvider  = null;
+		estado.errorString = "";
+		ciudad.errorString = "";
+		municipio.errorString = "";
+		colonia.errorString = "";
+		txtColonia.visible = false;
+		txtColonia.errorString = "";
+		lbOtraCol.visible = false;
+		txtColonia.text   = "";
+	}
+	
+	private function valYear():void
+	{
+		var date:Date = new Date();
+		anioAprob.value = date.getFullYear();
+	}
+	
+	private function setVal():void
+	{
+		if(fisica.selected)
+		{
+			rfcFisica.enabled = true;
+			rfcMoral.enabled = false;
+		
+		}
+		if(moral.selected)
+		{
+			rfcFisica.enabled = false;
+			rfcMoral.enabled = true; 
+		}
+		existRFC.text = "";
+		rfcFisica.text = ""; 
+		rfcMoral.text = ""; 
+		rfcFisica.errorString = ""; 
+		rfcMoral.errorString = "";
+		RFC.text = "";
+		validNextRFC.text = "";
+	}
+	
+	private var validFormatPM:String = "^[A-Za-zñÑ&]{3}[0-9]{6}[0-9A-Za-z]{3}$";
+	private var validFormatPF:String = "^[A-Za-zñÑ&]{4}[0-9]{6}[0-9A-Za-z]{3}$";
+	
+	private var expRfcPM:RegExp = new RegExp(validFormatPM,"g");
+	private var expRfcPF:RegExp = new RegExp(validFormatPF,"g");
+	
+	private function checkRFCPF(myCtrl:TextInput, valid:TextInput):void
+	{
+		if(expRfcPF.test(myCtrl.text))
+		{
+			myCtrl.errorString = "";
+			valid.text = "1";
+		}
+		else
+		{
+			if(myCtrl.text.length < 13)
+			{
+				myCtrl.errorString = "RFC Persona Física Incorrecto\n\n" +
+					"Formato “AAAAaammddHHD”, en donde: \n" +
+					"AAAA = Siglas del contribuyente, alfanumérico. \n" +
+					"              Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+					"aammdd = Fecha de nacimiento, numérico (año,mes,día). \n" +
+					"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+					"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+					"Los caracteres alfabéticos deben ser mayúsculas.";
+				valid.text = "0";
+			}
+		}	
+	}
+	
+	private function checkRFCPM(myCtrl:TextInput, valid:TextInput):void
+	{
+		if(expRfcPM.test(myCtrl.text))
+		{
+			myCtrl.errorString = "";
+			valid.text = "1";
+		}
+		else
+		{
+			if(myCtrl.text.length < 12)
+			{
+				myCtrl.errorString = "RFC Persona Moral Incorrecto\n\n" +
+					"Formato “AAAaammddHHD”, en donde: \n" +
+					"AAA = Siglas del contribuyente, alfanumérico. \n" +
+					"      Acepta los valores [A-Z (incluso Ñ) y &] \n" +
+					"aammdd = Fecha de constitución, numérico (año,mes,día). \n" +
+					"HH = Homonimia, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+					"D = Dígito verificador, alfanumérico (acepta los valores [A-Z 0-9 incluso Ñ]) \n" +
+					"Los caracteres alfabéticos deben ser mayúsculas.";
+				valid.text = "0";
+			}
+		}			
+	}
+	
+	private function validRFC():void
+	{
+		if(existRFC.text == "0" && validado.text == "0")//No existe el registro
+		{
+			existRFC.text = "ok";
+			validado.text = "ok"
+			razonSocial.text = "";
+			correoEmp.text = "";
+			nomSucursal.text = "";
+			rutaLogo.text = "";
+			correoSuc.text = "";
+			calle.text = "";
+			numExt.text = "";
+			numInt.text = "";
+			cp.text = "";
+			txtEstado.text = "";
+			txtCiudad.text = "";
+			txtMunicipio.text = "";
+			txtColonia.text = "";
+		}
+		else if(existRFC.text == "1" && validado.text == "0")//El registro existe como cliente
+		{
+			Alert.yesLabel="Aceptar";
+			Alert.noLabel="Cancelar";			
+			Alert.show("En el sistema ya existe información asociada a este RFC, deberá validar y Autenticar sus datos.","Aviso", Alert.YES | Alert.NO, null, getDataRFC, iconAlert, Alert.YES);
+		}
+		else if(existRFC.text == "1" && validado.text == "1")// El registro existe como Empresa
+		{
+			RFC.text = "";
+			rfcFisica.text = "";
+			rfcMoral.text = "";
+			Alert.okLabel = "Aceptar";		
+			Alert.show("En el sistema ya existe una empresa asociada a este RFC, no puede duplicar esta información.","Aviso", Alert.OK, null, null, iconAlert, Alert.YES);
+		}
+		existRFC.text = "VALID";
+		validado.text = "VALID";
+	}
+	
+	private function getDataRFC(eventObj:CloseEvent):void
+	{
+		if (eventObj.detail==Alert.YES) 
+		{
+			Send(592);
+		}
+		else if(eventObj.detail==Alert.NO) 
+		{
+			RFC.text = "";
+			if(rfcFisica.text.length == 13)
+			{
+				rfcFisica.text = "";
+			}
+			else if(rfcMoral.text.length == 12)
+			{
+				rfcMoral.text = "";
+			}
+		}
+	}
+	
+	private function validSerie():void
+	{
+		if (existFolios.text > "0")
+		{
+			serie.errorString = "Esta Seire ya fue asignada en el sistema para esta sucursal.";
+			serie.text = "";
+		}
+		else if (existFolios.text == "0")
+		{
+			serie.errorString = "";
+		}
+		existFolios.text = "";
+	}
+	
+	private function evalFolios(op:int):void
+	{
+		if(op == 1)
+		{
+			if(folioIni.text > "0")
+			{
+				folioIni.errorString = "";
+				folioActual.text = folioIni.text;
+			}
+			else if (folioIni.text== "0")
+			{
+				folioIni.errorString = "El Folio Inicial no puede ser 0";
+				folioIni.text = "";
+			}
+		}
+		else if(op == 2)
+		{
+			if(Number(folioIni.text) >= Number(folioFin.text))
+			{
+				folioFin.errorString = "El Folio Final no puede ser menor o igual al Folio Inicial";
+				folioFin.text = "";
+			}
+			else
+			{
+				folioFin.errorString = "";
+			}	
+		}	
+	}
+		
+	private function asignaGUID():void
+	{
+		guid.text = GUID.create();
+	}
+	
+	private function salir():void
+	{
+		if(window.text != "6")
+		{
+			paso.text = window.text;
+			if(omititConfiguracion.selected)
+			{
+				window.text = "cancelar";
+				PopUpManager.removePopUp(omitConfig);
+				omitConfig.visible = false;
+				omitConfig.isPopUp = false;
+			}
+			else
+			{
+				window.text = "finalizar";
+				PopUpManager.removePopUp(msg);
+				msg.visible = false;
+				msg.isPopUp = false;
+			}
+		}
+		else if(window.text == "6")
+		{
+			PopUpManager.removePopUp(msg);
+			msg.visible = false;
+			msg.isPopUp = false;
+			paso.text = window.text;
+			window.text = "recargar";
+		}
+	}
+	
+	protected function closeTW(evt:CloseEvent):void 
+	{
+		if(window.text != "1" && window.text != "6")
+		{
+			//clean();
+			window.text = "";
+			PopUpManager.removePopUp(evt.currentTarget as IFlexDisplayObject);
+		}
+		else if (window.text == "1" || window.text == "6")
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("No ha concluido la configuración de su cuenta, intente nuevamente.","Aviso",Alert.OK, null, null, iconAlert);
+		}
+	}
+	
+	private function clean():void
+	{
+		if(window.text == "1")
+		{
+			cleanTW(cnvsCOR);
+			cleanTW(cnvsEMP);
+			cleanTW(cnvsSUC);
+			cleanTW(cnvsCER);
+			cleanTW(cnvsFOL);
+			cleanTW(Ctrls);
+		}
+		else if(window.text == "2")
+		{
+			cleanTW(cnvsEMP);
+			cleanTW(cnvsSUC);
+			cleanTW(cnvsCER);
+			cleanTW(cnvsFOL);
+			cleanTW(Ctrls);
+		}
+		else if(window.text == "3")
+		{
+			cleanTW(cnvsSUC);
+			cleanTW(cnvsCER);
+			cleanTW(cnvsFOL);
+			cleanTW(Ctrls);
+		}
+		else if(window.text == "4")
+		{
+			cleanTW(cnvsCER);
+			cleanTW(cnvsFOL);
+			cleanTW(Ctrls);
+		}
+		else if(window.text == "5")
+		{
+			cleanTW(cnvsFOL);
+			cleanTW(Ctrls);
+		}
+		else if(window.text == "6")
+		{
+			cleanTW(cnvsSMT);
+			cleanTW(cnvsCER);
+			cleanTW(cnvsFOL);
+			cleanTW(Ctrls);
+		}
+	}
+	
+	private function cancelTW():void
+	{
+		if(window.text != "1" && window.text != "6")
+		{
+			clean();
+			window.text = "cancelar";
+		}
+		else if (window.text == "1" || window.text == "6")
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show("No ha concluido la configuración de su cuenta, intente nuevamente.","Aviso",Alert.OK, null, null, iconAlert);
+		}
+	}
+	
+	private function cleanTW(content:spark.components.Group):void
+	{
+		var elements:int = 0;
+		var className:String;
+		var currentCtl:Object;   
+		var ctrl:Array = new Array();
+		
+		elements = content.numChildren;
+		
+		for(var i:int=0; i < elements; i++)
+		{
+			currentCtl = content.getChildAt(i);
+			className = content.className.toString();	
+			
+			if(className == "TextInput")
+			{
+				spark.components.TextInput(currentCtl).text = "";
+			}
+			if(className == "TextArea")
+			{
+				spark.components.TextArea(currentCtl).text = "";
+			}
+			if(className == "DateField")
+			{
+				DateField(currentCtl).text = "";
+			}
+			if(className == "NumericStepper")
+			{
+				spark.components.NumericStepper(currentCtl).value = 0;
+			}
+			if(className == "ComboBox")
+			{
+				spark.components.ComboBox(currentCtl).selectedItem = null;   
+			}
+			if(className == "CheckBox")
+			{
+				spark.components.CheckBox(currentCtl).selected = false;   
+			}
+		}
+	}
+	
+	private function initProcess():void
+	{
+		var titleSUC:String;
+		
+		if(Number(window.text) == 6)
+		{
+			titleSUC = "Configurar Sucursal."
+		}
+		else if(Number(window.text) > 2 && Number(window.text) != 6)
+		{
+			titleSUC = "Agregar Sucursal."
+		}
+		else
+		{
+			titleSUC = "Agregar Dirección Fiscal (Sucursal Matriz)."
+		}
+		
+		if(window.text == "1")//Muestra Pantalla para generar Corporativo, Empresa, Sucursal, Certificado y Folios
+		{
+			esMatriz.selected = true;
+			txTITLE.text = "Agregar Corporativo.";
+			titleImg.source =  iconCorp;
+			siguiente.visible= true;
+			currentState = "CORP";
+		}
+		else if(window.text == "2")//Muestra Pantalla para generar Empresa, Sucursal, Certificado y Folios
+		{
+			txTITLE.text = "Agregar Empresa.";
+			titleImg.source =  iconEmps;
+			siguiente.visible= true;
+			currentState = "EMPS";
+		}
+		else if(window.text == "3")//Muestra Pantalla para generar Sucursal, Certificado y Folios
+		{
+			txTITLE.text = titleSUC;
+			titleImg.source =  iconSucl;
+			siguiente.visible= true;
+			currentState = "SUCR";
+			
+		}
+		else if(window.text == "4")//Muestra Pantalla para generar Certificado.
+		{
+			txTITLE.text = "Carga de Certificados.";
+			titleImg.source =  iconCert;
+			siguiente.visible = false;
+			aceptar.visible = true;
+			currentState = "CERT";
+		}
+		else if(window.text == "5")//Muestra Pantalla para generar Folios.
+		{
+			txTITLE.text = "Agregar Series y Folios.";
+			titleImg.source =  iconFols;
+			siguiente.visible = false;
+			aceptar.visible = true;
+			currentState = "FOLS";
+		}
+		else if(window.text == "6")//Muestra Pantalla para Configurar Sucursal, Certificado y Folios.
+		{
+			txTITLE.text = titleSUC;
+			titleImg.source =  iconSucl;
+			siguiente.visible= true;
+			currentState = "SMIT";			
+		}
+				
+		if(window.text < "4" && window.text != "" )
+		{
+			Send(566);//Carga el CB de Paises.
+		}
+		else if(window.text == "6" && window.text != "" )
+		{
+			Send(737);//Carga la Taza de Impuesto y Carga el CB de Plantillas.
+		}
+				
+		atras.visible= false;
+		canelar.visible = true;
+	}
+	
+	private function validData():String
+	{
+		var controlsValid:Array = new Array();
+		
+		if(currentState == "CORP")//Valida Pantalla para generar Corporativo.
+		{
+			controlsValid.push(this.descCorp);
+		}
+		else if(currentState == "EMPS")//Valida Pantalla para generar Empresa.
+		{
+
+			if(fisica.selected == true)
+			{
+				if(rfcFisica.text.length == 0)
+				{
+					controlsValid.push(this.rfcFisica);
+				}
+			}
+			else if(moral.selected == true)
+			{
+				if(rfcMoral.text.length == 0)
+				{
+					controlsValid.push(this.rfcMoral);
+				}
+			}
+			
+			if(validNextMAILEMP.text == "0")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("EL Formato de Correo Electrónico es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+				return "fail";
+			}
+			
+			if(validNextRFC.text == "0")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("EL Formato del RFC es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+				return "fail";
+			}
+			
+			controlsValid.push(this.razonSocial, this.correoEmp);
+		}
+		else if(currentState == "SUCR")//Valida Pantalla para generar Sucursal.
+		{	
+			if(validNextMAILSUC.text == "0")
+			{
+				Alert.okLabel = "Aceptar";
+				Alert.show("EL Formato de Correo Electrónico es incorrecto, verifique la información e intente nuevamente.", "Aviso", Alert.OK, null, null, iconAlert);
+				return "fail";
+			}
+
+			tasaImpuesto.text = "1";
+			
+			controlsValid.push(this.nomSucursal, this.rutaLogo, this.correoSuc, this.calle, this.numExt, this.cp);
+					
+			if(cp.text.length > 0)
+			{	
+				dataCombosInsert();
+				
+				if(estado.dataProvider.length == 0)
+				{
+					controlsValid.push(this.txtEstado);
+				}
+				if(ciudad.dataProvider.length == 0)
+				{
+					controlsValid.push(this.txtCiudad);
+				}
+				if(municipio.dataProvider.length == 0)
+				{
+					controlsValid.push(this.txtMunicipio);
+				}
+				if (colonia.dataProvider.length > 0 )
+				{
+					var valsColonia:Array = new Array();
+					
+					valsColonia   = colonia.selectedItem.valueOf().toString().split(",");
+					
+					if(valsColonia[1].toString() == "Otra Colonia")
+					{
+						controlsValid.push(this.txtColonia);
+					}
+				}
+			}
+			else
+			{
+				estado.errorString = "*Campo requerido";
+				ciudad.errorString = "*Campo requerido";
+				municipio.errorString = "*Campo requerido";
+				colonia.errorString = "*Campo requerido";
+			}
+		}
+		else if(currentState == "CERT")//Valida Pantalla para generar Certificado.
+		{
+			controlsValid.push(this.pwd,this.rutaCert, this.rutaKey);
+		}
+		else if(currentState == "FOLS")//Valida Pantalla para generar Folios.
+		{
+			controlsValid.push(this.serie,this.folioIni,this.folioFin);
+		}
+		else if(currentState == "SMIT")//Valida Pantalla para generar Sucursal.
+		{
+			controlsValid.push( this.rutaLogoMIT, this.idTasaImpuesto, this.idPlantilla);
+		}
+		
+		return validar(controlsValid);
+	}
+	
+	private function transWindow(forward:int):void
+	{
+		var valid:String;
+		var titleSUC:String;
+		
+		if(Number(window.text) > 2)
+		{
+			titleSUC = "Agregar Sucursal."
+		}
+		else
+		{
+			titleSUC = "Agregar Dirección Fiscal (Sucursal Matriz)."
+		}
+		
+		if(window.text == "1")//Por Corpoativo
+		{
+			if(currentState == "CORP" && forward == 1)//Corporativo >> Empresa
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "EMPS";
+					txTITLE.text = "Agregar Empresa.";
+					titleImg.source =  iconEmps;
+					atras.visible= true;
+				}
+			}
+			else if(currentState == "EMPS" && forward == 0)//Empresa >> Corporativo
+			{
+				currentState = "CORP";
+				txTITLE.text = "Agregar Corporativo.";
+				titleImg.source =  iconCorp;
+				atras.visible= false;
+			}
+			else if(currentState == "EMPS" && forward == 1)//Empresa >> Sucursal
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "SUCR";
+					txTITLE.text = titleSUC;
+					titleImg.source =  iconSucl;
+				}
+			}
+			else if(currentState == "SUCR" && forward == 0)//Sucursal >> Empresa 
+			{
+				currentState = "EMPS";
+				txTITLE.text = "Agregar Empresa.";
+				titleImg.source =  iconEmps;
+			}
+			else if(currentState == "SUCR" && forward == 1)//Sucursal >> Certificado
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "CERT";
+					txTITLE.text = "Carga de Certificados.";
+					titleImg.source =  iconCert;
+				}
+			}
+			else if(currentState == "CERT" && forward == 0)//Certificado >> Sucursal
+			{
+				currentState = "SUCR";
+				txTITLE.text = titleSUC;
+				titleImg.source =  iconSucl;
+			}
+			else if(currentState == "CERT" && forward == 1)//Certificado >> Folios
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "FOLS";
+					txTITLE.text = "Agregar Series y Folios.";
+					titleImg.source =  iconFols;
+					siguiente.visible = false;
+					aceptar.visible = true;
+				}
+			}
+			else if(currentState == "FOLS"  && forward == 0)//Folios >> Certificado
+			{
+				currentState = "CERT";
+				txTITLE.text = "Carga de Certificados.";
+				titleImg.source =  iconCert;
+				siguiente.visible = true;
+				aceptar.visible = false;
+			}
+		}
+		else if(window.text == "2")//Por Empresa
+		{
+			if(currentState == "EMPS" && forward == 1)//Empresa >> Sucursal
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "SUCR";
+					txTITLE.text = titleSUC;
+					titleImg.source =  iconSucl;
+					atras.visible= true;
+				}
+			}
+			else if(currentState == "SUCR" && forward == 0)//Sucursal >> Empresa 
+			{
+				currentState = "EMPS";
+				txTITLE.text = "Agregar Empresa.";
+				titleImg.source =  iconEmps;
+				atras.visible= false;
+			}
+			else if(currentState == "SUCR" && forward == 1)//Sucursal >> Certificado
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "CERT";
+					txTITLE.text = "Carga de Certificados.";
+					titleImg.source =  iconCert;
+				}
+			}
+			else if(currentState == "CERT" && forward == 0)//Certificado >> Sucursal
+			{
+				currentState = "SUCR";
+				txTITLE.text = "Agregar " + titleSUC;
+				titleImg.source =  iconSucl;
+			}
+			else if(currentState == "CERT" && forward == 1)//Certificado >> Folios
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "FOLS";
+					txTITLE.text = "Agregar Series y Folios.";
+					titleImg.source =  iconFols;
+					siguiente.visible = false;
+					aceptar.visible = true;
+				}
+			}
+			else if(currentState == "FOLS"  && forward == 0)//Folios >> Certificado
+			{
+				currentState = "CERT";
+				txTITLE.text = "Carga de Certificados.";
+				titleImg.source =  iconCert;
+				siguiente.visible = true;
+				aceptar.visible = false;
+			}
+		}
+		else if(window.text == "3")//Por Sucursal
+		{
+			if(currentState == "SUCR" && forward == 1)//Sucursal >> Certificado
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "CERT";
+					txTITLE.text = "Carga de Certificados.";
+					titleImg.source =  iconCert;
+					atras.visible= true;
+				}
+			}
+			else if(currentState == "CERT" && forward == 0)//Certificado >> Sucursal
+			{
+				currentState = "SUCR";
+				txTITLE.text = "Agregar Dirección Fisacal.";
+				titleImg.source =  iconSucl;
+				atras.visible= false;
+			}
+			else if(currentState == "CERT" && forward == 1)//Certificado >> Folios
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "FOLS";
+					txTITLE.text = "Agregar Series y Folios.";
+					titleImg.source =  iconFols;
+					siguiente.visible = false;
+					aceptar.visible = true;
+				}
+			}
+			else if(currentState == "FOLS"  && forward == 0)//Folios >> Certificado
+			{
+				currentState = "CERT";
+				txTITLE.text = "Carga de Certificados.";
+				titleImg.source =  iconCert;
+				siguiente.visible = true;
+				aceptar.visible = false;
+			}
+		}
+		else if(window.text == "4")//Por Certificado
+		{
+			if(currentState == "CERT" && forward == 1)//Certificado >> Folios
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "FOLS";
+					txTITLE.text = "Agregar Series y Folios.";
+					titleImg.source =  iconFols;
+					atras.visible= true;
+					siguiente.visible = false;
+					aceptar.visible = true;
+				}
+			}
+			else if(currentState == "FOLS"  && forward == 0)//Folios >> Certificado
+			{
+				currentState = "CERT";
+				txTITLE.text = "Carga de Certificados.";
+				titleImg.source =  iconCert;
+				atras.visible= false;
+				siguiente.visible = true;
+				aceptar.visible = false;
+			}
+		}
+		else if(window.text == "6")//Por Configuración de Sucursal
+		{
+			if(currentState == "SMIT" && forward == 1)//Config Sucursal >> Certificado
+			{
+				valid = validData();
+				if(valid == "1")
+				{					
+					if (idTasaImpuesto.dataProvider.length > 0)
+					{
+						var valsImpuesto:Array = new Array();
+						var getImpuesto:Array = new Array();
+						valsImpuesto	  = idTasaImpuesto.selectedItem[1].toString().split("%");
+						tasaImpuesto.text = valsImpuesto[0].toString();
+						
+					}
+					
+					currentState = "CERT";
+					txTITLE.text = "Carga de Certificados.";
+					titleImg.source =  iconCert;
+					atras.visible= true;
+				}
+			}
+			else if(currentState == "CERT" && forward == 0)//Certificado >> Config Sucursal
+			{
+				currentState = "SMIT";
+				txTITLE.text = "Configurar Sucursal.";
+				titleImg.source =  iconSucl;
+				atras.visible= false;
+			}
+			else if(currentState == "CERT" && forward == 1)//Certificado >> Folios
+			{
+				valid = validData();
+				if(valid == "1")
+				{
+					currentState = "FOLS";
+					txTITLE.text = "Agregar Series y Folios.";
+					titleImg.source =  iconFols;
+					siguiente.visible = false;
+					aceptar.visible = true;
+				}
+			}
+			else if(currentState == "FOLS"  && forward == 0)//Folios >> Certificado
+			{
+				currentState = "CERT";
+				txTITLE.text = "Carga de Certificados.";
+				titleImg.source =  iconCert;
+				siguiente.visible = true;
+				aceptar.visible = false;
+			}
+		}
+	}
+	
+	private function saveData():void
+	{
+		var valid:String;
+		valid = validData();
+		if(valid == "1")
+		{
+			clean();
+			Send(570);//Llamar Clase para Insertar Datos.
+		}
+	}
+	
+	private function msgDataInsert():void
+	{
+		if(dataOK.text == "1")
+		{
+			adviceMSG.text = "Nota:";
+			contentMSG.text = "Para agregar más Empresas, Clientes, Sucursales o para\nagregar otro Certificado utilice el menú Administración.";
+			PopUpManager.addPopUp(msg, contentCTLS, true);
+			PopUpManager.centerPopUp(msg);	 
+			msg.visible = true;
+			msg.isPopUp = true;
+		}
+		else if(dataOK.text == "2")
+		{
+			adviceMSG.text = "";
+			contentMSG.text = "La Empresa se agregó al sistema de manera correcta.";
+			PopUpManager.addPopUp(msg, contentCTLS, true);
+			PopUpManager.centerPopUp(msg);	 
+			msg.visible = true;
+			msg.isPopUp = true;
+		}
+		else if(dataOK.text == "3")
+		{
+			adviceMSG.text = "";
+			contentMSG.text = "La Sucursal se agregó al sistema de manera correcta.";
+			PopUpManager.addPopUp(msg, contentCTLS, true);
+			PopUpManager.centerPopUp(msg);	 
+			msg.visible = true;
+			msg.isPopUp = true;
+		}
+		else if(dataOK.text == "4")
+		{
+			adviceMSG.text = "";
+			contentMSG.text = "El Certificado se agregó al sistema de manera correcta.";
+			PopUpManager.addPopUp(msg, contentCTLS, true);
+			PopUpManager.centerPopUp(msg);	 
+			msg.visible = true;
+			msg.isPopUp = true;
+		}
+		else if(dataOK.text == "5")
+		{
+			adviceMSG.text = "";
+			contentMSG.text = "Las Series y Folios se agregarón al sistema de manera correcta.";
+			PopUpManager.addPopUp(msg, contentCTLS, true);
+			PopUpManager.centerPopUp(msg);	 
+			msg.visible = true;
+			msg.isPopUp = true;
+		}
+		else if(dataOK.text == "6")
+		{
+			adviceMSG.text = "";
+			contentMSG.text = "La configuración de la Sucursal, el Certificado \n"+
+							  "y las Series y Folios se agregarón al sistema de manera correcta.";
+			PopUpManager.addPopUp(msg, contentCTLS, true);
+			PopUpManager.centerPopUp(msg);	 
+			msg.visible = true;
+			msg.isPopUp = true;
+		}
+	}
+	
+	private function viewError():void
+	{
+		if(validCert.text == "1")
+		{
+			Send(590);
+		}
+		else if(validCert.text == "0")
+		{
+			Alert.okLabel = "Aceptar";
+			Alert.show(msgCert.text, "Aviso", Alert.OK, null, null, iconAlert);
+			rutaCert.text = "";
+			rutaKey.text = "";
+			validCert.text = "";
+			msgCert.text = "";
+		}
+	}
+	
+	private function selectPlantilla():void
+	{
+		if(idPlantilla.selectedItem != null)
+		{
+			tipoPlantilla.text = idPlantilla.selectedItem[0].toString();
+			plantilla.source = idPlantilla.selectedItem[3].toString(); 
+		}
+	}
+]]>
+</fx:Script>
+
+<s:VGroup width="100%" height="100%" paddingBottom="5" paddingTop="5" paddingLeft="5" paddingRight="5">	
+	<s:HGroup width="100%" paddingLeft="15" paddingBottom="10" paddingTop="15" verticalAlign="middle" gap="15">
+		<mx:Image id="titleImg" width="64" height="64" source="assets/num/blank.png" x="20" y="24"/>
+		<s:Label id="txTITLE" text="" x="60" y="28"  fontWeight="bold" fontSize="20" color="#3D3D3D" />
+		<s:TextInput x="0" y="90" id="tasaImpuesto" width="20" visible="false" editable="false"/>
+	</s:HGroup>
+	<s:HGroup width="100%" height="100%" paddingLeft="20" paddingBottom="10" paddingRight="20">
+		<s:Group width="100%" height="100%">
+			
+			<s:Group width="100%" height="100%" id="cnvsCOR" showEffect="showEffect" visible.CORP="true" visible="false">
+				<s:Label x="0" y="10" text="* Nombre del Corporativo" fontWeight="bold"/>
+				<s:TextInput x="0" y="30" id="descCorp" restrict="[A-Za-z0-9ñÑ&amp;-_.,áÁéÉíÍóÓúÚ ]" name="Descripción del Corporativo" 
+							 toolTip="Nombre de Corporativo:En caso de no formar parte de un corporativo o ser una persona física, se recomienda capturar su nombre comercial o su razón social." 
+							 width="300" height="24" maxChars="350"/>
+				<s:CheckBox x="0" visible="false" y="214" label="Omitir Configuración" click="omitrConfigHandler();" id="omititConfiguracion"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="cnvsEMP" showEffect="showEffect" visible.EMPS="true" visible="false">
+				<s:Label x="0" y="70" text="* Nombre o Razón Social" fontWeight="bold"/>
+				<s:Label x="285" y="70" text="* Correo Electrónico Empresa" fontWeight="bold"/>
+				<s:Label x="29" y="10" text="* Tipo de persona" fontWeight="bold"/>
+				<s:Label x="160" y="10" text="* RFC persona Fisica" fontWeight="bold"/>
+				<s:Label x="334" y="10" text="* RFC persona Moral" fontWeight="bold"/>
+				
+				<s:RadioButton x="15" y="32" id="fisica" label="Física" groupName="tipoPersona" valueCommit="setVal();" click="setVal();"/>
+				<s:RadioButton x="82" y="32" id="moral"  label="Moral"  groupName="tipoPersona" valueCommit="setVal();" click="setVal();" selected="true"/>
+				
+				<s:TextInput id="validado" valueCommit="validRFC();" editable="false" visible="false" width="20"/>
+				<s:TextInput id="existRFC" editable="false" visible="false" width="20"/>
+				<s:TextInput id="RFC" visible="false" width="20" typographicCase="uppercase"/>
+				
+				<s:TextInput x="160" y="30" id="rfcFisica" name="RFC Persona Fisica" width="150" maxChars="13" 
+							 change="if(rfcFisica.text!=&quot;&quot;)checkRFCPF(rfcFisica,validNextRFC);" 
+							 valueCommit="RFC.text = rfcFisica.text;" enabled="false"  restrict="A-Za-z0-9ñÑ&amp;"
+							 focusOut="if(rfcFisica.text.length == 13){Send(645);}" typographicCase="uppercase" height="24"/>
+				
+				<s:TextInput x="334" y="30" id="rfcMoral" name="RFC Persona Moral" width="150" maxChars="12" 
+							 change="if(rfcMoral.text!=&quot;&quot;){checkRFCPM(rfcMoral,validNextRFC);}" 
+							 valueCommit="RFC.text = rfcMoral.text;" restrict="A-Za-z0-9ñÑ&amp;"
+							 focusOut="if(rfcMoral.text.length == 12){Send(645);}" typographicCase="uppercase" height="24"/>
+				
+				<s:TextInput x="0" y="90" id="razonSocial" toolTip="Capture su nombre comercial o razón social." 
+							 restrict="[A-Za-z0-9&amp;ñÑ-_.,áÁéÉíÍóÓúÚ ]" name="Nombre o Razón Social" height="24" width="267" maxChars="350"/>
+				
+				<s:TextInput x="285" y="90" id="correoEmp" name="Correo electrónico de la Empresa" height="24" width="199" maxChars="150"
+							 restrict="\-\_a-no-zA-NO-Z0-9@." typographicCase="lowercase"/>
+				
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="cnvsSUC" showEffect="showEffect" visible.SUCR="true" visible="false">
+				<s:Label x="245" y="70" text="* Calle" fontWeight="bold"/>
+				<s:Label x="0" y="10" text="* Nombre Sucursal" fontWeight="bold"/>
+				
+				<s:Label x="411" y="10" text="* Adjuntar Logotipo" fontWeight="bold"/>
+				<s:Label x="521" y="10" text=" (Sólo Formatos png y jpg)" fontWeight="bold" fontStyle="italic"/>
+				<s:Label x="483.2" y="70" text="* Número Ext" fontWeight="bold"/>
+				<s:Label x="601.7" y="70" text="Número Int"/>
+				<s:Label x="0" y="70" text="* Correo Electrónico Sucursal" fontWeight="bold"/>		
+				<s:Label x="148" y="130" text="* Codigo Postal" fontWeight="bold"/>
+				<s:Label x="0" y="130" text="País"/>
+				<s:Label x="283" y="130" text="Estado"/>
+				<s:Label x="486.2" y="131" text="Ciudad"/>
+				<s:Label x="0" y="189.5" text="Delegación/Municipio"/>
+				<s:Label x="218" y="189.5" text="Colonia"/>
+				
+				<s:Label x="436" y="190.5" text="* Otra Colonia" id="lbOtraCol" visible="false" fontWeight="bold"/>
+				
+				<s:CheckBox id="esMatriz" selected="true" label="Es matriz" visible="false" x="0" y="0"/>
+				
+				<s:TextInput x="0" y="30"  id="nomSucursal" toolTip="En caso de no manejar sucursales en su empresa, se recomienda capturar su nombre comercial o su razón social." 
+							 restrict="[A-Za-z0-9&amp;ñÑ-_,.áÁéÉíÍóÓúÚ ]" name="Nombre de Sucursal" width="392" height="24" maxChars="350"/>
+				
+				<s:TextArea x="410" y="29" id="rutaLogo" valueCommit="msgUpload(1);" enabled="false" editable="false" name="Adjuntar Logotipo" width="267" height="26"/>
+				
+				
+				<s:TextInput x="0" y="90" id="correoSuc" name="Correo Electrónico de la Sucursal" 
+							 width="227" height="24" restrict="\-\_a-no-zA-NO-Z0-9@." typographicCase="lowercase"/>
+				
+				<s:TextInput x="245" y="90"  id="calle" restrict="[A-Za-z0-9&amp;-_#°,.áÁéÉíÍóÓúÚ ]" name="Calle" width="220" height="24" maxChars="350"/>
+				<s:TextInput x="483.2" y="90" id="numExt" restrict="[A-Za-z0-9#°-_,. ]" name="Número Exterior" width="100" height="24" maxChars="50"/>
+				<s:TextInput x="601.7" y="90" id="numInt" restrict="[A-Za-z0-9#°-_,. ]" name="Número Interior" width="75" height="24" maxChars="50"/>	
+				
+				<mx:ComboBox x="0" y="150" id="pais" name="Pais" width="130" height="24" change="handlerPais();"/>
+				
+				<s:TextInput id="cp" name="Código Postal" change="cpDir();" valueCommit="cpDir();" x="148" y="150"  width="117" restrict="0-9" maxChars="5" height="24"/>
+				
+				<mx:ComboBox x="283" y="150" id="estado" name="Estado" width="180" height="24"
+							 valueCommit="checkEnableCB(estado, txtEstado, colonia, txtColonia);"/>
+				
+				<mx:ComboBox x="481.2" y="150" id="ciudad" name="Ciudad" width="196" height="24"
+							 valueCommit="checkEnableCB(ciudad, txtCiudad, colonia, txtColonia);"/>
+				
+				<mx:ComboBox x="0" y="210" id="municipio" name="Municipio" width="200" height="24"
+							 valueCommit="checkEnableCB(municipio, txtMunicipio, colonia, txtColonia);"/>
+				
+				<mx:ComboBox x="218" y="210" id="colonia" prompt="Seleccione una opción" name="Colonia" width="200" height="24" change="dataCombos();"/>
+				
+				<s:TextInput x="0" y="150" width="130" id="txtPais" name="Pais" visible="false" height="24" maxChars="250" restrict="[A-Za-zñÑ ]"/>
+				<s:TextInput x="283" y="150" width="180" id="txtEstado" name="Estado" visible="false" height="24" maxChars="250" restrict="[A-Za-zñÑ ]"/>
+				<s:TextInput x="481.2" y="150" width="196" id="txtCiudad" name="Ciudad" visible="false" height="24" maxChars="250" restrict="[A-Za-zñÑ ]"/>
+				<s:TextInput x="0" y="210" width="200" id="txtMunicipio" name="Municipio" visible="false" height="24" maxChars="250" restrict="[A-Za-zñÑ ]"/>
+				<s:TextInput x="436" y="210" width="240" id="txtColonia" name="Colonia" visible="false" height="24" maxChars="250" restrict="[A-Za-zñÑ0-9 ]"/>
+				
+				<ns1:uploaderGen x="411" y="30" id="logoFactura" height="177" width="291" 
+								 r3DS="DS_FE" 
+								 r3FilePath="{guid.text}" 
+								 r3Param1="logMod"
+								 r3SQL="IF EXISTS (SELECT * FROM filesTmp WHERE GUID = @0) UPDATE filesTmp SET rutaLogo=@1 WHERE [GUID]=@0 ELSE INSERT INTO filesTmp (GUID,rutaLogo,FG) VALUES (@0,@1, GETDATE());" 
+								 r3SQLArgs="F:S:{guid.text}"
+								 r3AshxPath="https://fx.facturaxion.com/facturaxion/uploadHandler.ashx" 
+								 r3Param5="1"
+								 uploadComplete="upComplete(1);"/>
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="cnvsSMT" showEffect="showEffect" visible.SMIT="true" visible="false">
+				
+				<s:Label x="411" y="10" text="* Adjuntar Logotipo" fontWeight="bold"/>
+				<s:Label x="521" y="10" text=" (Sólo Formatos png y jpg)" fontWeight="bold" fontStyle="italic"/>
+				
+				<s:Label x="0" y="131" text="* Taza de Impuesto" fontWeight="bold"/>
+				<s:Label x="192" y="131" text="* Plantillas" fontWeight="bold" id="asas"/>
+				
+				<s:Label x="0" y="10" text="RFC" fontWeight="bold"/>
+				<s:Label x="168" y="10" text="Empresa" fontWeight="bold"/>
+				<s:Label x="0" y="71" text="Sucursal" fontWeight="bold"/>
+				
+				<s:Label x="0" y="31" id="mtRFC" fontWeight="bold" fontSize="13" width="145" color="#006bbd"/>
+				<s:Label x="168" y="31" id="mtEmpresa" fontWeight="bold" width="145" color="#006bbd"/>
+				<s:Label x="0" y="91" id="mtSucursal" fontWeight="bold" fontSize="13" width="392" color="#006bbd"/>
+				
+				<s:TextInput x="0" y="30"  id="rfcEmpresa" valueCommit="mtRFC.text = rfcEmpresa.text;" width="20" visible="false"/>
+								
+				<s:TextInput x="98" y="30"  id="nameEmpresa" valueCommit="mtEmpresa.text = nameEmpresa.text;" width="20" visible="false"/>
+								
+				<s:TextInput x="247" y="30"  id="nomSucursalMT" valueCommit="mtSucursal.text = nomSucursalMT.text;" width="20" visible="false"/>
+				
+				<s:ComboBox x="0" y="151" id="idTasaImpuesto" name="Tasa de Impuesto" width="140" height="24" />
+				
+				<s:ComboBox x="192" y="151" id="idPlantilla" name="Tipo de plantilla" width="200" height="24"
+							 change="selectPlantilla();" itemRenderer="rendererPlantillas" />
+				
+				<s:TextInput x="192" y="120" id="tipoPlantilla" width="20" visible="false" editable="false"/>
+				
+				
+				<mx:Image id="plantilla" x="410" y="90" width="290" height="150" source="assets\plantilla1.png"/>
+				
+				<s:TextArea x="410" y="29" id="rutaLogoMIT" valueCommit="msgUpload(4);" enabled="false" editable="false" name="Adjuntar Logotipo" width="267" height="26"/>
+				
+				<ns1:uploaderGen x="411" y="30" id="logoFacturaMIT" height="177" width="291" 
+								 r3DS="DS_FE" 
+								 r3FilePath="{guid.text}" 
+								 r3Param1="logMod"
+								 r3SQL="IF EXISTS (SELECT * FROM filesTmp WHERE GUID = @0) UPDATE filesTmp SET rutaLogo=@1 WHERE [GUID]=@0 ELSE INSERT INTO filesTmp (GUID,rutaLogo,FG) VALUES (@0,@1, GETDATE());" 
+								 r3SQLArgs="F:S:{guid.text}"
+								 r3AshxPath="http://localhost:1460/facturaxion/uploadHandler.ashx" 
+								 r3Param5="1"
+								 uploadComplete="upComplete(2);"/>
+				
+			</s:Group>
+			
+			<s:Group width="100%" height="100%" id="cnvsCER" showEffect="showEffect" visible.CERT="true" visible="false">
+				
+				<s:Label x="0" y="14" text="* Ingrese la Contraseña del Certificado" fontWeight="bold"/>
+				<s:Label x="66" y="55" text="* Seleccione los archivos" fontWeight="bold"/>
+				<s:Label x="74" y="74.5" text="Llave Pública (.cer)" fontWeight="bold"/>
+				<s:Label x="74" y="92.5" text="Llave Privada (.key)" fontWeight="bold"/>
+				<s:Label x="10" y="177" text="Nota:" fontWeight="bold"/>
+				<s:Label x="10" y="192" text="Puede seleccionar los dos" fontWeight="normal"/>
+				<s:Label x="10" y="207" text="archivos a la vez." fontWeight="normal"/>
+
+				
+				<s:TextInput x="230" y="10" width="414" displayAsPassword="true" id="pwd" name="Contraseña del Certificado" maxChars="350" /> 
+				
+				<s:TextArea x="230" y="54" id="rutaCert" valueCommit="msgUpload(2);" enabled="false" editable="false" name="Adjuntar Certificado" width="416" height="165"/>
+				<s:TextArea x="230" y="54" id="rutaKey"  valueCommit="msgUpload(3);" enabled="false" editable="false" name="Adjuntar Llaves" width="416" height="165"/>
+				<ns1:uploadFiles id="uploaderLlaves" x="231" y="55" width="414" height="164" 
+								 r3DS="DS_FE" 
+								 r3FilePath="{guid.text}" 
+								 r3Param1="{guid.text}" 
+								 r3SQL="" 
+								 r3SQLArgs=""
+								 r3Param2="IF EXISTS (SELECT * FROM filesTmp WHERE GUID=@0) UPDATE filesTmp SET pwd=@1, rutaCer=@2 WHERE [GUID]=@0 ELSE INSERT INTO filesTmp (GUID,rutaCer,FG) VALUES (@0,@2,GETDATE());"  
+								 r3Param3="IF EXISTS (SELECT * FROM filesTmp WHERE GUID=@0) UPDATE filesTmp SET pwd=@1, rutaKey=@2 WHERE [GUID]=@0 ELSE INSERT INTO filesTmp (GUID,rutaKey,FG) VALUES (@0,@2,GETDATE());" 
+								 r3Param4="F:S:{guid.text};F:S:{pwd.text}" 
+								 r3Param5="2"
+								 r3AshxPath="http://localhost:1460/facturaxion/uploadHandler.ashx" 
+								 fxParams3="{pwd}" 
+								 uploadComplete="upComplete(3);"/>
+				<!--https://fx.facturaxion.com/facturaxion/-->
+				<!--http://localhost:1460/facturaxion/-->
+				<s:TextInput id="numeroCertificado" visible="false" width="50"/>
+				<s:TextInput id="certificado64" visible="false" width="50"/>
+				<s:TextInput id="fechaExpira" visible="false" width="50"/>
+				<s:TextInput id="fechaEmision" visible="false" width="50"/>
+				<s:TextInput id="validCert" visible="false" width="50"/>
+				<s:TextInput id="msgCert"  valueCommit="viewError();" visible="false" width="150"/>
+				
+			</s:Group>
+	
+			<s:Group width="100%" height="100%" id="cnvsFOL" showEffect="showEffect" visible.FOLS="true" visible="false">
+				<s:Label x="0" y="11" text="* Serie" fontWeight="bold"/>
+				<s:Label x="148" y="10" text="* Folio Inicial" fontWeight="bold"/>
+				<s:Label x="300" y="10" text="* Folio Final" fontWeight="bold"/>
+				<s:Label x="0" y="70" text="Número de Aprobación" visible="false"/>
+				<s:Label x="148" y="70" text="Año de Aprobación" visible="false"/>
+				
+				<s:TextInput id="existFolios" visible="false" editable="false" valueCommit="validSerie();"/>
+				
+				<s:TextInput x="0" y="30" id="serie" restrict="a-no-zA-NO-Z" maxChars="25" typographicCase="uppercase" name="Serie" 
+							  valueCommit="if(window.text > '3' &amp;&amp; serie.text.length > 0){Send(569);}" width="130" height="24"/>
+				
+				<s:TextInput x="148" y="30" id="folioIni" valueCommit="evalFolios(1);" restrict="0-9" width="130" name="Folio Inicial" height="24" maxChars="10"/>
+				<s:TextInput x="296" y="30" id="folioFin" valueCommit="evalFolios(2);" restrict="0-9" width="130" name="Folio Final" height="24" maxChars="10"/>
+				<s:TextInput id="folioActual" editable="false" visible="false"/>
+				
+				<s:TextInput x="0" y="90" id="numAprob" text="123456789" restrict="0-9" typographicCase="uppercase" width="130" name="Número de Aprobación" height="24" maxChars="100" visible="false"/>
+				<s:NumericStepper x="148" y="88" id="anioAprob" width="130" name="Número de Aprobación" minimum="2006" maximum="2100" stepSize="1" creationComplete="valYear();" height="26" visible="false"/>
+			</s:Group>
+		
+		</s:Group>
+	</s:HGroup>
+	<s:HGroup id="Ctrls" width="100%" verticalAlign="middle" horizontalAlign="right" paddingRight="10" paddingBottom="10">
+		<s:HGroup width="100%" paddingLeft="20">
+			<s:Label x="0" y="11" text="Todos los campos marcados con * son obligatorios" fontWeight="bold"/>
+		</s:HGroup>
+		<s:TextInput id="dataOK" valueCommit="msgDataInsert();" visible="false" editable="false" width="20"/>
+		
+		<s:TextInput id="validNextMAILEMP" visible="false" editable="false" width="0"/>
+		<s:TextInput id="validNextMAILSUC" visible="false" editable="false" width="0"/>
+		<s:TextInput id="validNextRFC" visible="false" editable="false" width="0"/>
+		
+		<s:TextInput id="guid" visible="false" creationComplete="asignaGUID();" editable="false" enabled="false" width="0"/>
+		
+		<s:TextInput id="idColonia" visible="false" width="40"/>
+		<s:TextInput id="paso" width="0" visible="false"/>
+		<s:TextInput id="idRegistro" width="0" visible="false"/>
+		<s:TextInput id="idEmpresa" width="40" visible="false"/>
+		<s:TextInput id="idSucursal" width="40" visible="false" />
+		<s:TextInput id="window" visible="false" editable="false" valueCommit="initProcess()" width="0"/>
+		
+		<mx:Button id="atras" label="Atrás" visible="false" click="transWindow(0);" height="24" width="100" icon="@Embed(source='assets/back-icon_16.png')"/>
+		
+		<s:HGroup verticalAlign="middle">
+			<s:Group>
+				<mx:Button id="siguiente" label="Siguiente" visible="true"  click="transWindow(1);" height="24" width="100" icon="@Embed(source='assets/next-icon_16.png')"/>
+				<mx:Button id="aceptar"   label="Aceptar"   visible="false" click="saveData()" height="24" width="100" icon="@Embed(source='assets/accept-icon_16.png')"/>
+			</s:Group>
+		</s:HGroup>
+		<mx:Button id="canelar" label="Cancelar" click="cancelTW();" visible="true" height="24" icon="@Embed(source='assets/delete-icon_16.png')" width="100"/>
+		
+	</s:HGroup>
+</s:VGroup>
+<mx:Canvas id="contentCTLS" width="100%" height="100%">
+	<s:TitleWindow id="msg" close="salir();" width="482" height="215" visible="false" skinClass="twSkin" title="Configuración completa" horizontalCenter="-2" verticalCenter="0">
+		<mx:Image x="23" y="21" source="assets/fx_icon.png"/>
+		
+		<mx:Text x="78.5" y="27" id="titleMSG" text="Configuración finalizada." textAlign="center" fontSize="15" fontStyle="normal" fontWeight="bold" color="#054A95"/>		
+		<mx:Text x="21.5" y="76" id="adviceMSG" text="Nota:" textAlign="center" fontSize="13" fontStyle="normal" fontWeight="normal" color="#054A95"/>
+		<mx:Text x="79.5" y="75" id="contentMSG" textAlign="center" fontSize="13" fontStyle="normal" fontWeight="normal" color="#054A95"/>
+		
+		<mx:Button x="205.5" y="134" icon="@Embed(source='assets/accept-icon_24.png')" label=" Aceptar  " 
+				   click="salir();" height="38" fontSize="12"/>
+	</s:TitleWindow>
+	<s:TitleWindow id="omitConfig" close="salir();" width="482" height="224" visible="false" skinClass="twSkin" 
+				   title="Omitir configuración" horizontalCenter="-2" verticalCenter="-12">
+		<mx:Image x="23" y="21" source="assets/2519-32.png"/>
+		
+		<mx:Text x="78.5" y="25" text="¿Esta seguro de Omitir esta configuración?" textAlign="center" fontSize="15" 
+				 fontStyle="normal" fontWeight="bold" color="#054A95"/>		
+		<mx:Text x="24.5" y="70" text="Nota:" textAlign="center" fontSize="13" fontStyle="normal" fontWeight="normal" color="#054A95"/>
+		<mx:Text x="74.5" y="70" textAlign="center" fontSize="13" fontStyle="normal" fontWeight="normal" color="#054A95" 
+				 text="Al omitir estos pasos de configuración usted tendrá que realizarlos posteriormente en el menú de &quot;Administración&quot; y poder generar sus faturas." width="347"/>
+		
+		<mx:Button x="146.5" y="144" icon="@Embed(source='assets/accept-icon_24.png')" label=" Aceptar  " 
+				   click="salir();" height="28" fontSize="12"/>
+		
+		<mx:Button x="246.5" y="144" icon="@Embed(source='assets/delete-icon_24.png')" label="Cancelar" 
+				   click="PopUpManager.removePopUp(omitConfig);
+				   omititConfiguracion.selected=false;
+				   omitConfig.visible = false;
+				   omitConfig.isPopUp = false;" height="28" fontSize="12"/>
+	</s:TitleWindow>
+</mx:Canvas>
+</s:TitleWindow>

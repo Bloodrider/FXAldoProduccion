@@ -1,0 +1,1244 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="100%"
+	backgroundColor="#FFFFFF" creationComplete="convertToMDI(tipoProcedCFD);" 
+	pageTitle="Configuración de Factura"
+	applicationComplete="validateUser('configuraFact.swf');">
+	
+	<fx:Script source="r3Take.as"/>
+	<fx:Style source="fx.css" />
+	
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import com.roguedevelopment.objecthandles.CircleHandle;
+			import com.roguedevelopment.objecthandles.HandleDefinitions;
+			import com.roguedevelopment.objecthandles.HandleDescription;
+			import com.roguedevelopment.objecthandles.HandleRoles;
+			import com.roguedevelopment.objecthandles.ObjectChangedEvent;
+			import com.roguedevelopment.objecthandles.ObjectHandles;
+			import com.roguedevelopment.objecthandles.SpriteHandle;
+			import com.roguedevelopment.objecthandles.constraints.MovementConstraint;
+			import com.roguedevelopment.objecthandles.constraints.SizeConstraint;
+			import com.roguedevelopment.objecthandles.example.Example1;
+			import com.roguedevelopment.objecthandles.example.SimpleDataModel;
+			import com.roguedevelopment.objecthandles.example.SimpleFlexShape;
+			import com.roguedevelopment.objecthandles.example.SimpleSpriteShape;
+			
+			import flash.events.KeyboardEvent;
+			import flash.events.MouseEvent;
+			import flash.utils.Timer;
+			
+			import flexlib.controls.textClasses.StringBoundaries;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.DragSource;
+			import mx.core.IFlexDisplayObject;
+			import mx.effects.Move;
+			import mx.effects.Tween;
+			import mx.events.CloseEvent;
+			import mx.events.DragEvent;
+			import mx.managers.DragManager;
+			import mx.managers.PopUpManager;
+			import mx.messaging.messages.ErrorMessage;
+			import mx.utils.object_proxy;
+			
+			protected var objectHandles:ObjectHandles;
+			
+			
+			private var cartContents:ArrayCollection = new ArrayCollection();
+			
+			private function resetConfFAC():void
+			{
+				Alert.yesLabel="Si";
+				Alert.noLabel="No";
+				Alert.show("¿Esta seguro que desea inicializar el Diseñor de la Factura con los valores predeterminados?","Aviso",
+					Alert.YES|Alert.NO,this,alertListenerRSFAC,null,Alert.OK);
+			}
+			
+			private function alertListenerRSFAC(eventObj:CloseEvent):void 
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					//Send(315);Send(309);//Reinicia Registro
+					Send(615);//BORRAR LA CONFIGURACION DE CONFIGURADOR DE FACTURAS
+					Send(508);//INSERTAR LA CONFIGURACION INICIAL DE LA EMPRESA MODELO
+					Send(323);//EJECUTA LA CLASE App_Code.com.Facturaxion.facturaDummy y el método initFacturaDummy
+					Send(506);//INSERTA LOS NOMBRES EN EL TEXTINPUTS ASÍ COMO SUS POSICIONES X y Y
+					Send(616);//EJECTURA EL idRand PARA REFRESCAR
+					
+				}
+			}
+			
+			private function migrarFAC():void
+			{
+				Alert.yesLabel="Si";
+				Alert.noLabel="No";
+				Alert.show("¿Está seguro que desea guardar el Diseño de su Factura y visualizarla en la impresión de los CFDI reales?","Aviso",
+					Alert.YES|Alert.NO,this,alertListenerMGFAC,null,Alert.OK);
+			}
+			
+			private function alertListenerMGFAC(eventObj:CloseEvent):void 
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					Send(513);//Migrar Registro
+				}
+			}
+			
+			
+			
+			
+			
+			import mx.managers.CursorManager;
+			
+			//[Bindable]
+			// [Embed(source="assets/redArrow.png")]
+			private var redArrowIcon:Class;
+			private var cursorID:int;
+			
+			private function setItems():void
+			{
+				//Seteamos las posiciones de los controles de tipo Etiquetas e Imagenes según posiciones en BD
+				rfcEmpresa.x = Number(rfcEmpresa_X.text);
+				rfcEmpresa.y = Number(rfcEmpresa_Y.text);
+				empresa.x = Number(empresa_X.text) 
+				empresa.y = Number(empresa_Y.text)            	
+				direccionEmpresa1.x = Number(direccionEmpresa1_X.text) 
+				direccionEmpresa1.y = Number(direccionEmpresa1_Y.text)
+				direccionEmpresa2.x = Number(direccionEmpresa2_X.text) 
+				direccionEmpresa2.y = Number(direccionEmpresa2_Y.text)
+				direccionEmpresa3.x = Number(direccionEmpresa3_X.text) 
+				direccionEmpresa3.y = Number(direccionEmpresa3_Y.text)
+				serie.x = Number(serie_X.text) 
+				serie.y = Number(serie_Y.text)
+				folio.x = Number(folio_X.text) 
+				folio.y = Number(folio_Y.text)
+				fechaFactura.x = Number(fechaFactura_X.text) 
+				fechaFactura.y = Number(fechaFactura_Y.text)            	
+				rfcCliente.x = Number(rfcCliente_X.text) 
+				rfcCliente.y = Number(rfcCliente_Y.text)
+				cliente.x = Number(cliente_X.text) 
+				cliente.y = Number(cliente_Y.text)
+				direccionCliente1.x = Number(direccionCliente1_X.text) 
+				direccionCliente1.y = Number(direccionCliente1_Y.text)
+				direccionCliente2.x = Number(direccionCliente2_X.text) 
+				direccionCliente2.y = Number(direccionCliente2_Y.text)
+				direccionCliente3.x = Number(direccionCliente3_X.text) 
+				direccionCliente3.y = Number(direccionCliente3_Y.text)
+				logo.x = Number(logo_X.text);
+				logo.y = Number(logo_Y.text);
+				header.x = Number(header_X.text);
+				header.y = Number(header_Y.text);
+				
+				direccionSucursal1.x = Number(direccionSucursal1_X.text) 
+				direccionSucursal1.y = Number(direccionSucursal1_Y.text)
+				direccionSucursal2.x = Number(direccionSucursal2_X.text) 
+				direccionSucursal2.y = Number(direccionSucursal2_Y.text)
+				direccionSucursal3.x = Number(direccionSucursal3_X.text) 
+				direccionSucursal3.y = Number(direccionSucursal3_Y.text)
+				sucursal.x = Number(sucursal_X.text);
+				sucursal.y = Number(sucursal_Y.text);
+				folioFiscal.x = Number(folioFiscal_X.text);
+				folioFiscal.y = Number(folioFiscal_Y.text);
+				
+				
+				
+				
+				nuevoLbl0.x = Number(nuevoLbl0_X.text) 
+				nuevoLbl0.y = Number(nuevoLbl0_Y.text)
+				nuevoLbl1.x = Number(nuevoLbl1_X.text) 
+				nuevoLbl1.y = Number(nuevoLbl1_Y.text)
+				nuevoLbl2.x = Number(nuevoLbl2_X.text) 
+				nuevoLbl2.y = Number(nuevoLbl2_Y.text)
+				nuevoLbl3.x = Number(nuevoLbl3_X.text) 
+				nuevoLbl3.y = Number(nuevoLbl3_Y.text)
+				nuevoLbl4.x = Number(nuevoLbl4_X.text) 
+				nuevoLbl4.y = Number(nuevoLbl4_Y.text)
+				nuevoLbl5.x = Number(nuevoLbl5_X.text) 
+				nuevoLbl5.y = Number(nuevoLbl5_Y.text)
+				nuevoLbl6.x = Number(nuevoLbl6_X.text) 
+				nuevoLbl6.y = Number(nuevoLbl6_Y.text)
+				nuevoLbl7.x = Number(nuevoLbl7_X.text) 
+				nuevoLbl7.y = Number(nuevoLbl7_Y.text)
+				nuevoLbl8.x = Number(nuevoLbl8_X.text) 
+				nuevoLbl8.y = Number(nuevoLbl8_Y.text)
+				nuevoLbl9.x = Number(nuevoLbl9_X.text) 
+				nuevoLbl9.y = Number(nuevoLbl9_Y.text)
+				
+			}
+			
+			
+			private function entrar():void
+			{
+				Send(508);
+				
+				if(inicializarConfiginstUso.selected == true)
+				{
+					Send(507);//INSERTA LOS VALORES DEL SERVIDOR DE PRODUCCION A DESARROLLO PRIMERA VEZ
+					
+				}
+				
+				Send(506)//INSERTA LOS VALORES DE LAS POSICIONES DE LOS CONTROLES EN LOS TEXTINPUTS
+				Send(323);
+				instUso.visible = false;      
+				contador.setFocus(); 
+				addEventListener("keyUp", myKeyDown);       	
+			}
+			
+			
+			// Define private keyDown event handler.
+			private function myKeyDown(eventObj:KeyboardEvent):void {   
+				// Check to see if Ctrl-Z pressed. Keycode for Z is 90.         
+				if (eventObj.ctrlKey && eventObj.keyCode == 90) 
+				{
+					this[ctrlZName.text].x = Number(ctrlZX.text);
+					this[ctrlZName.text].y = Number(ctrlZY.text);
+					//savePosition(ctrlZName.text);
+				}
+			}
+			
+			
+			private function salir():void
+			{
+				
+				mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="init.swf";
+				
+			}
+			/*
+			private function salir():void
+			{
+			SWFLoader(this.parent.parent.parent.parent.getChildByName("globalLoader")).load("init.swf");
+			}
+			*/
+			private function convertToMDI(titleW:IFlexDisplayObject):void
+			{
+				PopUpManager.addPopUp(titleW, principalConf, true);
+				
+			}
+			
+			public function closeTitleWindow(titleWC:IFlexDisplayObject):void {
+				
+				//PopUpManager.removePopUp(titleWC);
+				
+			}
+			
+			
+			private function setIdRef():void
+			{				
+				//logoFactura.eGobIdRef = idEmpresa.text;
+				//encabezadoFactura.eGobIdRef = idEmpresa.text; 
+				//pieFactura.eGobIdRef = idEmpresa.text;
+			}
+			
+			private function setCtrlZ(nameControl:String):void
+			{
+				if(contador.text == "0")
+				{
+					ctrlZX.text = this[nameControl].x;
+					ctrlZY.text = this[nameControl].y;
+					ctrlZName.text = nameControl; 
+					contador.text = "1";
+				}
+			}
+			
+			public function init() : void
+			{
+				objectHandles = new ObjectHandles( this , null, null);
+				
+				objectHandles.registerComponent(header,header,null,true,null);
+				//objectHandles.registerComponent(footer,footer,null,true,null);
+				objectHandles.registerComponent(logo,logo,null,true,null);
+				objectHandles.registerComponent(rfcEmpresa,rfcEmpresa,null,true,null);
+				objectHandles.registerComponent(empresa,empresa,null,true,null);
+				objectHandles.registerComponent(direccionEmpresa1,direccionEmpresa1,null,true,null);
+				objectHandles.registerComponent(direccionEmpresa2,direccionEmpresa2,null,true,null);
+				objectHandles.registerComponent(direccionEmpresa3,direccionEmpresa3,null,true,null);
+				objectHandles.registerComponent(serie,serie,null,true,null);
+				objectHandles.registerComponent(folio,folio,null,true,null);
+				objectHandles.registerComponent(fechaFactura,fechaFactura,null,true,null);
+				objectHandles.registerComponent(rfcCliente,rfcCliente,null,true,null);
+				objectHandles.registerComponent(cliente,cliente,null,true,null);
+				objectHandles.registerComponent(direccionCliente1,direccionCliente1,null,true,null);
+				objectHandles.registerComponent(direccionCliente2,direccionCliente2,null,true,null);
+				objectHandles.registerComponent(direccionCliente3,direccionCliente3,null,true,null);
+				
+				
+				objectHandles.registerComponent(sucursal,sucursal,null,true,null);
+				objectHandles.registerComponent(direccionSucursal1,direccionSucursal1,null,true,null);
+				objectHandles.registerComponent(direccionSucursal2,direccionSucursal2,null,true,null);
+				objectHandles.registerComponent(direccionSucursal3,direccionSucursal3,null,true,null);
+				objectHandles.registerComponent(folioFiscal,folioFiscal,null,true,null);
+				
+				objectHandles.registerComponent(nuevoLbl0,nuevoLbl0,null,true,null);
+				objectHandles.registerComponent(nuevoLbl1,nuevoLbl1,null,true,null);
+				objectHandles.registerComponent(nuevoLbl2,nuevoLbl2,null,true,null);
+				objectHandles.registerComponent(nuevoLbl3,nuevoLbl3,null,true,null);
+				objectHandles.registerComponent(nuevoLbl4,nuevoLbl4,null,true,null);
+				objectHandles.registerComponent(nuevoLbl5,nuevoLbl5,null,true,null);
+				objectHandles.registerComponent(nuevoLbl6,nuevoLbl6,null,true,null);
+				objectHandles.registerComponent(nuevoLbl7,nuevoLbl7,null,true,null);
+				objectHandles.registerComponent(nuevoLbl8,nuevoLbl8,null,true,null);
+				objectHandles.registerComponent(nuevoLbl9,nuevoLbl9,null,true,null);
+				
+				
+				
+				
+			}
+			
+			private function setIdTipoCFD():void{
+				
+				
+				if(tipoCFD.selectedItem!=null){
+					var valsTipoCFD:Array = new Array();
+					valsTipoCFD   = tipoCFD.selectedItem.valueOf().toString().split(",");
+					idTipoCFD.text = valsTipoCFD[0].toString();
+				}
+				
+				
+			}
+			/*
+			private function setIdTipoCFDHeader():void{
+			
+			if (tipoCFDHeader.selectedIndex != -1){
+			if(tipoCFDHeader.selectedItem[0].toString()!="0"){
+			
+			var valsTipoCFDHeader:Array = new Array();
+			valsTipoCFDHeader   = tipoCFDHeader.selectedItem.valueOf().toString().split(",");
+			idTipoCFD.text = valsTipoCFDHeader[0].toString();
+			idProcedCFD.text = "1";
+			
+			Alert.yesLabel="Si";
+			Alert.noLabel="No";
+			
+			
+			
+			Alert.show("¿Está a punto de configurar el Comprobante Fiscal Digital "+ valsTipoCFDHeader[1].toString()+ ". El sistema generará la configuración en este momento." + 
+			" ¿Está seguro que desea continuar?","Aviso",
+			Alert.YES|Alert.NO,this,function ConfigCFD(eventObj:CloseEvent):void{if (eventObj.detail==Alert.YES){doConfigCFD(valsTipoCFDHeader[0].toString())}},null,Alert.OK);
+			
+			}else{
+			Alert.show("Debe seleccionar un elemento de la lista de Tipo de Comprobantes Fiscales Digitales","Aviso");
+			}
+			
+			
+			
+			
+			}else{
+			Alert.show("Debe seleccionar un elemento de la lista de Tipo de Comprobantes Fiscales Digitales","Aviso");
+			}
+			
+			
+			
+			}
+			
+			*/
+			private function verInst():void{
+				
+				//var msjTipoCFD:String = "";
+				
+				Alert.yesLabel="Si";
+				Alert.noLabel="No";
+				
+				if (tipoCFD.selectedIndex != -1){
+					if(tipoCFD.selectedItem[0].toString()!="0"){
+						var valsTipoCFD:Array = new Array();
+						valsTipoCFD   = tipoCFD.selectedItem.valueOf().toString().split(",");
+						
+						
+						Alert.show("Está a punto de configurar el Comprobante Fiscal Digital "+ valsTipoCFD[1].toString()+ ". El sistema generará la configuración en este momento." + 
+							" ¿Está seguro que desea continuar?","Aviso",
+							Alert.YES|Alert.NO,this,function ConfigCFD(eventObj:CloseEvent):void{if (eventObj.detail==Alert.YES){doConfigCFD(valsTipoCFD[0].toString())}},null,Alert.OK);
+						
+					}else{
+						Alert.show("Debe seleccionar un elemento de la lista de Tipo de Comprobantes Fiscales Digitales","Aviso");
+					}
+					
+					
+				}else{
+					Alert.show("Debe seleccionar un elemento de la lista de Tipo de Comprobantes Fiscales Digitales","Aviso");
+				}
+			}
+			
+			
+			private function isThereDataProdFx():void{
+				
+				var isThereData:int = int(isThereDataProd.text);
+				
+				if(isThereData ==0){//NO HAY REGISTROS EN PRODUCCION DE CONFIGURACION DE FACTURAS
+					
+					inicializarConfiginstUso.selected = false;
+					inicializarConfiginstUso.enabled = false;
+					
+					isThereDataProd.text =="-1";
+				}else if(isThereData > 0){
+					
+					inicializarConfiginstUso.selected = false;
+					inicializarConfiginstUso.enabled = true;
+					isThereDataProd.text =="-1";
+				}
+				convertToMDI(instUso);
+				instUso.visible = true;
+				tipoProcedCFD.visible = false;
+				
+				
+			}
+			
+			
+			private function doConfigCFD(tipoCFD:String):void{
+				Send(526);//INDICA SI YA EXISTE ALGUNA CONFIGURACIÓN EN 
+				
+				CFD1.visible = true;
+				CFD2.visible = false;
+				CFD3.visible = false;
+				CFD4.visible = false;
+				CFD5.visible = false;
+			
+			}
+			
+			private function actualizarCtrl():void{
+				
+				
+				if(toUpd.text == "1"){
+					if(Number(xControl.text)<0)
+					{
+						xControl.text ="0.00";
+						this[idControl.text].x = 0.00;
+					}
+					if(Number(yControl.text)<0)
+					{
+						yControl.text = "0.00";
+						this[idControl.text].y = 0.00;
+					}
+					
+					
+					if(nameControl.text=="1"){//LABEL
+						xControl.text=String(((0.46 * Number(xControl.text)) + 3.877));
+						yControl.text=String((-(0.475 * Number(yControl.text)) + 784.6));
+						
+						Send(509);//ACTUALLIZA EN LA BASE LA POSICIÓN X,Y DE UN  LABEL
+					}else if(nameControl.text=="2"){//IMAGEN HEADER Y FOOTER
+						xControl.text=String((0.250 * Number(xControl.text)) + 6.863);
+						
+						//yControl.text=String((-0.452 * Number(yControl.text)) + 490.7);
+						yControl.text=String((-0.452 * Number(yControl.text)) + 590.7);
+						Send(512);//ACTUALIZA EN LA BASE LA POSICION X,Y DE UNA IMAGEN
+						
+					}else if(nameControl.text=="3"){//IMAGEN LOGO
+						xControl.text=String((0.450 * Number(xControl.text)) + 0.005);
+						yControl.text=String((-0.479 * Number(yControl.text)) + 740.6);
+						Send(512);//ACTUALIZA EN LA BASE LA POSICION X,Y DE UNA IMAGEN
+					}
+					toUpd.text = "-1";
+					
+				}else if(toUpd.text == "-1"){
+					//this[idControl.text+"_X"].x = xControl.text;
+					//this[idControl.text+"_Y"].y = yControl.text;
+				}
+			}
+			
+			private function verUL(myTW:TitleWindow):void{
+				
+				PopUpManager.removePopUp(myTW);
+				myTW.visible =true;
+				convertToMDI(myTW);
+			}
+			
+			
+			private function verTWMasCampos():void{
+				convertToMDI(this.masCampos);
+				this.masCampos.visible =true;
+				Send(534);//CARGAR EL COMBOBOX DE TIPO DE IDENTIFICADOR
+				
+			}
+			/*
+			private function verTWEditMasCampos():void{
+			convertToMDI(this.editCampos);
+			this.editCampos.visible =true;
+			Send(0);//CARGAR EL GRIDVIEW CON LOS CAMPOS UTILIZADOS
+			
+			}
+			*/
+			
+			
+			private function agregarMasCampos():void{
+				var patternBlank:RegExp = /([[:space:]]+)/gi;
+				
+				if(idTipoIdent.selectedItem!=null){
+					if(idTipoIdent.selectedItem[0].toString()!="0"){
+						if(idTipoIdent.selectedItem[0].toString()=="1"){
+							if(nuevoCampo.text.search(patternBlank) == -1 ){
+								
+								Send(519);//AGREGAR UN NUEVO CAMPO EN LA TABLA DE LA CONFIGURACION DE FACTURA DETALLE
+							}else{
+								Alert.show("El identificador no debe contener espacios en blanco. Favor de verificar","Aviso")
+								
+							}	
+							
+						}else if(idTipoIdent.selectedItem[0].toString()=="2"){
+							
+							Send(519);//AGREGAR UN NUEVO CAMPO EN LA TABLA DE LA CONFIGURACION DE FACTURA DETALLE
+						}
+						
+					}
+					else{
+						Alert.show("Debe Seleccionar algún elemento de la lista de Tipo de Identificador. Favor de verificar","Aviso")
+					}	 
+				}else{
+					Alert.show("Debe Seleccionar algún elemento de la lista de Tipo de Identificador. Favor de verificar","Aviso")
+				}
+				
+				
+			}
+			
+			private function isThereMore():void{
+				var pattern:RegExp = /nuevoLbl/i;
+				
+				if(isThereNuevoLbl.text=="0"){//Ya NO SE PUEDE AGREGAR MAS CAMPOS
+					Alert.show("Solo se pueden agregar 10 campos nuevos.","Alerta");
+					isThereNuevoLbl.text="-1";
+				}else if(isThereNuevoLbl.text.search(pattern)!=-1){//INGRESO UN NUEVO REGISTRO Y TE TRAE EL ID DEL LABEL QUE SE INGRESO
+					
+					
+					addToCart(isThereNuevoLbl.text,nuevoCampo.text,'Nuevo');//nuevoLbl@,nombre de nuevoLbl@0 que se ingresó en el TW
+					masCampos.visible = false;
+					PopUpManager.removePopUp(masCampos);
+				}
+				
+			}
+			
+			private function addToCart(ctrlIdInt:String,ctrlIdExt:String,estado:String):void{
+				////validar si el id esta repetido				
+				cartContents.addItem(new addItemToChart(ctrlIdInt,ctrlIdExt,estado));
+				
+				
+			}
+			
+			private function delFromCart(position:int):void{
+				////validar si el id esta repetido				
+				cartContents.removeItemAt(position);
+				
+				
+			}	
+			
+			private function updFromCart(ctrlIdInt:String,ctrlIdExt:String,estado:String):void{
+				
+				cartContents.itemUpdated(new addItemToChart(ctrlIdInt,ctrlIdExt,estado),null,"Nuevo","En uso");
+				
+				
+				
+				
+			}			
+			
+			private function makeName(item:*):String
+			{
+				return item.@lastName + ", " + item.@firstName;
+			}
+			
+			
+			
+			private function dragAccept(event:DragEvent):void
+			{
+				var dropTarget:Canvas = event.currentTarget as Canvas;
+				DragManager.acceptDragDrop(dropTarget);
+			}
+			
+			
+			private function dragDrop(event:DragEvent):void
+			{
+				try
+				{
+					
+					if(event.dragSource.dataForFormat('lbl') != null){
+						
+						var lbl:spark.components.Label = event.dragSource.dataForFormat('lbl') as spark.components.Label;
+						
+					}else if(event.dragSource.dataForFormat('img') != null){
+						var img:Image = event.dragSource.dataForFormat('img') as Image;
+						
+						
+					}else if(event.dragSource.dataForFormat('items') != null){
+						var aItems:Array = event.dragSource.dataForFormat('items') as Array;
+						
+						var name:String = aItems[0].idInt;
+						
+						
+						this[aItems[0].idInt].visible = true;
+						this[aItems[0].idInt].x = 650;
+						this[aItems[0].idInt].y = 340;
+						this[aItems[0].idInt].text = aItems[0].name;
+						//delFromCart(0);
+						
+						//cartContents.itemUpdated(new addItemToChart(aItems[0].idInt,aItems[0].name,"Nuevo"),null,"Nuevo","En uso");
+						
+						cartContents.setItemAt({idInt:aItems[0].idInt, name:aItems[0].name,estado:"Usándose"}, DGNuevoLbl.selectedIndex);
+						
+						
+					}
+				}
+				catch (e:ErrorMessage) 
+				{	
+					Alert.show("Se genero un error");
+				}
+			}
+			private function setIdTipoIdent():void{
+				
+				if(idTipoIdent.selectedItem!=null){
+					idTipoIdentTxt.text =idTipoIdent.selectedItem[0].toString();
+				}
+				
+				
+			}
+			private function viewIntoDG(numLbl:int):void{
+				
+				if(this["nuevoLbl"+numLbl+"_X"].text!="650.00"){
+					if(this["nuevoLbl"+numLbl+"_Y"].text!="340.00"){
+						
+						
+						this["nuevoLbl"+numLbl].visible = true;
+						this["nuevoLbl"+numLbl].text =this["nuevoLbl"+numLbl+"_N"].text 
+						this["nuevoLbl"+numLbl].x = this["nuevoLbl"+numLbl+"_X"].text;
+						this["nuevoLbl"+numLbl].y = this["nuevoLbl"+numLbl+"_Y"].text;
+						cartContents.addItem(new addItemToChart("nuevoLbl"+numLbl,this["nuevoLbl"+numLbl +"_N"].text,"Sin Usar"));
+						
+					}else{
+						
+						
+						cartContents.addItem(new addItemToChart("nuevoLbl"+numLbl,this["nuevoLbl"+numLbl +"_N"].text,"En uso"));
+						
+						
+					}
+				}else{
+					if(this["nuevoLbl"+numLbl+"_Y"].text!="340.00"){
+						
+						this["nuevoLbl"+numLbl].visible = true;
+						this["nuevoLbl"+numLbl].text =this["nuevoLbl"+numLbl+"_N"].text 
+						this["nuevoLbl"+numLbl].x = this["nuevoLbl"+numLbl+"_X"].text;
+						this["nuevoLbl"+numLbl].y = this["nuevoLbl"+numLbl+"_Y"].text;
+						cartContents.addItem(new addItemToChart("nuevoLbl"+numLbl,this["nuevoLbl"+numLbl +"_N"].text,"Sin Usar"));
+						
+					}else{
+						cartContents.addItem(new addItemToChart("nuevoLbl"+numLbl ,this["nuevoLbl"+numLbl +"_N"].text,"En uso"));
+					}
+					
+				}
+				
+				
+			}
+			
+			public function dgChangeHandler(edit1Del2:int):void {
+				
+				if (DGNuevoLbl.selectedItem !== null) {
+					clearInputs();
+					idInterno.text = DGNuevoLbl.selectedItem.idInt;
+					nombreControl.text = DGNuevoLbl.selectedItem.name;
+					estado.text = DGNuevoLbl.selectedItem.estado;
+					editDeleteFields.visible=true;
+					if(edit1Del2==1){//EDICION
+						btnEdit.visible=true;
+						btnDel.visible=false;
+						nombreControl.enabled = true;
+						
+					}if(edit1Del2==2){//BORRADO
+						
+						btnEdit.visible=false;
+						btnDel.visible=true;
+						nombreControl.enabled = false;
+					}	
+				}
+			}
+			
+			
+			public function clearInputs():void {
+				idInterno.text = "";
+				nombreControl.text = "";
+				estado.text = "";
+			}
+			
+			public function editNewField():void {
+				if (DGNuevoLbl.selectedItem !== null) {
+					cartContents.setItemAt({idInt:idInterno.text, name:nombreControl.text,estado:estado.text}, DGNuevoLbl.selectedIndex);
+					Send(580);
+					editDeleteFields.visible=false;
+				}
+			}
+			
+			public function delNewField():void {
+				if (DGNuevoLbl.selectedItem !== null) {
+					
+					Alert.show("¿Está seguro que desea eliminar el campo seleccionado?","Aviso",
+						Alert.YES|Alert.NO,this,doDelNewField,null,Alert.OK);
+					
+					
+					
+				}
+			}
+			
+			public function doDelNewField(eventObj:CloseEvent):void {
+				
+				if (eventObj.detail==Alert.YES){
+					cartContents.removeItemAt(DGNuevoLbl.selectedIndex);
+					Send(579);
+					editDeleteFields.visible=false;
+					this[idInterno.text].visible = false;
+					this[idInterno.text].text = "";
+				}
+				
+			}
+			
+			public function getNameCtrls(tipoImg:int):void{
+				
+				//Send(506);//ACTUALIZA LOS CONTROLES
+				if(tipoImg==1){//ENCABEZADO
+					Send(641);
+				}else if(tipoImg==2){//LOGO
+					Send(642);
+				}else if(tipoImg==3){//FOOTER
+					Send(643);
+				}
+				
+			}
+			
+			public function showMsg():void{
+				
+				
+				if(isUploaded.text=="1"){
+					Alert.okLabel="Aceptar";
+					Alert.show("El archivo fue guardado exitósamente","Aviso");
+					Send(506);//ACTUALIZA LOS CONTROLES
+					
+				}else if(isUploaded.text=="0"){
+					Alert.okLabel="Aceptar";
+					Alert.show("El archivo no fue guardado. Intente nuevamente","Aviso");
+					Send(506);//ACTUALIZA LOS CONTROLES
+				}
+				
+				isUploaded.text="-1";
+				//Send(506);//ACTUALIZA LOS CONTROLES
+			
+			}
+			
+			public function refreshImg(TIRutaImg:TextInput,img:Image):void{
+				
+				
+					if(TIRutaImg.text!="-1"){
+						img.source = TIRutaImg.text
+					}
+					TIRutaImg.text="-1";
+			}
+		]]>
+	</fx:Script>
+	<!--To-Do: Checar por que el valor de la posicion no se refresca en los controles de pantalla, y ver lo de la separación del guardado de cada control-->
+	<s:Group x="0" y="0" width="100%" height="100%">
+		<s:VGroup width="100%" height="100%" paddingTop="15" paddingBottom="10" paddingLeft="10" paddingRight="10">
+			
+			
+			<s:HGroup width="100%" paddingLeft="20" paddingRight="20" gap="15">
+				<mx:Button x="20" y="3" label="Guardar Diseño" icon="@Embed(source='assets/accept-icon_24.png')" click="migrarFAC();" height="30" tabIndex="99" toolTip="Guardar Diseño"/>
+				<mx:Button x="288" y="3" label="Inicializar Diseño de CFDI" icon="@Embed(source='assets/3518-24.png')" click="resetConfFAC();" height="30" tabIndex="99" toolTip="Inicializar Diseño de CFDI"/>
+				<mx:Button x="556" y="3" label="Vista Previa" icon="@Embed(source='assets/3020-24.png')" click="Send(323);Send(318); " height="30" tabIndex="99" toolTip="Previsualizar Diseño de la Factura"/>
+				<mx:Button x="949" y="3" label="Ayuda" icon="@Embed(source='assets/ayuda_hot_24.png')" click="ayuda.visible = true;/* convertToMDI(instUso2); */"  height="30" tabIndex="99" toolTip="Ayuda"/>
+				<!--<mx:Button x="1205" y="3" label="Plantillas" icon="@Embed(source='assets/32px_Crystal_Clear_action_reload.png')" click="navigateToURL(new URLRequest('http://fx.facturaxion.com/repositorio/plantillas.zip'), '_self');"  height="29" width="120" tabIndex="99" toolTip="Salir de la Configuración, los movimientos generados ya se encuentran guardados en su preconfiguración"/>-->
+				<mx:Button x="1077" y="3" label="Salir" icon="@Embed(source='assets/delete-icon_24.png')" click=" salir(); instUso.visible = false; " height="30" tabIndex="99" toolTip="Salir del Diseñador de Factura" width="87"/>
+				<!--<s:ComboBox id="tipoCFDHeader"  x="744" y="3.5" width="197" height="24" creationComplete="Send(502);" change="setIdTipoCFDHeader();"></s:ComboBox>-->
+			</s:HGroup>
+			
+			
+			<s:HGroup width="100%" height="100%" >
+				<s:VGroup width="80%" height="100%" >
+					<mx:Canvas width="100%" height="100%">
+						<mx:Canvas id="principalConf" width="100%" height="100%" borderStyle="solid"  backgroundColor="#747D84"  creationComplete="init();">
+							<mx:Canvas id="CFD1" y="5" x="0" width="100%" height="100%" borderStyle="solid"  backgroundColor="#FFFFFF" mouseOut="contador.setFocus();"
+									   dragDrop="dragDrop(event)" dragEnter="dragAccept(event)">
+								
+								
+								<s:TextInput id="idEmpresa" x="0" y="0" width="100" height="22" visible="false" creationComplete="Send(317);" valueCommit="setIdRef();"/>
+								<s:TextInput id="isThereNuevoLbl" x="0" y="0" width="20" height="22" visible="false" valueCommit="isThereMore();"/>
+								<s:TextInput id="idTipoIdentTxt" x="20" y="0" width="20" height="22" visible="false"/>
+								<s:TextInput id="idSucursal" x="60" y="0" width="20" height="22" visible="false"/>
+								<s:TextInput id="isUploaded" x="60" y="0" width="20" height="22" visible="false" valueCommit="showMsg();"/>
+								
+								<!--Images con las posiciones de los controles con la configuración inicial-->
+								<mx:Image id="header" name="2" x="63" y="54" source="assets/header.png" doubleClickEnabled="true" doubleClick="verUL(adjuntarHeader);"    />
+								<mx:Image id="footer" name="2" x="63" y="1570" source="assets/footer.png" toolTip="Pie de la Factura" doubleClickEnabled="true" doubleClick="verUL(adjuntarFooter);"   />
+								<mx:Image id="logo" name="3" x="63" y="108" source="assets/imagenLogo.png" doubleClickEnabled="true" doubleClick="verUL(adjuntarLogotipo);"   toolTip="Dé doble clic sobre esta imagen para adjuntar el Logotipo de la Factura"/>
+								<mx:Image id="qrCode" name="2" x="55" y="1234" source="assets/qrCode.png" toolTip="QR Code"   width="134" height="139"/>
+								
+								<!--Input Text con las posiciones de los controles con la configuración inicial-->
+								<s:TextInput id="rfcEmpresa_X" x="410" y="600" width="22" height="22" visible="false" />
+								<s:TextInput id="rfcEmpresa_Y" x="620" y="600" width="22" visible="false"/>
+								<s:TextInput id="empresa_X" x="110" y="620" width="22" visible="false"/>
+								<s:TextInput id="empresa_Y" x="220" y="620" width="22" visible="false"/>
+								<s:TextInput id="direccionEmpresa1_X" x="110" y="640" width="22" visible="false"/>
+								<s:TextInput id="direccionEmpresa1_Y" x="220" y="640" width="22" visible="false"/>
+								<s:TextInput id="direccionEmpresa2_X" x="110" y="660" width="22" visible="false"/>
+								<s:TextInput id="direccionEmpresa2_Y" x="220" y="660" width="22" visible="false"/>
+								<s:TextInput id="direccionEmpresa3_X" x="110" y="680" width="22" visible="false"/>
+								<s:TextInput id="direccionEmpresa3_Y" x="220" y="680" width="22" visible="false"/>
+								<s:TextInput id="serie_X" x="110" y="700" width="22" visible="false"/>
+								<s:TextInput id="serie_Y" x="220" y="700" width="22" visible="false"/>
+								<s:TextInput id="folio_X" x="110" y="720" width="22" visible="false"/>
+								<s:TextInput id="folio_Y" x="220" y="720" width="22" visible="false"/>
+								<s:TextInput id="fechaFactura_X" x="110" y="740" width="22" visible="false"/>
+								<s:TextInput id="fechaFactura_Y" x="220" y="740" width="22" visible="false"/>
+								<s:TextInput id="rfcCliente_X" x="110" y="760" width="22" visible="false"/>
+								<s:TextInput id="rfcCliente_Y" x="220" y="760" width="22" visible="false"/>
+								<s:TextInput id="cliente_X" x="110" y="780" width="22" visible="false"/>
+								<s:TextInput id="cliente_Y" x="220" y="780" width="22" visible="false"/>
+								<s:TextInput id="direccionCliente1_X" x="110" y="800" width="22" visible="false"/>
+								<s:TextInput id="direccionCliente1_Y" x="220" y="800" width="22" visible="false"/>
+								<s:TextInput id="direccionCliente2_X" x="110" y="820" width="22" visible="false"/>
+								<s:TextInput id="direccionCliente2_Y" x="220" y="820" width="22" visible="false"/>
+								<s:TextInput id="direccionCliente3_X" x="110" y="840" width="22" visible="false"/>
+								<s:TextInput id="direccionCliente3_Y" x="220" y="840" width="22" visible="false"/>
+								<s:TextInput id="logo_X" x="110" y="860" width="22" visible="false"/>
+								<s:TextInput id="logo_Y" x="220" y="860" width="22" visible="false"/>
+								<s:TextInput id="header_X" x="110" y="880" width="22" visible="false"/>
+								<s:TextInput id="header_Y" x="220" y="880" width="22" visible="false" />
+								<s:TextInput id="idRand" x="220" y="900" width="22" visible="false" valueCommit="setItems();"/>
+								<s:TextInput id="ctrlZX" x="220" y="600" width="22" visible="false"/>
+								<s:TextInput id="ctrlZY" x="220" y="620" width="22" visible="false"/>
+								<s:TextInput id="ctrlZName" x="220" y="640" width="22" visible="false"/>
+								<s:TextInput id="contador" width="22" visible="false" text="0" right="0" bottom="0"/>
+								
+								<s:TextInput id="direccionSucursal1_X" x="110" y="930" width="22" visible="false"/>
+								<s:TextInput id="direccionSucursal1_Y" x="220" y="930" width="22" visible="false"/>
+								<s:TextInput id="direccionSucursal2_X" x="110" y="950" width="22" visible="false"/>
+								<s:TextInput id="direccionSucursal2_Y" x="220" y="950" width="22" visible="false"/>
+								<s:TextInput id="direccionSucursal3_X" x="110" y="970" width="22" visible="false"/>
+								<s:TextInput id="direccionSucursal3_Y" x="220" y="970" width="22" visible="false"/>
+								<s:TextInput id="sucursal_X" x="110" y="970" width="22" visible="false"/>
+								<s:TextInput id="sucursal_Y" x="220" y="970" width="22" visible="false"/>
+								<s:TextInput id="folioFiscal_X" x="110" y="990" width="22" visible="false"/>
+								<s:TextInput id="folioFiscal_Y" x="220" y="990" width="22" visible="false"/>
+								
+								
+								
+								<s:TextInput id="nuevoLbl0_X" x="110" y="920" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl1_X" x="110" y="940" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl2_X" x="110" y="960" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl3_X" x="110" y="980" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl4_X" x="110" y="1000" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl5_X" x="110" y="1020" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl6_X" x="110" y="1040" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl7_X" x="110" y="1060" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl8_X" x="110" y="1080" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl9_X" x="110" y="1100" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl0_Y" x="220" y="920" width="22" visible="false" />
+								<s:TextInput id="nuevoLbl1_Y" x="220" y="940" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl2_Y" x="220" y="960" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl3_Y" x="220" y="980" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl4_Y" x="220" y="1000" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl5_Y" x="220" y="1020" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl6_Y" x="220" y="1040" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl7_Y" x="220" y="1060" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl8_Y" x="220" y="1080" width="22" visible="false"/>
+								<s:TextInput id="nuevoLbl9_Y" x="220" y="1100" width="22" visible="false"/>
+								
+								<s:TextInput id="nuevoLbl0_N" x="420" y="920" width="22" visible="false" valueCommit="viewIntoDG(0);"/>
+								<s:TextInput id="nuevoLbl1_N" x="420" y="940" width="22" visible="false" valueCommit="viewIntoDG(1);"/>
+								<s:TextInput id="nuevoLbl2_N" x="420" y="960" width="22" visible="false" valueCommit="viewIntoDG(2);"/>
+								<s:TextInput id="nuevoLbl3_N" x="420" y="980" width="22" visible="false" valueCommit="viewIntoDG(3);"/>
+								<s:TextInput id="nuevoLbl4_N" x="420" y="1000" width="22" visible="false" valueCommit="viewIntoDG(4);"/>
+								<s:TextInput id="nuevoLbl5_N" x="420" y="1020" width="22" visible="false" valueCommit="viewIntoDG(5);"/>
+								<s:TextInput id="nuevoLbl6_N" x="420" y="1040" width="22" visible="false" valueCommit="viewIntoDG(6);"/>
+								<s:TextInput id="nuevoLbl7_N" x="420" y="1060" width="22" visible="false" valueCommit="viewIntoDG(7);"/>
+								<s:TextInput id="nuevoLbl8_N" x="420" y="1080" width="22" visible="false" valueCommit="viewIntoDG(8);"/>
+								<s:TextInput id="nuevoLbl9_N" x="420" y="1100" width="22" visible="false" valueCommit="viewIntoDG(9);"/>
+								
+								
+								
+								<s:TextInput id="xControl" x="110" y="600" width="22" visible="false"/>
+								<s:TextInput id="yControl" x="220" y="600" width="22" visible="false"/>
+								<s:TextInput id="idControl" x="110" y="620" width="22" visible="false"/>
+								<s:TextInput id="nameControl" x="220" y="620" width="22" visible="false"/>
+								<s:TextInput id="nuevoCampo" text="{nuevoCampoTW.text}" x="220" y="620" width="22" visible="false"/>
+								<s:TextInput id="toUpd" x="320" y="620" width="22" visible="false" valueCommit="actualizarCtrl();"/>
+								
+								<s:TextInput id="idTipoCFD" x="520" y="600" width="22" visible="false"/>
+								<s:TextInput id="idProcedCFD" x="410" y="620" width="22" visible="false" text="1"/>
+								
+								<!--<s:TextInput id="rutaTemplateHeader" x="110" y="400" width="600" visible="false" valueCommit="header.source = rutaTemplateHeader.text"/>
+								<s:TextInput id="rutaLogo" x="110" y="430" width="600" visible="false" valueCommit="logo.source = rutaLogo.text"/>
+								<s:TextInput id="rutaTemplateFooter" x="100" y="460" width="600" visible="false" valueCommit="footer.source = rutaTemplateFooter.text"/>-->
+								
+								<s:TextInput id="rutaTemplateHeader" x="110" y="400" width="600" visible="false" valueCommit="refreshImg(rutaTemplateHeader,header);"/>
+								<s:TextInput id="rutaLogo" x="110" y="430" width="600" visible="false" valueCommit="refreshImg(rutaLogo,logo);"/>
+								<s:TextInput id="rutaTemplateFooter" x="100" y="460" width="600" visible="false" valueCommit="refreshImg(rutaTemplateFooter,footer);"/>
+								
+								<!--Controles mostrados en pantalla-->
+								<s:Label id="rfcEmpresa"  name="1" x="397" y="119" text="RFC EMISOR" fontSize="14" fontWeight="bold"  toolTip="RFC Emisor(X: {rfcEmpresa.x}, Y: {rfcEmpresa.y})" mouseOver="rfcEmpresa.setStyle('color', '#FF1800');" mouseOut="rfcEmpresa.setStyle('color', '#000000');"  />
+								
+								<s:Label id="empresa"  name="1" text="NOMBRE DE LA EMPRESA" fontSize="14" fontWeight="bold"   toolTip="Razón Social Emisor(X: {empresa.x}, Y: {empresa.y})" y="139" x="397" mouseOver="empresa.setStyle('color', '#FF1800');" mouseOut="empresa.setStyle('color', '#000000');" />
+								<s:Label id="direccionEmpresa1"  name="1" x="399" y="162" text="CALLE, NUMERO EXTERIOR Y NUMERO INTERIOR" fontSize="14" fontWeight="bold"   toolTip="Calle parte 1 Emisor(X: {direccionEmpresa1.x}, Y: {direccionEmpresa1.y})" mouseOver="direccionEmpresa1.setStyle('color', '#FF1800');" mouseOut="direccionEmpresa1.setStyle('color', '#000000');" />
+								<s:Label id="direccionEmpresa2"  name="1" x="397" y="186" text="COLONIA Y CÓDIGO POSTAL" fontSize="14" fontWeight="bold"   toolTip="Calle parte 2 Emisor(X: {direccionEmpresa2.x}, Y: {direccionEmpresa2.y})" mouseOver="direccionEmpresa2.setStyle('color', '#FF1800');" mouseOut="direccionEmpresa2.setStyle('color', '#000000');" />
+								<s:Label id="direccionEmpresa3" name="1"  x="397" y="210" text="ENTIDAD FEDERATIVA, DELEGACIÓN O MUNICIPIO" fontSize="14" fontWeight="bold"    toolTip="Calle parte 3 Emisor(X: {direccionEmpresa3.x}, Y: {direccionEmpresa3.y})" mouseOver="direccionEmpresa3.setStyle('color', '#FF1800');" mouseOut="direccionEmpresa3.setStyle('color', '#000000');" />
+								<s:Label id="serie" name="1"  x="962" y="155" text="A" fontWeight="bold" fontSize="14"   toolTip="Serie(X: {serie.x}, Y: {serie.y})" mouseOver="serie.setStyle('color', '#FF1800');" mouseOut="serie.setStyle('color', '#000000');" />
+								<s:Label id="folio"  name="1" x="1128" y="154" text="153" fontWeight="bold" fontSize="14"   toolTip="Folio(X: {folio.x}, Y: {folio.y})" mouseOver="folio.setStyle('color', '#FF1800');" mouseOut="folio.setStyle('color', '#000000');" color="#000000"/>
+								<s:Label id="fechaFactura"  name="1" x="968" y="229" text="28/06/2010 07:29:57 p.m." fontWeight="bold" fontSize="14"   toolTip="Fecha y Hora(X: {fechaFactura.x}, Y: {fechaFactura.y})" mouseOver="fechaFactura.setStyle('color', '#FF1800');" mouseOut="fechaFactura.setStyle('color', '#000000');" />
+								<s:Label id="rfcCliente"  name="1" x="85" y="311" text="RFC RECEPTOR O CLIENTE" fontWeight="bold" fontSize="14"   toolTip="RFC Receptor(X: {rfcCliente.x}, Y: {rfcCliente.y})" mouseOver="rfcCliente.setStyle('color', '#FF1800');" mouseOut="rfcCliente.setStyle('color', '#000000');" />
+								<s:Label id="cliente"  name="1" x="83" y="335" text="NOMBRE DE LA EMPRESA" fontWeight="bold" fontSize="14"    toolTip="Razón Social del Receptor(X: {cliente.x}, Y: {cliente.y})" mouseOver="cliente.setStyle('color', '#FF1800');" mouseOut="cliente.setStyle('color', '#000000');" />
+								<s:Label id="direccionCliente1" name="1"  x="83" y="356" text="CALLE, NUMERO EXTERIOR Y NUMERO INTERIOR" fontWeight="bold" fontSize="14"    toolTip="Calle parte 1 Receptor(X: {direccionCliente1.x}, Y: {direccionCliente1.y})" mouseOver="direccionCliente1.setStyle('color', '#FF1800');" mouseOut="direccionCliente1.setStyle('color', '#000000');" />
+								<s:Label id="direccionCliente2" name="1"  x="83" y="379" text="COLONIA Y CÓDIGO POSTAL" fontWeight="bold" fontSize="14"    toolTip="Calle parte 2 Receptor(X: {direccionCliente2.x}, Y: {direccionCliente2.y})" mouseOver="direccionCliente2.setStyle('color', '#FF1800');" mouseOut="direccionCliente2.setStyle('color', '#000000');" />
+								<s:Label id="direccionCliente3" name="1"  x="83" y="402" text="ENTIDAD FEDERATIVA, DELEGACIÓN O MUNICIPIO" fontWeight="bold" fontSize="14"  toolTip="Calle parte 3 Receptor(X: {direccionCliente3.x}, Y: {direccionCliente3.y})" mouseOver="direccionCliente3.setStyle('color', '#FF1800');" mouseOut="direccionCliente3.setStyle('color', '#000000');" />
+								
+								<s:Label id="folioFiscal"  name="1" x="869" y="72" text="B3E4A92B-8609-41D3-9736-D8D42F6770FA" fontSize="14" fontWeight="bold"  toolTip="Folio Fiscal(X: {folioFiscal.x}, Y: {folioFiscal.y})" mouseOver="folioFiscal.setStyle('color', '#FF1800');" mouseOut="folioFiscal.setStyle('color', '#000000');"  />						
+								<s:Label id="sucursal"  name="1" x="716" y="317" text="NOMBRE DE LA SUCURSAL" fontWeight="bold" fontSize="14"    toolTip="Nombre de la Sucursal(X: {sucursal.x}, Y: {sucursal.y})" mouseOver="sucursal.setStyle('color', '#FF1800');" mouseOut="sucursal.setStyle('color', '#000000');" />
+								<s:Label id="direccionSucursal1" name="1"  x="715" y="339" text="CALLE, NUMERO EXTERIOR Y NUMERO INTERIOR" fontWeight="bold" fontSize="14"    toolTip="Calle parte 1 Sucursal(X: {direccionSucursal1.x}, Y: {direccionSucursal1.y})" mouseOver="direccionSucursal1.setStyle('color', '#FF1800');" mouseOut="direccionSucursal1.setStyle('color', '#000000');" />
+								<s:Label id="direccionSucursal2" name="1"  x="715" y="358" text="COLONIA Y CÓDIGO POSTAL" fontWeight="bold" fontSize="14"    toolTip="Calle parte 2 Sucursal(X: {direccionSucursal2.x}, Y: {direccionSucursal2.y})" mouseOver="direccionSucursal2.setStyle('color', '#FF1800');" mouseOut="direccionSucursal2.setStyle('color', '#000000');" />
+								<s:Label id="direccionSucursal3" name="1"  x="715" y="379" text="ENTIDAD FEDERATIVA, DELEGACIÓN O MUNICIPIO" fontWeight="bold" fontSize="14"  toolTip="Calle parte 3 Sucursal(X: {direccionSucursal3.x}, Y: {direccionSucursal3.y})" mouseOver="direccionSucursal3.setStyle('color', '#FF1800');" mouseOut="direccionSucursal3.setStyle('color', '#000000');" />
+								
+								<s:Label id="nuevoLbl0" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl0.x}, Y: {nuevoLbl0.y})" visible="true"
+										 mouseOver="nuevoLbl0.setStyle('color', '#FF1800');" mouseOut="nuevoLbl0.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl1" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl1.x}, Y: {nuevoLbl1.y})" visible="true" 
+										 mouseOver="nuevoLbl1.setStyle('color', '#FF1800');" mouseOut="nuevoLbl1.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl2" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl2.x}, Y: {nuevoLbl2.y})"  visible="true"
+										 mouseOver="nuevoLbl2.setStyle('color', '#FF1800');" mouseOut="nuevoLbl2.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl3" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl3.x}, Y: {nuevoLbl3.y})"  visible="true"
+										 mouseOver="nuevoLbl3.setStyle('color', '#FF1800');" mouseOut="nuevoLbl3.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl4" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl4.x}, Y: {nuevoLbl4.y})"  visible="true"
+										 mouseOver="nuevoLbl4.setStyle('color', '#FF1800');" mouseOut="nuevoLbl4.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl5" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl5.x}, Y: {nuevoLbl5.y})"  visible="true"
+										 mouseOver="nuevoLbl5.setStyle('color', '#FF1800');" mouseOut="nuevoLbl5.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl6" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl6.x}, Y: {nuevoLbl6.y})"  visible="true"
+										 mouseOver="nuevoLbl6.setStyle('color', '#FF1800');" mouseOut="nuevoLbl6.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl7" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl7.x}, Y: {nuevoLbl7.y})"  visible="true"
+										 mouseOver="nuevoLbl7.setStyle('color', '#FF1800');" mouseOut="nuevoLbl7.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl8" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl8.x}, Y: {nuevoLbl8.y})"  visible="true"
+										 mouseOver="nuevoLbl8.setStyle('color', '#FF1800');" mouseOut="nuevoLbl8.setStyle('color', '#000000');" />
+								<s:Label id="nuevoLbl9" name="1"  x="1280" y="130" text="" fontWeight="bold" fontSize="14"  
+										 toolTip="(X: {nuevoLbl9.x}, Y: {nuevoLbl9.y})"  visible="true"
+										 mouseOver="nuevoLbl9.setStyle('color', '#FF1800');" mouseOut="nuevoLbl9.setStyle('color', '#000000');" />
+								
+								
+								
+								<s:Label x="74" y="493" text="0" fontWeight="bold" fontSize="14"/>
+								<s:Label x="74" y="521" text="0" fontWeight="bold" fontSize="14"/>
+								<s:Label x="74" y="549" text="0" fontWeight="bold" fontSize="14"/>
+								<s:Label x="162" y="493" text="UNIDADES" fontWeight="bold" fontSize="14"/>
+								<s:Label x="162" y="521" text="UNIDADES" fontWeight="bold" fontSize="14"/>
+								<s:Label x="162" y="549" text="UNIDADES" fontWeight="bold" fontSize="14"/>
+								<s:Label x="420" y="493" text="PRODUCTO 1" fontWeight="bold" fontSize="14"/>
+								<s:Label x="420" y="521" text="PRODUCTO 2" fontWeight="bold" fontSize="14"/>
+								<s:Label x="420" y="549" text="PRODUCTO 3" fontWeight="bold" fontSize="14"/>
+								<s:Label x="809" y="600" text="Subtotal" fontWeight="bold" fontSize="14"/>
+								<s:Label x="809" y="628" text="Impuestos" fontWeight="bold" fontSize="14"/>
+								<s:Label x="809" y="656" text="Total" fontWeight="bold" fontSize="14"/>
+								<s:Label x="1022" y="600" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="1022" y="628" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="1022" y="656" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="805" y="493" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="805" y="521" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="805" y="549" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="1025" y="493" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="1025" y="521" text="$0.00" fontWeight="bold" fontSize="14"/>
+								<s:Label x="1025" y="549" text="$0.00" fontWeight="bold" fontSize="14"/>
+								
+								
+								<s:Label x="80" y="748" id="totalLetra"   name="1" text="CERO PESOS (00/100) M.N." fontSize="16" fontWeight="bold"/>
+								<s:Label x="221" y="1358" id="totalLetra0"   name="1" text="Este documento es una representación impresa de un CFDI" fontSize="16" fontWeight="bold"/>
+								<s:Label x="78" y="775" id="ordenCompraLbl"   name="1" text="Forma de Pago" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="491" y="775" id="ordenCompra"   name="1" text="Efectivo" fontWeight="bold" fontSize="12"/>
+								<s:Label x="355" y="774" id="ordenCompra0"   name="1" text="|" fontWeight="bold" fontSize="12"/>
+								<s:Label x="345" y="930" id="ordenCompra1"   name="1" text="|" fontWeight="bold" fontSize="12" width="13"/>
+								<s:Label x="568" y="930" id="ordenCompra2"   name="1" text="|" fontWeight="bold" fontSize="12" width="13"/>
+								<s:Label x="593" y="1238" id="ordenCompra3"   name="1" text="|" fontWeight="bold" fontSize="12" width="13"/>
+								<s:Label x="390" y="775" id="formaPagoLbl"   name="1" text="Método de Pago:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="181" y="775" id="formaPago"   name="1" text="Pago en una solal exhibición" fontWeight="bold" fontSize="12"/>
+								<s:Label x="391" y="930" id="anioAprobacionLbl"   name="1" text="Año de Aprobación:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="77" y="930" id="anioAprobacionLbl0"   name="1" text="Certificado:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="147" y="930" id="anioAprobacionLbl1"   name="1" text="30001000000100000800" fontWeight="bold" fontSize="12"/>
+								<s:Label x="506" y="930" id="anioAprobacion"  name="1"  text="2011" fontWeight="bold" fontSize="12"/>
+								<s:Label x="617" y="930" id="noAprobacionLbl"   name="1" text="Número de Aprobación:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="777" y="930" id="noAprobacion"   name="1" text="123456789" fontWeight="bold" fontSize="12"/>
+								<s:Label x="80" y="838" id="observacionesLbl"  name="1"  text="Observaciones:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="80" y="864" id="observaciones"   name="1" text="Sin Observaciones" fontWeight="bold" fontSize="12"/>
+								
+								<s:Label x="80" y="988" text="Cadena Original:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="80" y="1014" text="||2.0|A|153|2010-06-28T19:29:57|123456789|2010|ingreso|aaaa|0.00|0.00|RFC EMISOR|NOMBRE EMISORA|CALLE|NUM.EXT.|NUM.INT.|ENTIDAD|DELEGACION|" fontWeight="bold" fontSize="12"/>
+								<s:Label x="80" y="1040" text="ENTIDAD FEDERATIVA|PAIS|C.P.|RFC RECEPTOR|NOMBRE RECEPTORA|CALLE|NUM.EXT|COLONIA|DELEGACION|ENTIDAD|PAIS|C.P.|1|u|Desarrollo de Base de" fontWeight="bold" fontSize="12"/>
+								<s:Label x="79" y="1066" text="Datos|0.00|0.00|0.00|IVA|15|0.00|0.00||" fontWeight="bold" fontSize="12"/>
+								<s:Label x="79" y="1126" text="Sello Digital:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="222" y="1238" text="Folio Fiscal: " fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="222" y="1262" text="Fecha y Hora de Certificación:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="222" y="1282" text="Sello Digital SAT:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="616" y="1238" text="Certificado SAT:" fontWeight="bold" fontSize="12" color="#2B91AF"/>
+								<s:Label x="79" y="1149" text="dd9h5k5HOWgPzuO64+tpEMIhErCFM/2irv1z79G3k6XFIL77bWrZlTbsbO9rg5koRF5WYCZd+QHaHPxU3TuVhVQfyr3fp/Aq34yggt+kSM0B5wjnWGfQNnBGPcwNx5XNFLYWUwiOlzjx5BhZEXNBYlrwDWE3y1U" fontWeight="bold" fontSize="12" width="1161"/>
+								<s:Label x="79" y="1166" text="fdasfegHFDEFASFdfdsfA%Y%%$GSDFGSD" fontWeight="bold" fontSize="12" width="1161"/>
+								<s:Label x="222" y="1302" text="dd9h5k5HOWgPzuO64+tWYCZd+QHaHPxU3TuVhVQfyr3fp/Aq34yggt+kSM0B5wjnWGfQNnBGPcwNx5XNFLYWUwiOGFDSGEGGZFDfdaseADFADFAfdfasdfasd" fontWeight="bold" fontSize="12" width="931"/>
+								<s:Label x="221" y="1326" text="dd9h5k5HOWgPzuO64+tWYCZd+QHaFdsfea$#$fdafewgagfwqghhteERWERWEWEHPxU3TuVh" fontWeight="bold" fontSize="12" width="931"/>
+								<s:Label x="308" y="1238" text="B3E-4AB3B-8009-4fD3-B73D-D8D42FC77OFA" fontWeight="bold" fontSize="12" width="277"/>
+								<s:Label x="387" y="1262" text="2011-01-16T23:09:01" fontWeight="bold" fontSize="12" width="277"/>
+								<s:Label x="732" y="1238" text="30001000000100000801" fontWeight="bold" fontSize="12" width="277"/>
+								
+								<s:TitleWindow id="tipoProcedCFD" title="Tipo de CFDI"  visible="true" width="341" height="192" borderAlpha=".95" 
+											   close="salir();tipoProcedCFD.visible=false;" horizontalCenter="0" verticalCenter="0">
+									<s:Label x="29" y="29" text="1. Tipo de CFDI" color="#FF0101" fontWeight="bold"/>
+									<!--<s:Label x="10" y="84" text="2. Procedencia" color="#FF0202" fontWeight="bold"/>-->
+									<mx:Button x="174" y="111" label="Aceptar" icon="@Embed(source='assets/accept-icon_24.png')" click="verInst();" height="29" width="137" tabIndex="3"/>
+									<mx:Button x="29" y="111" label="Cancelar" icon="@Embed(source='assets/delete-icon_24.png')" click="  tipoProcedCFD.visible = false;salir(); " height="29" width="137" tabIndex="99"/>
+									<s:ComboBox id="tipoCFD"  x="29" y="55" width="282" creationComplete="Send(499);"  change="setIdTipoCFD();"></s:ComboBox>
+									<!--<s:ComboBox id="procedCFD" x="10" y="110" width="282"  creationComplete="Send(500);"   change="setIdProcedCFD();"></s:ComboBox>-->
+									<s:TextInput id="isThereDataProd" valueCommit="isThereDataProdFx();" x="10" y="43" width="274" visible="false"/>
+									
+								</s:TitleWindow>
+								
+								<s:TitleWindow id="masCampos" title="Agregar más campos"  visible="false" width="341" height="276" 
+											   borderAlpha=".95" 
+											   close="masCampos.visible = false;" horizontalCenter="0" verticalCenter="0">
+									<s:Label x="10" y="17" text="1. Nombre de la etiqueta del nuevo campo" color="#FF0101" fontWeight="bold"/>
+									<s:Label x="10" y="86" text="2. Tipo de Campo" color="#FF0101" fontWeight="bold"/>
+									<mx:Button x="155" y="173" label="Agregar" icon="@Embed(source='assets/accept-icon_24.png')" click="agregarMasCampos();" height="29" width="137" tabIndex="3"/>
+									<mx:Button x="10" y="173" label="Cancelar" icon="@Embed(source='assets/delete-icon_24.png')" click="masCampos.visible = false; " height="29" width="137" tabIndex="99"/>
+									<s:TextInput id="nuevoCampoTW" x="10" y="43" width="274" maxChars="40"/>
+									<s:ComboBox x="10" y="112" width="274" id="idTipoIdent"  change="setIdTipoIdent();"></s:ComboBox>
+									
+								</s:TitleWindow>
+								
+								<s:TitleWindow id="editDeleteFields" title="Edición de Nuevos Campos"  visible="false" width="341" height="219" 
+											   borderAlpha=".95" 
+											   close="editDeleteFields.visible = false;" horizontalCenter="0" verticalCenter="0">
+									<s:Label x="10" y="17" text="Nombre del Campo" color="#FF0101" fontWeight="bold"/>
+									<s:TextInput id="idInterno" x="37" y="74" width="274" visible="false"/>
+									<s:TextInput id="nombreControl" x="10" y="50" width="274"  maxChars="40"/>
+									<s:TextInput id="estado" x="10" y="43" width="274" visible="false"/>
+									
+									<mx:Button id="btnEdit" label="Guardar" icon="@Embed(source='assets/add.png')" click="editNewField();" height="29" width="129" tabIndex="99"
+											   toolTip="" x="85" y="106" visible="false"/>
+									<mx:Button id="btnDel" label="Eliminar" icon="@Embed(source='assets/del.png')" click="delNewField();" height="29" width="128" tabIndex="99"
+											   toolTip="" x="85" y="106" visible="false"/>
+								</s:TitleWindow>
+								
+								<s:TitleWindow id="adjuntarHeader" title="Adjuntar Encabezado"  visible="false" width="427" height="378"  borderAlpha=".95" 
+											   close="adjuntarHeader.visible = false;"   horizontalCenter="0" verticalCenter="0">
+									<s:Label x="21" y="115" text="Subir Encabezado de Factura" />
+									<s:Label x="21" y="10" text="Nota Importante:"  color="#FF0101" fontWeight="bold"/>
+									<s:Label x="47" y="34" text="La imagen deberá de medir 1150 px de ancho por 420 de Alto" />
+									<s:Label x="47" y="48" text="y deberá de pesar menos de 60 kb, si estas condiciones no se " />
+									<s:Label x="47" y="62" text="llegarán a cumplir, la imagen será tratada para que cumpla con" />
+									<s:Label x="47" y="75" text="las especificaciones dadas, esto podría hacer que la imagen no" />
+									<s:Label x="47" y="87" text=" se vea de forma correcta." />
+									
+									
+									<!--
+									<ns1:uploaderGenJCL x="69" y="135" id="encabezadoFactura" r3DS="DS_FE" r3FilePath="C:\inetpub\repositorioFacturaxion\imagenesFacturaPreconfiguracion" 
+														r3SQL="UPDATE configuracionFacturasDesigner SET rutaTemplateHeader = @2 WHERE idEmpresa = @0 AND idTipoComp = @1 AND idCFDProcedencia =1;"
+														r3Param1="{idEmpresa.text}" r3Param2="{idTipoCFD.text}"
+														r3Param3="encabezadoMod" r3Param4="1150" r3Param5="420"
+														r3AshxPath="http://localhost:49224/r3Take/uploadConfigFact.ashx"  height="200" width="265" uploadComplete="getNameCtrls(12);">
+										
+									</ns1:uploaderGenJCL>
+									-->
+									
+									<ns1:uploaderGenJCL x="69" y="135" id="encabezadoFactura" r3DS="DS_FE" r3FilePath="C:\inetpub\repositorioFacturaxion\imagenesFacturaPreconfiguracion" 
+														r3SQL="UPDATE configuracionFacturasDesigner SET rutaTemplateHeader = @2 WHERE idEmpresa = @0 AND idTipoComp = @1 AND idCFDProcedencia =1;"
+														r3Param1="{idEmpresa.text}" r3Param2="{idTipoCFD.text}"
+														r3Param3="encabezadoMod" r3Param4="1150" r3Param5="420"
+														r3AshxPath="https://fx.facturaxion.net/uploadConfigFact.ashx"  height="200" width="265" uploadComplete="getNameCtrls(1);">
+										<!--https://fx.facturaxion.com/facturaxion/uploadConfigFact.ashx-->
+									</ns1:uploaderGenJCL>
+									
+									
+									
+								</s:TitleWindow>
+								
+								<s:TitleWindow id="adjuntarLogotipo" title="Adjuntar Logotipo"  visible="false" width="427" height="378"  borderAlpha=".95" 
+											   close="adjuntarLogotipo.visible = false;"   horizontalCenter="0" verticalCenter="0" >
+									<s:Label x="10" y="113" text="Subir Logotipo"/>
+									<s:Label x="14" y="6" text="Nota Importante:"  color="#FF0101" fontWeight="bold"/>
+									<s:Label x="14" y="28" text="La imagen deberá de medir 230 px de ancho por 110 de Alto" />
+									<s:Label x="14" y="42" text="y deberá de pesar menos de 60 kb, si estas condiciones no se " />
+									<s:Label x="14" y="56" text="llegarán a cumplir, la imagen será tratada para que cumpla con" />
+									<s:Label x="14" y="69" text="las especificaciones dadas, esto podría hacer que la imagen no" />
+									<s:Label x="11" y="83" text=" se vea de forma correcta." />
+									
+									
+									<!--
+									<ns1:uploaderGenJCL x="80" y="133" id="logoFactura" r3DS="DS_FE" r3FilePath="C:\Inetpub\repositorioFacturaxion\imagenesLogoSuc" 
+														r3SQL="UPDATE sucursales SET rutaLogo= @2 WHERE idEmpresa = @0 AND idSucursal = @1;"
+														r3Param1="{idEmpresa.text}" r3Param2="{idSucursal.text}"
+														r3Param3="logoMod" r3Param4="230" r3Param5="110"
+														r3AshxPath="http://localhost:49224/r3Take/uploadConfigFact.ashx"  height="202" width="265" uploadComplete="getNameCtrls(2);">
+										
+										
+										
+									</ns1:uploaderGenJCL>
+									-->
+									<ns1:uploaderGenJCL x="80" y="133" id="logoFactura" r3DS="DS_FE" r3FilePath="C:\Inetpub\repositorioFacturaxion\imagenesLogoSuc" 
+														r3SQL="UPDATE sucursales SET rutaLogo= @2 WHERE idEmpresa = @0 AND idSucursal = @1;"
+														r3Param1="{idEmpresa.text}" r3Param2="{idSucursal.text}"
+														r3Param3="logoMod" r3Param4="230" r3Param5="110"
+														r3AshxPath="https://fx.facturaxion.net/uploadConfigFact.ashx"  height="202" width="265" uploadComplete="getNameCtrls(2);">
+									
+									</ns1:uploaderGenJCL>
+									
+									<!--	
+									https://fx.facturaxion.com/facturaxion/uploadConfigFact.ashx
+									-->
+								</s:TitleWindow>
+								
+								<s:TitleWindow id="adjuntarFooter" title="Adjuntar Pie de Página"  visible="false" width="427" height="400"  borderAlpha=".95" 
+											   close="adjuntarFooter.visible = false;"   horizontalCenter="0" verticalCenter="0" >
+									<s:Label x="10" y="125" text="Subir Pie de Página"/>
+									<s:Label x="13" y="18" text="Nota Importante:"  color="#FF0101" fontWeight="bold"/>
+									<s:Label x="13" y="40" text="La imagen deberá de medir 1150 px de ancho por 60 de Alto" />
+									<s:Label x="13" y="54" text="y deberá de pesar menos de 60 kb, si estas condiciones no se " />
+									<s:Label x="13" y="68" text="llegarán a cumplir, la imagen será tratada para que cumpla con" />
+									<s:Label x="13" y="81" text="las especificaciones dadas, esto podría hacer que la imagen no" />
+									<s:Label x="10" y="95" text=" se vea de forma correcta." />
+									
+									
+									<!--
+									<ns1:uploaderGenJCL x="76" y="145" id="pieFactura" r3DS="DS_FE" r3FilePath="C:\inetpub\repositorioFacturaxion\imagenesFacturaPreconfiguracion" 
+														r3SQL="UPDATE configuracionFacturasDesigner SET rutaTemplateFooter = @2 WHERE idEmpresa = @0 AND idTipoComp = @1 AND idCFDProcedencia =1;"
+														r3Param1="{idEmpresa.text}" r3Param2="{idTipoCFD.text}"
+														r3Param3="pieMod" r3Param4="1150" r3Param5="60"
+														r3AshxPath="http://localhost:49224/r3Take/uploadConfigFact.ashx"  height="212" width="265" uploadComplete="getNameCtrls(3);">
+										
+									</ns1:uploaderGenJCL>
+									-->
+									<ns1:uploaderGenJCL x="76" y="145" id="pieFactura" r3DS="DS_FE" r3FilePath="C:\inetpub\repositorioFacturaxion\imagenesFacturaPreconfiguracion" 
+														r3SQL="UPDATE configuracionFacturasDesigner SET rutaTemplateFooter = @2 WHERE idEmpresa = @0 AND idTipoComp = @1 AND idCFDProcedencia =1;"
+														r3Param1="{idEmpresa.text}" r3Param2="{idTipoCFD.text}"
+														r3Param3="pieMod" r3Param4="1150" r3Param5="60"
+														r3AshxPath="https://fx.facturaxion.net/uploadConfigFact.ashx"  height="212" width="265" uploadComplete="getNameCtrls(3);">
+										
+									</ns1:uploaderGenJCL>
+									<!--https://fx.facturaxion.com/facturaxion/uploadConfigFact.ashx-->
+									
+								</s:TitleWindow>
+								
+								<s:TitleWindow id="instUso" title="Instrucciones de Uso"  visible="false" width="931" height="500"  borderAlpha="1"  
+											   horizontalCenter="0" top="40">
+									<mx:Canvas horizontalScrollPolicy="on"  verticalScrollPolicy="on" width="100%" height="100%">
+										<s:VGroup width="100%" height="100%">
+											<s:HGroup width="100%" height="100%" paddingLeft="10" paddingRight="10" >
+												<s:Group width="100%" height="100%">
+													<mx:Text width="100%" x="5" y="5" htmlText=
+															 "&lt;b&gt;1.	Logotipo y Encabezado:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Para definir un nuevo logotipo y/o encabezado deberá de ubicarse sobre ellos y dar doble clic, elija el logotipo o encabezado a subir, tomando en cuenta las consideraciones mostradas en la ventana de diálogo correspondiente.&lt;br&gt;
+															 Recuerde que el logotipo lo definió al momento de Agregar la Sucursal en el Administrador de Configuración.&lt;br&gt;&lt;br&gt;&lt;b&gt;2.		Etiquetas de datos:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Las etiquetas de datos disponibles para reubicar son aquellas que pertenecen al Emisor, Receptor, Sucursal, así como, serie, folio,fecha, hora de emisión y folio fiscal.&lt;br&gt;
+															 Bastará con ubicar el cursor del ratón sobre la etiqueta para que se torne de color rojo y arrastrarla a la posición que desee.&lt;br&gt;&lt;br&gt;&lt;b&gt;3.		Etiquetas de datos nuevos:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Adicional, podrá crear, editar y/o borrar etiquetas con texto estático, útiles para fines operativos, y campos adicionales de datos, disponibles para su presentación.&lt;br&gt;&lt;br&gt;
+															 a.	Crear Más Campos - Podrá definir el nombre de la etiqueta que tendrá el Campo y el tipo de éste (Campo o Etiqueta).&lt;br&gt;
+															 Una vez definido aparecerá en la lista de control y bastará con ubicarse con el puntero del ratón sobre el elemento y arrastrarlo al área de configuración.&lt;br&gt;
+															 b.	Editar - De doble clic sobre el elemento de la lista  de control a editar y cambie el nombre.&lt;br&gt;
+															 c.	Borrar - Bastará con seleccionar el campo en la lista de control y dar clic al botón Borrar Campo, confirme su eliminación.&lt;br&gt;&lt;br&gt;&lt;b&gt;4.		Vista Previa:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Podrá verificar el avance de su configuración, dando clic en el botón Vista Previa.&lt;br&gt;&lt;br&gt;&lt;b&gt;5.		Inicializar Diseño de CFDI:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Si requiere iniciar con la configuración que por defecto presenta el sistema, bastará con dar clic al botón Inicializar Diseño de CFDI, recuerde que una vez realizada esta acción no podrá revertirla.&lt;br&gt;&lt;br&gt;&lt;b&gt;6.		Salir:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Si da clic al botón Salir, abandonará el área de trabajo del configurador y los cambios que haya realizado se guardarán.&lt;br&gt;&lt;br&gt;&lt;b&gt;7.		Finalizar:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Dé clic al botón Guardar Diseño para que los cambios realizados durante la configuración se vean reflejados en la impresión final del CFDI." />
+													<mx:CheckBox x="10" y="351" label="Desea inicializar su configuración al último estado que guardo en producción" id="inicializarConfiginstUso" visible="false"/>
+												</s:Group>
+											</s:HGroup>
+											<s:HGroup width="100%"  verticalAlign="middle" horizontalAlign="center" paddingTop="15" paddingBottom="20">
+												<mx:Button x="521" y="617" label="Entrar" icon="@Embed(source='assets/accept-icon_24.png')" click=" entrar();" height="29" width="137" tabIndex="3"/>
+												<mx:Button x="355" y="617" label="Cancelar" icon="@Embed(source='assets/delete-icon_24.png')" click=" salir(); instUso.visible = false; " height="29" width="137" tabIndex="99"/>
+											</s:HGroup>
+										</s:VGroup>
+									</mx:Canvas>
+								</s:TitleWindow>
+																	
+								<s:TitleWindow id="ayuda" title="Instrucciones de Uso"  visible="false" width="931" height="510"  borderAlpha="1" close="ayuda.visible = false;"  
+											   horizontalCenter="0" top="0">
+									<mx:Canvas horizontalScrollPolicy="on"  verticalScrollPolicy="on" width="100%" height="100%">
+										<s:VGroup width="100%" height="100%">
+											<s:HGroup width="100%" height="100%" paddingLeft="10" paddingRight="10" >
+												<s:Group width="100%" height="100%">
+											
+													<mx:Text width="100%" x="5" y="5" htmlText=
+															 "&lt;b&gt;1.	Logotipo y Encabezado:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Para definir un nuevo logotipo y/o encabezado deberá de ubicarse sobre ellos y dar doble clic, elija el logotipo o encabezado a subir, tomando en cuenta las consideraciones mostradas en la ventana de diálogo correspondiente.&lt;br&gt;
+															 Recuerde que el logotipo lo definió al momento de Agregar la Sucursal en el Administrador de Configuración.&lt;br&gt;&lt;br&gt;&lt;b&gt;2.		Etiquetas de datos:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Las etiquetas de datos disponibles para reubicar son aquellas que pertenecen al Emisor, Receptor, Sucursal, así como, serie, folio,fecha, hora de emisión y folio fiscal.&lt;br&gt;
+															 Bastará con ubicar el cursor del ratón sobre la etiqueta para que se torne de color rojo y arrastrarla a la posición que desee.&lt;br&gt;&lt;br&gt;&lt;b&gt;3.		Etiquetas de datos nuevos:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Adicional, podrá crear, editar y/o borrar etiquetas con texto estático, útiles para fines operativos, y campos adicionales de datos, disponibles para su presentación.&lt;br&gt;&lt;br&gt;
+															 a.	Crear Más Campos - Podrá definir el nombre de la etiqueta que tendrá el Campo y el tipo de éste (Campo o Etiqueta).&lt;br&gt;
+															 Una vez definido aparecerá en la lista de control y bastará con ubicarse con el puntero del ratón sobre el elemento y arrastrarlo al área de configuración.&lt;br&gt;
+															 b.	Editar - De doble clic sobre el elemento de la lista  de control a editar y cambie el nombre.&lt;br&gt;
+															 c.	Borrar - Bastará con seleccionar el campo en la lista de control y dar clic al botón Borrar Campo, confirme su eliminación.&lt;br&gt;&lt;br&gt;&lt;b&gt;4.		Vista Previa:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Podrá verificar el avance de su configuración, dando clic en el botón Vista Previa.&lt;br&gt;&lt;br&gt;&lt;b&gt;5.		Inicializar Diseño de CFDI:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Si requiere iniciar con la configuración que por defecto presenta el sistema, bastará con dar clic al botón Inicializar Diseño de CFDI, recuerde que una vez realizada esta acción no podrá revertirla.&lt;br&gt;&lt;br&gt;&lt;b&gt;6.		Salir:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Si da clic al botón Salir, abandonará el área de trabajo del configurador y los cambios que haya realizado se guardarán.&lt;br&gt;&lt;br&gt;&lt;b&gt;7.		Finalizar:&lt;&#47;b&gt;&lt;br&gt;&lt;br&gt;
+															 Dé clic al botón Guardar Diseño para que los cambios realizados durante la configuración se vean reflejados en la impresión final del CFDI." />
+																							
+												</s:Group>
+											</s:HGroup>
+										</s:VGroup>
+									</mx:Canvas>
+								</s:TitleWindow>
+								
+
+								<s:Label x="80" y="718" text="________________________________________________________________________________________________________________________________________________________________________________________" width="1136"/>
+								<s:Label x="80" y="801" text="________________________________________________________________________________________________________________________________________________________________________________________" width="1136"/>
+								<s:Label x="80" y="890" text="________________________________________________________________________________________________________________________________________________________________________________________" width="1136"/>
+								<s:Label x="78" y="960" text="________________________________________________________________________________________________________________________________________________________________________________________" width="1136"/>
+								<s:Label x="64" y="1094" text="________________________________________________________________________________________________________________________________________________________________________________________" width="1136"/>
+								<s:Label x="64" y="1193" text="________________________________________________________________________________________________________________________________________________________________________________________" width="1136"/>
+								
+							</mx:Canvas>
+							<mx:Canvas id="CFD2" visible="false" y="40" x="20" width="100%" height="100%" borderStyle="solid"  backgroundColor="#FFFFFF" mouseOut="contador.setFocus();"></mx:Canvas>
+							<mx:Canvas id="CFD3" visible="false"  y="40" x="20" width="100%" height="100%" borderStyle="solid"  backgroundColor="#FFFFFF" mouseOut="contador.setFocus();"></mx:Canvas>
+							<mx:Canvas id="CFD4" visible="false"  y="40" x="20" width="100%" height="100%" borderStyle="solid"  backgroundColor="#FFFFFF" mouseOut="contador.setFocus();"></mx:Canvas>
+							<mx:Canvas id="CFD5" visible="false"  y="40" x="20" width="100%" height="100%" borderStyle="solid"  backgroundColor="#FFFFFF" mouseOut="contador.setFocus();"></mx:Canvas>
+						</mx:Canvas>
+					</mx:Canvas>
+				</s:VGroup>
+				<s:VGroup width="20%" height="100%" paddingBottom="10" visible="true">
+					<mx:Canvas width="100%" borderStyle="solid" backgroundColor="#FFFFFF">
+						<s:VGroup width="100%" horizontalAlign="center" verticalAlign="middle" paddingBottom="5" paddingTop="5" > 
+							<mx:Button label="Crear Más Campos" icon="@Embed(source='assets/add-icon_24.png')" click="verTWMasCampos(); " height="29" width="170" tabIndex="99"
+									   toolTip="" x="40"/>
+							<!--<mx:Button label="Edición Campos Usados" icon="@Embed(source='assets/edit.png')" click="verTWEditMasCampos();" height="29" width="172" tabIndex="99"
+							toolTip="" x="39"/>-->
+							<mx:Button label="Borrar Campos" icon="@Embed(source='assets/delete-icon_24.png')" click="dgChangeHandler(2); " height="29" width="168" tabIndex="99"
+									   toolTip="" x="41"/>
+						</s:VGroup>
+					</mx:Canvas>
+					<mx:Canvas width="100%" height="100%" borderStyle="solid" backgroundColor="#747D84">
+						
+						<mx:DataGrid  dataProvider="{cartContents}" id="DGNuevoLbl" width="100%" height="100%" dragEnabled="true" doubleClick="dgChangeHandler(1);"
+									  doubleClickEnabled="true">
+							
+							<mx:columns>
+								<mx:DataGridColumn headerText="Id Interno Control" dataField="idInt" visible="false"/>
+								<mx:DataGridColumn headerText="Nombre Control" dataField="name" />
+								<mx:DataGridColumn headerText="Estado" dataField="estado"/>
+								<!--			<mx:itemRenderer>
+								<mx:Component>
+								<s:HGroup>
+								<mx:Spacer width="50"/>
+								<mx:Image width="20" height="20" toolTip="Folio Predeterminado" source="{data[2]}"/>
+								</s:HGroup>
+								</mx:Component>
+								</mx:itemRenderer>
+								</mx:DataGridColumn>-->
+							</mx:columns>
+						</mx:DataGrid>
+					</mx:Canvas>
+					
+				</s:VGroup>
+			</s:HGroup>
+		</s:VGroup>
+	</s:Group>
+</s:Application>
