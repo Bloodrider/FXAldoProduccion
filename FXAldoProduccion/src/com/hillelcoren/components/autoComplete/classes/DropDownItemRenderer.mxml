@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Label xmlns:mx="http://www.adobe.com/2006/mxml" 
-	width="100%"
+	width="100%" toolTip=""
 	creationComplete="init()"
 	htmlText="{ _list.labelFunction( data ) }">
 	
@@ -9,11 +9,14 @@
 			import mx.controls.List;
 			
 			[Bindable]
-			private var _list:List;
+			protected var _list:List;
 			
-			private function init():void
+			protected function init():void
 			{
-				_list = listData.owner as List;
+				if (listData)
+				{
+					_list = listData.owner as List;
+				}
 			}
 		]]>
 	</mx:Script>

@@ -29,23 +29,23 @@
 			import mx.managers.PopUpManager;
 					
 			[Bindable]
-			private var _dataProvider:ListCollectionView;		
-			private var _dataProviderChanged:Boolean;
+			protected var _dataProvider:ListCollectionView;		
+			protected var _dataProviderChanged:Boolean;
 			
-			private var _allowMultipleSelection:Boolean;	
-			private var _allowMultipleSelectionChanged:Boolean;
+			protected var _allowMultipleSelection:Boolean;	
+			protected var _allowMultipleSelectionChanged:Boolean;
 					
 			[Bindable]
-			private var _originalSelectedItems:Array;
+			protected var _originalSelectedItems:Array;
 			
-			private var _browserFields:Array;
+			protected var _browserFields:Array;
 			
-			private var _searchStr:String
-			private var _searchStrChanged:Boolean;
+			protected var _searchStr:String
+			protected var _searchStrChanged:Boolean;
 			
-			private var _filterFunction:Function;
-			private var _labelFunction:Function;
-			private var _itemRenderer:IFactory;
+			protected var _filterFunction:Function;
+			protected var _labelFunction:Function;
+			protected var _itemRenderer:IFactory;
 			
 			[Bindable]
 			protected var _list:ListBase;
@@ -107,7 +107,7 @@
 				vBox.addChildAt( _list, 0 );
 			}
 			
-			private function getListType():Class
+			protected function getListType():Class
 			{
 				if (!_dataProvider || _dataProvider.length == 0)
 				{
@@ -131,13 +131,13 @@
 				_filterFunction = value;
 			}
 			
-			private function handleDoubleClick( event:ListEvent ):void
+			protected function handleDoubleClick( event:ListEvent ):void
 			{
 				var changeEvent:Event = new Event( Event.CHANGE );
 				dispatchEvent( changeEvent );
 			}
 			
-			private function handleKeyDown( event:KeyboardEvent ):void
+			protected function handleKeyDown( event:KeyboardEvent ):void
 			{
 				if (_list.selectedIndex > -1 && event.keyCode == Keyboard.ENTER)
 				{
@@ -146,12 +146,12 @@
 				}
 			}
 			
-			private function handleCancelClick():void
+			protected function handleCancelClick():void
 			{
 				dispatchEvent( new CloseEvent( CloseEvent.CLOSE ) );
 			}
 			
-			private function handleSelectClick():void
+			protected function handleSelectClick():void
 			{
 				var changeEvent:Event = new Event( Event.CHANGE );
 				dispatchEvent( changeEvent );	
@@ -259,7 +259,7 @@
 				return _filterFunction( item, searchTextInput.text );
 			}
 			
-			private function handleSearchChange():void
+			protected function handleSearchChange():void
 			{
 				_dataProvider.refresh();
 			}

@@ -11,7 +11,7 @@
 			
 			use namespace mx_internal;
 			
-			private static const DEFAULT_MEASURED_MIN_HEIGHT:int = 18;
+			protected static const DEFAULT_MEASURED_MIN_HEIGHT:int = 18;
 			
 			/**
 			 * Here's the problem. The DEFAULT_MEASURED_MIN_HEIGHT constant has a value of 22, which is the height
@@ -53,6 +53,11 @@
 			    measuredHeight = Math.max(h, DEFAULT_MEASURED_MIN_HEIGHT);
 			    measuredMinHeight = DEFAULT_MEASURED_MIN_HEIGHT;
 			}			
+
+			override protected function focusInHandler(event:FocusEvent):void
+			{
+				// prevent the border from beeing drawn
+			}
 			
 		]]>
 	</mx:Script>

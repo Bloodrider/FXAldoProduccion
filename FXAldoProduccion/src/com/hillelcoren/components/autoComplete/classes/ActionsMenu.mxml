@@ -27,18 +27,18 @@
 			public static const RADIUS:int = 5;
 			public static const MENU_PADDING:int = 6;
 			
-			private var _menu:Menu;
-			private var _button:Button;
-			private var _dataProvider:Object;
+			protected var _menu:Menu;
+			protected var _button:Button;
+			protected var _dataProvider:Object;
 			
 			[Bindable]
-			private var _parentWidth:int;
-			private var _rowHeight:int;
+			protected var _parentWidth:int;
+			protected var _rowHeight:int;
 			
 			[Embed(source="/com/hillelcoren/assets/icons/actionsUp.png")]
-			private var _upIcon:Class;
+			protected var _upIcon:Class;
 			
-			private function init():void
+			protected function init():void
 			{
 				addEventListener( MoveEvent.MOVE, handleMove, false, 0, true );
 				
@@ -54,8 +54,14 @@
 				_menu.labelField="@label";
 				_menu.setStyle( "openDuration", 0 );
 				_menu.setStyle( "dropShadowEnabled", false );
-				_menu.setStyle( "borderStyle", "none" );				
+								
+				// FLEX3
+				//_menu.setStyle( "borderStyle", "none" );
 				
+				// FLEX4
+				_menu.setStyle( "borderAlpha", 0.0 ); 
+				_menu.setStyle( "dropShadowVisible", false );
+												
 				_menu.addEventListener( MenuEvent.MENU_HIDE, handleMenuHide );
 				_menu.addEventListener( MenuEvent.MENU_SHOW, handleMenuShow );
 				_menu.addEventListener( MenuEvent.ITEM_CLICK, handleItemClick );
@@ -74,7 +80,7 @@
 				addChild( _button );				
 			}
 
-			private function handleMenuHide( event:MenuEvent ):void
+			protected function handleMenuHide( event:MenuEvent ):void
 			{
 				if (event.menu == _menu)
 				{
@@ -84,17 +90,17 @@
 				dispatchEvent( event );
 			}
 			
-			private function handleMenuShow( event:MenuEvent ):void
+			protected function handleMenuShow( event:MenuEvent ):void
 			{
 				dispatchEvent( event );
 			}
 						
-			private function handleItemClick( event:MenuEvent ):void
+			protected function handleItemClick( event:MenuEvent ):void
 			{
 				dispatchEvent( event );
 			}
 			
-			private function getMenuPosition():Point
+			protected function getMenuPosition():Point
 			{
 				var localPoint:Point = new Point( 0, 0 );
 				var globalPoint:Point = localToGlobal( localPoint ); 
@@ -105,18 +111,18 @@
 				return new Point( x, y );
 			}
 			
-			private function positionMenu():void
+			protected function positionMenu():void
 			{
 				var point:Point = getMenuPosition();
 				_menu.move( point.x, point.y );				
 			}
 		
-			private function handleMove( event:Event ):void
+			protected function handleMove( event:Event ):void
 			{
 				callLater( positionMenu );		
 			}
 			
-			private function handleResize( event:Event ):void
+			protected function handleResize( event:Event ):void
 			{
 				callLater( positionMenu );
 			}
@@ -141,7 +147,7 @@
 				_menu.selectedIndex = 0;
 			}
 			
-			private function drawShape( g:Graphics, width:int, height:int, point:Point, radius:int ):void
+			protected function drawShape( g:Graphics, width:int, height:int, point:Point, radius:int ):void
 			{
 				g.moveTo( 0, point.y + radius);
 				g.lineTo( 0, height - radius );
@@ -158,7 +164,7 @@
 				g.curveTo( 0, point.y, 0, point.y + radius );				
 			}
 			
-			private function handleCreationComplete():void
+			protected function handleCreationComplete():void
 			{
 				var comp:UIComponent = new UIComponent();
 				var mask:Shape = new Shape();

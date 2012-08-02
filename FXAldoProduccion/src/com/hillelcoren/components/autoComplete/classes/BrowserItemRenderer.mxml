@@ -4,7 +4,7 @@
 	<mx:Script>
 		<![CDATA[
 			
-			private var _selectedItems:Array;
+			protected var _selectedItems:Array;
 			
 			public function set selectedItems( value:Array ):void
 			{

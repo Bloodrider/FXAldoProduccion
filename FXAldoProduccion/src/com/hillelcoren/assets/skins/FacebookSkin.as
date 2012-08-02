@@ -5,7 +5,7 @@ package com.hillelcoren.assets.skins
 
 	public class FacebookSkin extends ProgrammaticSkin 
 	{
-		private static const RADIUS:int = 10;
+		protected static const RADIUS:int = 10;
 		
 		override protected function updateDisplayList( w:Number, h:Number ):void 
 		{	

@@ -25,19 +25,19 @@
 			import com.hillelcoren.components.AutoComplete;
 			
 			[Bindable]
-			private var _dataProvider:ListCollectionView;
+			protected var _dataProvider:ListCollectionView;
 						
 			[Bindable]
-			private var _selectedItems:Array; 
+			protected var _selectedItems:Array; 
 			
 			[Bindable]
-			private var _filterFunction:Function;
+			protected var _filterFunction:Function;
 			
 			[Bindable]
-			private var _labelFunction:Function;
+			protected var _labelFunction:Function;
 			
 			[Bindable]
-			private var _showOrderButtons:Boolean;
+			protected var _showOrderButtons:Boolean;
 			
 			public function set dataProvider( value:ListCollectionView ):void
 			{
@@ -74,7 +74,7 @@
 				okButton.setFocus();
 			}
 									
-			private function handleOkClick():void
+			protected function handleOkClick():void
 			{
 				if (listBuilder.isChanged)
 				{
@@ -87,7 +87,7 @@
 				}
 			}
 			
-			private function handleCancelClick():void
+			protected function handleCancelClick():void
 			{
 				var event:CloseEvent = new CloseEvent( CloseEvent.CLOSE );
 				dispatchEvent( event );

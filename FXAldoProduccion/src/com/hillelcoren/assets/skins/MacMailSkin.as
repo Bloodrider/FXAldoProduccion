@@ -6,7 +6,7 @@ package com.hillelcoren.assets.skins
 
 	public class MacMailSkin extends ProgrammaticSkin 
 	{
-		private static const RADIUS:int = 20;
+		protected static const RADIUS:int = 20;
 		
 		override protected function updateDisplayList( w:Number, h:Number ):void 
 		{	

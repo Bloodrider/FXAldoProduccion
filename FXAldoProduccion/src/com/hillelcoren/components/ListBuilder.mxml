@@ -23,26 +23,26 @@
 			import com.hillelcoren.components.AutoComplete;
 			
 			[Bindable]
-			private var _dataProvider:ListCollectionView;
-			private var _dataProviderChanged:Boolean;
+			protected var _dataProvider:ListCollectionView;
+			protected var _dataProviderChanged:Boolean;
 						
 			[Bindable]
-			private var _selectedItems:ArrayCollection; 
+			protected var _selectedItems:ArrayCollection; 
 			
-			private var _filterFunction:Function;
-			
-			[Bindable]
-			private var _labelFunction:Function;
+			protected var _filterFunction:Function;
 			
 			[Bindable]
-			private var _labelField:String;
+			protected var _labelFunction:Function;
 			
-			private var _showOrderButtons:Boolean;
-			private var _showOrderButtonsChanged:Boolean;
+			[Bindable]
+			protected var _labelField:String;
 			
-			private var _isChanged:Boolean;
+			protected var _showOrderButtons:Boolean;
+			protected var _showOrderButtonsChanged:Boolean;
 			
-			private function init():void
+			protected var _isChanged:Boolean;
+			
+			protected function init():void
 			{
 				if (_labelFunction == null)
 				{
@@ -133,12 +133,12 @@
 				return _isChanged;
 			}
 			
-			private function rightFilterFunctionWrapper( item:Object ):Boolean
+			protected function rightFilterFunctionWrapper( item:Object ):Boolean
 			{
 				return _filterFunction( item, rightTextInput.text );
 			}
 			
-			private function leftFilterFunctionWrapper( item:Object ):Boolean
+			protected function leftFilterFunctionWrapper( item:Object ):Boolean
 			{
 				if (_selectedItems.source.indexOf( item ) >= 0 )
 				{
@@ -148,7 +148,7 @@
 				return _filterFunction( item, leftTextInput.text ); 
 			}
 			
-			private function defaultFilterFunction( item:Object, searchStr:String ):Boolean
+			protected function defaultFilterFunction( item:Object, searchStr:String ):Boolean
 			{
 				if (searchStr.length == 0)
 				{
@@ -160,7 +160,7 @@
 				return StringUtils.beginsWith( str, searchStr );
 			}						
 					
-			private function defaultLabelFunction( item:Object ):String
+			protected function defaultLabelFunction( item:Object ):String
 			{
 				if (_labelField && item.hasOwnProperty( _labelField ))
 				{
@@ -172,26 +172,26 @@
 				}
 			}
 						
-			private function handleLeftSearchChange():void
+			protected function handleLeftSearchChange():void
 			{
 				_dataProvider.refresh();
 			}
 			
-			private function handleRightSearchChange():void
+			protected function handleRightSearchChange():void
 			{
 				 _selectedItems.filterFunction = rightFilterFunctionWrapper; 
 				 _selectedItems.refresh()
 			}
 			
 			// this will remove any selected items from the list on the left
-			private function handleSelectedItemsChange( event:Event ):void
+			protected function handleSelectedItemsChange( event:Event ):void
 			{
 				_dataProvider.refresh();
 				_isChanged = true;
 				dispatchEvent( new Event( Event.CHANGE ) );
 			}
 			
-			private function handleLeftDrop( event:DragEvent ):void
+			protected function handleLeftDrop( event:DragEvent ):void
 			{
 				event.preventDefault();
 				event.currentTarget.hideDropFeedback(event);
@@ -224,7 +224,7 @@
 				_dataProvider.refresh();
 			}
 			
-			private function handleRightDrop( event:DragEvent ):void
+			protected function handleRightDrop( event:DragEvent ):void
 			{
 				// this means we're just reordering the list
 				if (event.dragInitiator == rightList)
@@ -263,7 +263,7 @@
 				_dataProvider.refresh();
 			}
 			
-			private function handleAddSelectedClick():void
+			protected function handleAddSelectedClick():void
 			{
 				for each (var item:Object in leftList.selectedItems)
 				{
@@ -271,20 +271,21 @@
 				}
 				
 				leftTextInput.text = null;
+				
 				_dataProvider.refresh();		
 			}
 	
-			private function handleLeftDoubleClick():void
+			protected function handleLeftDoubleClick():void
 			{
 				handleAddSelectedClick();
 			}
 	
-			private function handleRightDoubleClick():void
+			protected function handleRightDoubleClick():void
 			{
 				handleRemoveSelectedClick();
 			}
 	
-			private function handleRemoveSelectedClick():void
+			protected function handleRemoveSelectedClick():void
 			{
 				for each (var item:Object in rightList.selectedItems)
 				{
@@ -298,7 +299,7 @@
 				_dataProvider.refresh();
 			}
 			
-			private function moveItems( moveTo:String ):void
+			protected function moveItems( moveTo:String ):void
 			{
 				var tmp:Array = rightList.selectedItems;
 				

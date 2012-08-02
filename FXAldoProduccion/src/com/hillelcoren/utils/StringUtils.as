@@ -1,6 +1,7 @@
 package com.hillelcoren.utils
 {
-	import com.hillelcoren.components.AutoComplete;	
+	import com.hillelcoren.components.AutoComplete;
+	
 	import mx.utils.StringUtil;
 	
 	public class StringUtils
@@ -198,36 +199,12 @@ package com.hillelcoren.utils
 			return value;
 		}
 				
-		public static function highlighMatch( string:String, searchStr:String, matchType:String = "" ):String
+		public static function highlightMatch( string:String, searchStr:String ):String
 		{
-			if (!matchType)
-			{
-				matchType = AutoComplete.MATCH_ANY_PART;
-			}
-			
-			var regExp:RegExp = new RegExp( searchStr, "i" );
-			var matchPos:int = string.search( regExp );
-			
-			if (matchPos == -1)
-			{
-				return string;
-			}
-			
-			// if we're matching on word then we need to make sure 
-			// we're highliting the right part (ie, search for "st" in "Test String" 
-			// would need to higlight the "st" in String)
-			if (matchType == AutoComplete.MATCH_WORD)
-			{
-				if (matchPos > 0 && string.charAt( matchPos - 1 ) != " ")
-				{
-					regExp = new RegExp( " " + searchStr, "i" );
-					matchPos = string.search( regExp ) + 1;			
-				}
-			}
-			
-			var returnStr:String = string.substring( 0, matchPos );
-			returnStr += "<b><u>" + string.substr( matchPos, searchStr.length) + "</u></b>";
-			returnStr += string.substr( matchPos + searchStr.length, string.length ) + " ";		
+			// solution by Jan Reges, 2009-07-17
+			var searchStrPattern:String = "(" + searchStr + ")";
+			var regExp:RegExp = new RegExp( searchStrPattern, "igm" );
+			var returnStr:String = string.replace( regExp, "<b><u>$1</u></b>" );
 
 			return returnStr;
 		}		

@@ -18,64 +18,64 @@
 	
 	<mx:Script>
 		<![CDATA[
-			import mx.collections.ListCollectionView;
-			import mx.controls.LinkButton;
-			import mx.controls.Button;
-			import mx.core.EdgeMetrics;
-			import mx.events.ResizeEvent;
-			import mx.events.MoveEvent;
-			import mx.events.MenuEvent;
-			import mx.containers.GridRow;
-			import mx.containers.GridItem;
-			import mx.core.UIComponent;
-			import mx.containers.VBox;
-			import mx.containers.HBox;
-			import mx.managers.PopUpManager;
-			import mx.core.IFlexDisplayObject;
-			import mx.core.Application;
-			import mx.controls.Button;
-			import mx.collections.ArrayCollection;
-			import com.hillelcoren.components.autoComplete.interfaces.IBrowser;
 			import com.hillelcoren.components.autoComplete.classes.*;
+			import com.hillelcoren.components.autoComplete.interfaces.IBrowser;
 			
-			private var _showBrowseButton:Boolean;
-			private var _showBrowseButtonChanged:Boolean;
-			private var _browseButton:Button;
-			private var _browseButtonWidth:uint = Consts.BUTTON_WIDTH;
+			import mx.collections.ArrayCollection;
+			import mx.collections.ListCollectionView;
+			import mx.containers.GridItem;
+			import mx.containers.GridRow;
+			import mx.containers.HBox;
+			import mx.containers.VBox;
+			import mx.controls.Button;
+			import mx.controls.LinkButton;
+			import mx.core.Application;
+			import mx.core.EdgeMetrics;
+			import mx.core.IFlexDisplayObject;
+			import mx.core.UIComponent;
+			import mx.events.MenuEvent;
+			import mx.events.MoveEvent;
+			import mx.events.ResizeEvent;
+			import mx.managers.PopUpManager;
 			
-			private var _browser:IBrowser;
-			private var _useListBuilder:Boolean;
-			private var _browserFields:Array;
+			protected var _showBrowseButton:Boolean;
+			protected var _showBrowseButtonChanged:Boolean;
+			protected var _browseButton:Button;
+			protected var _browseButtonWidth:uint = Consts.BUTTON_WIDTH;
+			
+			protected var _browser:IBrowser;
+			protected var _useListBuilder:Boolean;
+			protected var _browserFields:Array;
 			protected var _browserClass:Class = Browser;
 			protected var _listBuilderClass:Class = ListBuilderBrowser;
-			private var _browserItemRenderer:IFactory;
-			private var _browseButtonGridItem:GridItem;
-			private var _browserFilterFunction:Function;
+			protected var _browserItemRenderer:IFactory;
+			protected var _browseButtonGridItem:GridItem;
+			protected var _browserFilterFunction:Function;
 			
-			private var _browseLabel:String = "Browse";
-			private var _removeLabel:String = "Remove";	
+			protected var _browseLabel:String = "Browse";
+			protected var _removeLabel:String = "Remove";	
 						
-			private var _selectionLayout:String = LAYOUT_VERTICAL;
-			private var _selectionLayoutChanged:Boolean;
-			private var _multiSelect:MultiSelect;
+			protected var _selectionLayout:String = LAYOUT_VERTICAL;
+			protected var _selectionLayoutChanged:Boolean;
+			protected var _multiSelect:MultiSelect;
 
-			private var _showOrderButtons:Boolean;
-			private var _showOrderButtonsChanged:Boolean;			
+			protected var _showOrderButtons:Boolean;
+			protected var _showOrderButtonsChanged:Boolean;			
 			
-			private var _showRemoveButton:Boolean;
-			private var _showRemoveButtonChanged:Boolean;
+			protected var _showRemoveButton:Boolean;
+			protected var _showRemoveButtonChanged:Boolean;
 			
-			private var _actionsMenuDataProvider:Object;
-			private var _actionsMenuDataProviderChanged:Boolean;
+			protected var _actionsMenuDataProvider:Object;
+			protected var _actionsMenuDataProviderChanged:Boolean;
 					
-			private var _actionsMenu:ActionsMenu;
+			protected var _actionsMenu:ActionsMenu;
 			
 			[Embed(source="/com/hillelcoren/assets/icons/actionsUp.png")]
-			private var _upIcon:Class;
+			protected var _upIcon:Class;
 			[Embed(source="/com/hillelcoren/assets/icons/actionsDown.png")]
-			private var _downIcon:Class;
+			protected var _downIcon:Class;
 			[Embed(source="/com/hillelcoren/assets/icons/actionsOver.png")]
-			private var _overIcon:Class;
+			protected var _overIcon:Class;
 						
 			private function init():void
 			{
@@ -161,7 +161,7 @@
 				}				
 			}
 			
-			private function handleButtonClick( event:Event = null ):void
+			protected function handleButtonClick( event:Event = null ):void
 			{
 				var vm:EdgeMetrics = flowBox.viewMetricsAndPadding;
 	        	var textHeight:int = textInput.height + vm.top + vm.bottom;
@@ -185,7 +185,7 @@
 				}
 			}
 			
-			private function positionActionsMenu():void
+			protected function positionActionsMenu():void
 			{
 				if (!_actionsMenu)
 				{
@@ -207,31 +207,33 @@
 				_actionsMenu.y = globalPoint.y + (height - textHeight);			
 			}
 			
-			private function handleMenuHide( event:Event ):void
+			protected function handleMenuHide( event:Event ):void
 			{
 				flowBox.buttonEnabled = true;
 
 				dispatchEvent( event );
 			}
 			
-			private function handleMenuShow( event:MenuEvent ):void
+			protected function handleMenuShow( event:MenuEvent ):void
 			{
 				flowBox.buttonEnabled = false;
 				
 				dispatchEvent( event );
 			}
 						
-			private function handleItemClick( event:MenuEvent ):void
+			protected function handleItemClick( event:MenuEvent ):void
 			{
 				dispatchEvent( event );
 			}								
 					
-			private function handleMove( event:Event ):void
+			override protected function handleMove( event:MoveEvent ):void
 			{
+				super.handleMove( event );
+				
 				callLater( positionActionsMenu );
 			}
 			
-			private function handleBrowseClick( event:Event ):void
+			protected function handleBrowseClick( event:Event ):void
 			{
 				showBrowser();
 			}
@@ -272,18 +274,20 @@
 					_browser.selectedItems = _selectedItems.source;
 				}
 							
-				PopUpManager.addPopUp( IFlexDisplayObject( _browser ), DisplayObject( Application.application), true );
+				PopUpManager.addPopUp( IFlexDisplayObject( _browser ), DisplayObject( parentApplication ), true );
 				PopUpManager.centerPopUp( IFlexDisplayObject( _browser ) );
 				
 				_browser.init();
 				
+				/*
 				if (!useListBuilder && _selectedItems.length == 0)
 				{
 					IBrowser( _browser ).searchStr = searchText;
-				}													
+				}
+				*/													
 			}
 			
-			private function handleBrowserChange( event:Event ):void
+			protected function handleBrowserChange( event:Event ):void
 			{
 				var item:Object;
 				
@@ -308,12 +312,12 @@
 				dispatchEvent( new Event( Event.CHANGE ) );
 			}			
 			
-			private function handleMultiSelectChange( event:Event ):void
+			protected function handleMultiSelectChange( event:Event ):void
 			{
 				dispatchEvent( event );
 			}
 			
-			private function setBrowseButtonVisible( show:Boolean ):void
+			protected function setBrowseButtonVisible( show:Boolean ):void
 			{
 				if (show && _browseButton == null)
 				{
@@ -368,7 +372,7 @@
 				_browseButtonWidth = value;
 			}
 			
-			private function showMultiSelectList( show:Boolean ):void
+			protected function showMultiSelectList( show:Boolean ):void
 			{
 				if (show && _multiSelect == null)
 				{

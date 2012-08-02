@@ -20,23 +20,23 @@
 
             [Bindable]
             [Embed('/com/hillelcoren/assets/icons/remove.png')]
-            private var Icon:Class;
+            protected var Icon:Class;
 			
-			private var _showRemoveIcon:Boolean;
-			private var _showRemoveIconChanged:Boolean;
+			protected var _showRemoveIcon:Boolean;
+			protected var _showRemoveIconChanged:Boolean;
 			
-			private var _origColor:uint;
-			private var _showCommaChanged:Boolean;
-			private var _allowMultipleSelection:Boolean;
+			protected var _origColor:uint;
+			protected var _showCommaChanged:Boolean;
+			protected var _allowMultipleSelection:Boolean;
 			
-			private function init():void
+			protected function init():void
 			{
 				labelPlacement = ButtonLabelPlacement.LEFT;
 				
 				addEventListener( FocusEvent.FOCUS_IN, handleFocusIn );
 			}
 			
-			private function handleFocusIn( event:FocusEvent ):void
+			protected function handleFocusIn( event:FocusEvent ):void
 			{
 				drawFocus( false );
 			}

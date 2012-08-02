@@ -14,31 +14,37 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import com.hillelcoren.components.autoComplete.interfaces.iComboItem;
+			
 			import mx.containers.Canvas;
 			import mx.controls.Button;
-			import mx.events.ResizeEvent;
-			import mx.events.MoveEvent;
-			import mx.events.FlexEvent;
-			import mx.events.MenuEvent;
-			import mx.managers.PopUpManager;
-			import mx.core.UIComponent;
 			import mx.controls.VRule;
 			import mx.core.Container;
 			import mx.core.EdgeMetrics;
 			import mx.core.IUIComponent;
-			import com.hillelcoren.components.autoComplete.interfaces.iComboItem;
+			import mx.core.UIComponent;
+			import mx.events.FlexEvent;
+			import mx.events.MenuEvent;
+			import mx.events.MoveEvent;
+			import mx.events.ResizeEvent;
+			import mx.managers.PopUpManager;
 			
-			private var _showRemoveIcon:Boolean;
-			private var _showRemoveIconChanged:Boolean;
+			protected var _showRemoveIcon:Boolean;
+			protected var _showRemoveIconChanged:Boolean;
 			
-			private var _inlineButton:Button;
-			private var _inlineButtonChanged:Boolean;
-			private var _inlineButtonCanvas:Canvas;
+			protected var _inlineButton:Button;
+			protected var _inlineButtonChanged:Boolean;
+			protected var _inlineButtonCanvas:Canvas;
 			
-			private var _enableMultiRow:Boolean;
+			protected var _enableMultiRow:Boolean;
 			
-						
-			private function init():void
+			protected var _tabIndex:int;
+			protected var _tabIndexChanged:Boolean;
+			
+			[Bindable]
+			public var showSpinner:Boolean;								
+			
+			protected function init():void
 			{
 				addEventListener( FocusEvent.FOCUS_IN, handleFocusIn );		
 				addEventListener( FocusEvent.FOCUS_OUT, handleFocusOut );		
@@ -52,17 +58,17 @@
 				}
 			}
 			
-			private function handleFocusIn( event:FocusEvent ):void
+			protected function handleFocusIn( event:FocusEvent ):void
 			{
 				drawFocus( true );													
 			}
 			
-			private function handleFocusOut( event:FocusEvent ):void
+			protected function handleFocusOut( event:FocusEvent ):void
 			{
 				drawFocus( false );
 			}
 			
-			private function handleChange( event:Event ):void
+			protected function handleChange( event:Event ):void
 			{
 				dispatchEvent( event );
 			}			
@@ -101,20 +107,34 @@
 						
 						rawChildren.addChild( _inlineButtonCanvas );
 					}
-				}				
+				}
+				
+				if (_tabIndexChanged)
+				{
+					_tabIndexChanged = false;
+					textInput.tabIndex = _tabIndex;
+				}
 			}
 						
-			private function handleButtonMouseDown( event:Event ):void
+			protected function handleButtonMouseDown( event:Event ):void
 			{
 				event.stopPropagation();
 			}
 			
-			private function handleButtonClick( event:Event ):void
+			protected function handleButtonClick( event:Event ):void
 			{
 				var event:Event = new Event( "buttonClick" );
 				dispatchEvent( event );
 			}			
 			
+			override public function set tabIndex(value:int):void
+			{
+				_tabIndex = value;
+				_tabIndexChanged = true;
+				
+				invalidateProperties();
+			}
+
 			public function getItemPosition( comboItem:iComboItem ):Point
 			{
 				var lastY:int;
@@ -279,6 +299,8 @@
 						{
 							child.width = width - sidePadding;
 						}
+						
+						child.percentWidth = 100;
 					}
 				}
 				
@@ -306,6 +328,6 @@
 	</mx:Script>
 	
 	<components:PromptTextInput id="textInput" enableClearIcon="false" width="100%"
-		change="handleChange(event)" drawFocusBorder="false" borderStyle="none"/>
+		change="handleChange(event)" drawFocusBorder="false" borderStyle="none" showSpinner="{ showSpinner }"/>
 		
 </mx:Canvas>

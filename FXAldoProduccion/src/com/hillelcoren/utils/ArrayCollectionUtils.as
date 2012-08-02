@@ -68,7 +68,7 @@ package com.hillelcoren.utils
 			}					
 		}
 		
-		private static function getNewIndex( arrayCollection:ArrayCollection, item:Object, moveTo:String ):uint
+		protected static function getNewIndex( arrayCollection:ArrayCollection, item:Object, moveTo:String ):uint
 		{
 			var index:uint = arrayCollection.getItemIndex( item );
 			

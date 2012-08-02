@@ -20,27 +20,33 @@
 			import mx.controls.Image;
 			import mx.states.SetStyle;
 			
-			private var _prompt:String;
-			private var _promptChanged:Boolean;
+			protected var _prompt:String;
+			protected var _promptChanged:Boolean;
+			protected var _enablePrompt:Boolean = true;
 			
-			private var _isPromptSet:Boolean;
-			private var _drawFocusBorder:Boolean = true;
+			protected var _isPromptSet:Boolean;
+			protected var _drawFocusBorder:Boolean = true;
 			
 			[Bindable]
-			private var _enableClearIcon:Boolean = true;
-			private var _enablePrompt:Boolean = true;
-			private var _isMouseOver:Boolean;
+			protected var _enableClearIcon:Boolean = true;
+			protected var _isMouseOver:Boolean;
 			
-			private var _text:String;
-			private var _textChanged:Boolean;
+			[Bindable]
+			public var showSpinner:Boolean;
 			
-			private var _promptColor:String;
-			private var _textPadding:int = 10;
+			protected var _text:String;
+			protected var _textChanged:Boolean;
+			
+			protected var _promptColor:String;
+			protected var _textPadding:int = 10;
+			
+			protected var _tabIndex:int;
+			protected var _tabIndexChanged:Boolean;
 			
 			[Bindable]
 			public var displayAsPassword:Boolean;
 			
-			private function init():void
+			protected function init():void
 			{
 				addEventListener( FocusEvent.FOCUS_IN, handleFocusIn );
 				addEventListener( FocusEvent.FOCUS_OUT, handleFocusOut );
@@ -71,6 +77,12 @@
 						showPrompt();
 					}
 				}
+				
+				if (_tabIndexChanged)
+				{
+					_tabIndexChanged = false;
+					textInput.tabIndex = _tabIndex;
+				}
 			}						
 			
 			override public function styleChanged( styleProp:String ):void 
@@ -83,12 +95,12 @@
 					
 					if (_isPromptSet)
 					{
-						setStyle( "color", _promptColor );
+						textInput.setStyle( "color", _promptColor );
 					}
 				}
 			}
 			
-			private function showPrompt():void
+			protected function showPrompt():void
 			{
 				if (_prompt == null || !_enablePrompt)
 				{
@@ -110,12 +122,12 @@
 				
 				_isPromptSet = true;
 				textInput.text = _prompt;
-
-				setStyle( "color", _promptColor );
-				setStyle( "fontStyle", "italic" );
+				
+				textInput.setStyle( "color", _promptColor );
+				textInput.setStyle( "fontStyle", "italic" );
 			}
 			
-			private function hidePrompt():void
+			protected function hidePrompt():void
 			{
 				if (_isPromptSet)
 				{
@@ -124,13 +136,21 @@
 				
 				_isPromptSet = false;
 				
-				clearStyle( "color" );
-				clearStyle( "fontStyle" );
+				textInput.clearStyle( "color" );
+				textInput.clearStyle( "fontStyle" );
 			}
 			
 			public function set textPadding( value:int ):void
 			{
 				_textPadding = value;
+			}
+			
+			override public function set tabIndex(value:int):void
+			{
+				_tabIndex = value;
+				_tabIndexChanged = true;
+				
+				invalidateProperties();
 			}
 			
 			override public function get minWidth():Number
@@ -183,7 +203,14 @@
 						validateNow();
 					}
 					
-					return textInput.text;
+					if (_textChanged)
+					{
+						return _text;
+					}
+					else
+					{
+						return textInput.text;
+					}
 				}
 			}
 			
@@ -200,7 +227,7 @@
 				invalidateProperties();
 			}
 			
-			private function setNewText():void
+			protected function setNewText():void
 			{	
 				if (_text == null)
 				{
@@ -226,7 +253,7 @@
 				textInput.setSelection( startPos, text.length );
 			}
 				
-			private function handleFocusIn( event:FocusEvent ):void
+			protected function handleFocusIn( event:FocusEvent ):void
 			{
 				if (_drawFocusBorder)
 				{
@@ -239,7 +266,7 @@
 				}
 			}
 			
-			private function handleFocusOut( event:FocusEvent ):void
+			protected function handleFocusOut( event:FocusEvent ):void
 			{
 				if (_drawFocusBorder)
 				{
@@ -257,7 +284,7 @@
 				_drawFocusBorder = value;
 			}
 			
-			private function handleChange( event:Event ):void
+			protected function handleChange( event:Event ):void
 			{
 				dispatchEvent( event );
 				
@@ -284,7 +311,7 @@
 				}																		
 			}
 			
-			private function handleMouseOver( event:MouseEvent ):void
+			protected function handleMouseOver( event:MouseEvent ):void
 			{
 				_isMouseOver = true;
 				
@@ -296,7 +323,7 @@
 				showClearIcon();
 			}
 			
-			private function handleMouseOut( event:MouseEvent ):void
+			protected function handleMouseOut( event:MouseEvent ):void
 			{
 				_isMouseOver = false;
 				
@@ -315,12 +342,12 @@
 				hideClearIcon();
 			}
 			
-			private function hideClearIcon():void
+			protected function hideClearIcon():void
 			{
 				clearIcon.visible = false;
 			}
 			
-			private function showClearIcon():void
+			protected function showClearIcon():void
 			{
 				if (_enableClearIcon)
 				{
@@ -328,7 +355,7 @@
 				}																			
 			}
 			
-			private function handleClearClick():void
+			protected function handleClearClick():void
 			{
 				text = null;
 				validateNow();
@@ -377,7 +404,7 @@
 				callLater( _setCursorPosition, [value] );
 			}	
 			
-			private function _setCursorPosition( value:int ):void
+			protected function _setCursorPosition( value:int ):void
 			{
 				textInput.selectionBeginIndex = value;
 				textInput.selectionEndIndex = value;
@@ -387,7 +414,14 @@
 	</mx:Script>
 	
 	<classes:ShorterTextInput id="textInput" width="100%" borderStyle="none" displayAsPassword="{ displayAsPassword }"/> 
-	<mx:Image id="clearIcon" source="@Embed('/com/hillelcoren/assets/icons/clear.png')" verticalAlign="middle" 
-		visible="false" includeInLayout="{ _enableClearIcon }" click="handleClearClick()"/>
+
+	<mx:Canvas>
+		<mx:Image id="clearIcon" source="@Embed('/com/hillelcoren/assets/icons/clear.png')" verticalAlign="middle" 
+			visible="false" includeInLayout="{ _enableClearIcon }" click="handleClearClick()"/>
+		<!--
+		<mx:Image id="spinner" source="@Embed('/com/hillelcoren/assets/spinner.swf')" 
+			visible="{ showSpinner }" includeInLayout="{ showSpinner }" height="{ textInput.height - 4 }" top="2" right="0"/>
+		-->
+	</mx:Canvas>
 			
 </mx:HBox>

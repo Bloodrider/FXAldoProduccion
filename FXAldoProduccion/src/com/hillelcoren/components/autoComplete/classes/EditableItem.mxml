@@ -3,23 +3,23 @@
 	implements="com.hillelcoren.components.autoComplete.interfaces.iComboItem"
 	xmlns:mx="http://www.adobe.com/2006/mxml" paddingLeft="0"
 	initialize="init()" tabChildren="false" tabEnabled="false"
-	borderStyle="none" focusThickness="0">
+	borderStyle="none" borderSkin="{null}" focusThickness="0">
 	
 	<mx:Script>
 		<![CDATA[
 			import com.hillelcoren.utils.StringUtils;
 			
-			private var _item:Object;
-			private var _allowMultipleSelection:Boolean;
+			protected var _item:Object;
+			protected var _allowMultipleSelection:Boolean;
 			
-			private function init():void
+			protected function init():void
 			{
 				addEventListener( Event.CHANGE, handleChange );
 				addEventListener( FocusEvent.FOCUS_IN, handleFocusIn );
 				addEventListener( FocusEvent.FOCUS_OUT, handleFocusOut );
 			}
 			
-			private function handleChange( event:Event ):void
+			protected function handleChange( event:Event ):void
 			{
 				width = measureText( text ).width + 10;
 			}
@@ -40,14 +40,14 @@
 				return selectionBeginIndex == 0 && selectionEndIndex == text.length;
 			}
 			
-			private function handleFocusIn( event:Event ):void
+			protected function handleFocusIn( event:Event ):void
 			{
 				drawFocus( false );
 				
 				text = StringUtils.trimCommas( text );
 			}
 			
-			private function handleFocusOut( event:Event ):void
+			protected function handleFocusOut( event:Event ):void
 			{
 				if (_allowMultipleSelection)
 				{

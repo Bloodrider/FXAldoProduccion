@@ -25,23 +25,23 @@
 			import mx.core.UIComponent;
 			import mx.controls.TextInput;
 			
-			private var _text:String;
-			private var _textChanged:Boolean;
+			protected var _text:String;
+			protected var _textChanged:Boolean;
 			
-			private var _buttonStyleChanged:Boolean;
+			protected var _buttonStyleChanged:Boolean;
 			
-			private var _item:Object;
-			private var _isMouseOver:Boolean;
+			protected var _item:Object;
+			protected var _isMouseOver:Boolean;
 			
-			private var _allowMultipleSelection:Boolean;
-			private var _allowMultipleSelectionChanged:Boolean;
+			protected var _allowMultipleSelection:Boolean;
+			protected var _allowMultipleSelectionChanged:Boolean;
 			
 			[Bindable]			
-			private var _showRemoveIcon:Boolean = true;
+			protected var _showRemoveIcon:Boolean = true;
 			
 			public static const REMOVE_ITEM:String = "removeItem";
 			
-			private function init():void
+			protected function init():void
 			{
 				button.addEventListener( FocusEvent.FOCUS_OUT, handleButtonFocusOut );
 			}
@@ -87,12 +87,12 @@
 				}
 			}
 			
-			private function handleClick():void
+			protected function handleClick():void
 			{
 				selected = true;
 			}
 									
-			private function handleButtonFocusOut( event:FocusEvent ):void
+			protected function handleButtonFocusOut( event:FocusEvent ):void
 			{
 				if (!event.relatedObject)
 				{
@@ -104,7 +104,7 @@
 				}
 			}
 			
-			private function handleTextInput( event:TextEvent ):void
+			protected function handleTextInput( event:TextEvent ):void
 			{
 				textInput.text = "";
 				textInput.validateNow();
@@ -198,7 +198,7 @@
 		]]>
 	</mx:Script>
 	
-	<classes:ShorterTextInput id="textInput" width="5" borderStyle="none" 
+	<classes:ShorterTextInput id="textInput" width="5" borderStyle="none" borderSkin="{null}" paddingLeft="0" paddingRight="0" 
 		focusThickness="0" textInput="handleTextInput(event)"/>
 	<classes:IconButton id="button" showRemoveIcon="{ _showRemoveIcon }" 
 		click="handleClick()" removeClick="handleRemoveClick()" toggle="true"/>
