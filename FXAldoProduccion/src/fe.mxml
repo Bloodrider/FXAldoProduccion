@@ -1,0 +1,2302 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:mx2="library://ns.adobe.com/flex/halo"
+	xmlns:timePicker="com.visualempathy.display.controls.datetime.*"
+	xmlns:local="*" 
+	xmlns:ns="library:adobe/flex/gumbo" 
+	width="100%" height="1000"
+	backgroundColor="#FFFFFF" 
+	creationComplete="initFact.isPopUp = true; modal.visible = true; consultaAC(); tipoMoneda.setFocus();" 
+	xmlns:components="com.hillelcoren.components.*"
+	applicationComplete="validateUser('fe.swf');">
+	
+	
+	<fx:Script source="r3Take.as"/>
+	<fx:Style source="fx.css" />
+	<fx:Script>
+		<![CDATA[
+			import com.hillelcoren.utils.StringUtils;
+			
+			import flashx.textLayout.formats.Float;
+			
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.core.ByteArrayAsset;
+			import mx.events.CollectionEvent;
+			import mx.events.FlexEvent;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			import mx.managers.SystemManager;
+			import mx.messaging.Producer;
+			import mx.utils.StringUtil;
+			
+			import org.generalrelativity.foam.dynamics.collision.geom.AABR;
+			
+			import spark.events.TextOperationEvent;
+			
+			private var numFtr:NumberFormatter = new NumberFormatter;
+			private var numFtrXML:NumberFormatter = new NumberFormatter;
+			private var pu:Number = 0;
+			private var cantidad:Number = 0;
+			private var imp:Number = 0;
+			private var st:Number = 0;
+			private var desc:Number = 0;
+			private var IVA:Number = 0;
+			private var ret:Number = 0;
+			private var neto:Number = 0;	
+			private var xmlTextV2:String ="";
+			private var xmlTextV3:String ="";
+			private var gbTotales:ArrayCollection = new ArrayCollection();	
+			private var gbTotalesDG:ArrayCollection = new ArrayCollection();
+			private var loadedASM:SystemManager;
+			private var addendaComplemento:int;
+			private var totGranTotal:Number;
+			private var gb:ArrayCollection = new ArrayCollection();
+			private var modificacionAddenda:String = "";
+			private var listaImpuestosLocales:ArrayCollection;
+			private var inputAddendas:XML;
+			private var addendaXML:XML;
+			private var importeISH:Number = new Number();
+
+			private function setFormat():void
+			{
+				numFtr.precision = precisionDecimales.value;
+				numFtr.useThousandsSeparator = false;
+				numFtr.useNegativeSign = true;
+				numFtr.rounding = decTruncados.selected==true?"none":"nearest";
+				
+				
+				numFtrXML.useNegativeSign = false;
+			}
+			private function entrar():void
+			{		
+				
+				
+				setFormat();
+				if(tipoMoneda.selectedIndex < 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar el tipo de Moneda.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+					tipoMoneda.setFocus();
+					tipoMoneda.errorString = "Debe seleccionar el tipo de Moneda.";
+				}
+				
+				if(tipoMoneda.selectedItem[1].toString() == "DOLARES")
+				{
+					if(tasaCambio.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Para poder continuar, es necesario tener una tasa de cambio, para cualquier duda contacte al administrador del sistema.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+						tasaCambio.setFocus();
+						tasaCambio.errorString = "Tasa de Cambio requerida";
+						return;
+					}
+				}		
+				if(metodoPago.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para poder continuar, es necesario agregar un método de pago, para cualquier duda contacte al administrador del sistema.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+					metodoPago.setFocus();
+					metodoPago.errorString = "Método de Pago requerido";
+					return;
+				}
+				
+				if (cuentaPago.text.length<4 && cuentaPago.text.length!=0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para capturar la cuenta con que se efectúa el pago de la operación, es necesario capturar al menos 4 caracteres (4 últimos dígitos de la cuenta utilizada).","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+					cuentaPago.setFocus();
+					cuentaPago.errorString = "Cuenta con que se paga incorrecta";
+					return;
+				}
+				
+				if(tasaValid.text == "1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La tasa de cambio es incorrecta, favor de corregirla.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+					tasaCambio.setFocus();
+					return;
+				}
+				
+				if(tasaCambio.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La tasa de cambio es requerida, favor de ingresarla.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+					tasaCambio.setFocus();
+					return;
+				}
+				
+				if(cTipoCFDI.selectedIndex == -1||cTipoCFDI.selectedItem[0].toString()=="0"){
+					
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar un Tipo de Comprobante Fiscal Digital, favor de Verificar.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+					cTipoCFDI.setFocus();
+					cTipoCFDI.errorString = "Tipo de Comprobante requerido";
+					return;
+				}
+				else{
+					if (Number(cTipoCFDI.selectedItem[0].toString()) == 6){
+						lbCuentaPredial.visible = true;
+						ctCuentaPredial.visible = true;
+						ctUsaCuentaPredial.text = "1";
+					}
+				}
+				
+				if(isConfigured.text=="0"){
+					
+					Alert.okLabel = "Aceptar";
+					Alert.show("Antes de generar el CFDI, es necesario configurarlo ingresando al Menú Catálogos > Configura tu CFDI","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				if(parseInt(validaExisteClientes.text) > 0)
+				{
+					Send(716);//LLENA EL COMBOBOX DE IMPUESTOS DEPENDIENDO DEL TIPO DE COMPROBANTE
+				}
+				else
+				{
+					Terminar.enabled = false;
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para poder generar un CFDI es necesario tener al menos un cliente configurado.", "Mensaje FacturaXion",Alert.OK,null, null, iconDel);
+					return;
+				}
+				
+				numFtr.precision = precisionDecimales.value;
+				validadorPrecio.precision=precisionDecimales.value;
+				validadorPrecioUnitario.precision=precisionDecimales.value;
+				enabledAllControls();
+				
+				tipoMoneda.errorString = "";
+				metodoPago.errorString = "";
+				tasaCambio.errorString = "";
+				
+				metodoPagoR.text = metodoPago.text;
+				tipoMonedaR.text = tipoMoneda.selectedItem[0].toString();
+				tasaCambioR.text = tasaCambio.text;
+				noOrdenCompraR.text = noOrdenCompra.text;
+				
+				initFact.visible = false;
+				
+				//Campos Adicionales
+				if ((parseInt(countCamposAdicionales.text) > 0)&&(countCamposAdicionales.text != ""))
+				{
+					Send(523); // Llena Datagrid campos Adicionales
+					TTWvalores.visible = true;
+					btnAdendas.visible = true;
+					return;
+				}
+				
+				TTWvalores.visible = false;
+				btnAdendas.visible = false; 
+				
+				modal.visible = false;
+				receptor.setFocus();
+			}
+			
+			private function activaTerminar():void
+			{
+				if(countCamposAdicionales.text!="")
+				{
+					Terminar.enabled=true;
+				}
+				else
+				{
+					Terminar.enabled=false;
+				}
+			}
+			
+			private function add():void
+			{			
+				mx.core.Application.application.stopCountdown();
+				mx.core.Application.application.beginCountdown();
+				
+				var validConcept:String = concepto.text;
+				
+				concepto.text=replaceAll(concepto.text,"<","");
+				concepto.text=replaceAll(concepto.text,">","");
+				concepto.text=replaceAll(concepto.text,'"',"");
+				concepto.text=replaceAll(concepto.text,"'","");
+				concepto.text=replaceAll(concepto.text,"&","");
+				concepto.text=replaceAll(concepto.text,";","");
+				
+				concepto.text = validConcept;
+				
+				validadorPrecio.validate();
+				
+				if(concepto.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el concepto.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					concepto.setFocus();
+					concepto.errorString = "Debe especificar el concepto";
+					return;
+				}
+				if(um.selectedIndex < 0)
+				{		
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar una Unidad de Medida.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					um.setFocus();
+					um.errorString = "Debe seleccionar una Unidad de Medida";
+					return;
+				}
+				if(cant.text.length == 0 || cant.text == "0")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar la cantidad y esta no puede ser cero..","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					cant.setFocus();
+					cant.errorString = "Debe especificar la cantidad";
+					return;
+				}
+				if(precio.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el Precio.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					precio.setFocus();
+					precio.errorString = "Debe especificar el Precio";
+					return;
+				}
+				
+				if(impuesto.selectedIndex < 0)
+				{			
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar el impuesto.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					impuesto.setFocus();
+					impuesto.errorString = "Debe seleccionar el impuesto";
+					return;
+				}
+				
+				if(precioValid.text == "1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Precio no tiene el formato correcto.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					precio.setFocus();
+					return;				
+				}
+				
+				if(cantValid.text == "1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Cantidad es numérico con seis posiciones decimales.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					cant.setFocus();
+					return;	
+				}
+				
+				if(precio.text == "" || parseFloat(precio.text) <= 0.00)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El precio debe ser mayor a 0.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					precio.setFocus();
+					precio.errorString = "El precio debe ser mayor a 0","Error en precio";
+					return;	
+				}
+				
+				
+				
+				if(conceptos.dataProvider != null)
+				{
+					gb = new ArrayCollection(ArrayUtil.toArray(conceptos.dataProvider.source));
+				}
+				
+				pu = Number(precio.text.replace(/,/g, "")); 
+				cantidad=Number(cant.text);
+				st = (cantidad * pu*100)/100;
+				desc = st * (descuento.value/100);
+				
+				var valsImp:Array = new Array();
+				var valsImpDet:Array = new Array();
+				var descString:String = "";
+				
+				
+				valsImp = impuesto.selectedItem[0].toString().split("#");
+				
+				for(var imp:int=0; imp < valsImp.length; imp++)
+				{            	
+					valsImpDet = valsImp[imp].toString().split("|");
+					
+					var porcentImp:Number = Number(valsImpDet[1]);
+					
+					if(porcentImp > 0)
+					{
+						descString += "Traslados " + valsImpDet[0] + " " + valsImpDet[1].toString() + ": $ " + numFtr.format(((porcentImp / 100) * (st - desc))) + " \n";            		           		
+					}else if(porcentImp < 0)
+					{
+						descString += "Retención " + valsImpDet[0] + " " + valsImpDet[1].toString() + ": $ " + numFtr.format(((porcentImp / 100) * (st - desc))) + " \n";
+					}  
+				}
+				var cadenaInfAduanera:String="";
+				if(detalleAduana.dataProvider!=null && detalleAduana.dataProvider.length>0)
+				{
+					var arrayDetalleAduana:ArrayCollection=new ArrayCollection(ArrayUtil.toArray(detalleAduana.dataProvider.source));
+					
+					for(var idxInfAduanera=0;idxInfAduanera<arrayDetalleAduana.length;idxInfAduanera++)
+					{
+						cadenaInfAduanera+=arrayDetalleAduana[idxInfAduanera][0].toString()+"|";
+						cadenaInfAduanera+=arrayDetalleAduana[idxInfAduanera][1].toString()+"|";
+						cadenaInfAduanera+=arrayDetalleAduana[idxInfAduanera][2].toString();
+						cadenaInfAduanera+=(idxInfAduanera+1<arrayDetalleAduana.length)?"!":"";
+					}
+				}
+				
+				//Agregamos la partida al arreglo gb
+				gb.addItem(
+					{0:concepto.text,//v- DescripcionConcepto
+						1:cantidad, //n- Cantidad
+						2:numFtr.format(pu),//v 
+						3:numFtr.format((cantidad* pu*100 )/100),//v
+						4:descuento.value.toString(), //v
+						5:numFtr.format(desc),//v
+						6:impuesto.selectedItem[0],//v				 
+						7:um.selectedItem[0].toString(),//v
+						8:impuesto.selectedItem[1].toString(),//v
+						9:((descuento.value!=0) ? "Descuento " + descuento.value.toString() + "% : " + numFtr.format(desc)+ "    \n": "\n") + descString,//v
+						10:numFtr.format(((cantidad * pu*100)/100) - desc),//v
+						11:impuesto.selectedItem[0],//v
+						12:numFtrXML.format(((cantidad * pu*100)/100)- desc),//v
+						13:impuesto.selectedItem[2].toString(),//v
+						14:um.selectedItem[1].toString(),//v
+						15:((cantidad * pu*100)/100) - desc,//n
+						16:desc,//n
+						17:cadenaInfAduanera//v
+					}
+				);
+				
+				calcular(gb);  
+				
+				conceptos.dataProvider = gb;
+				autocompleteProductosText.text = "";
+				descuento.value = 0;
+				um.selectedIndex = -1;
+				concepto.text = "";
+				impuesto.selectedIndex = 0;
+				cant.text = "1";
+				precio.text = prefijoCeroPesos(int(precisionDecimales.value));
+				detalleAduana.dataProvider=null;
+				
+				autocompleteProductosText.selectedItem = null;
+				concepto.text = "";
+				autocompleteProductosText.dataProvider = acACProductos;
+			}
+			
+			private function prefijoCeroPesos(decimales:int):String
+			{
+				var prefijo:String="0."
+				for(var count:int=0;count<decimales;count++)
+				{
+					prefijo=prefijo.concat("0");
+				}
+				return prefijo;
+			}
+			
+			private function calcular(gb:ArrayCollection):void
+			{
+				var total:Number = 0;
+				var subTotal:Number=0;
+				var error:String="";
+				var stAcumulado:Number=0;
+				var impDet:Array = new Array();
+				var valsImpDet:Array = new Array();
+
+				var porcentImp:Number = 0;
+				var conceptImp:String = "";
+
+				var impNuevo:int = 0;
+				var esTotal:int = 0;
+				var palabraRet:String = "";
+				var valueImp:Number = 0;				
+				
+				gbTotales = new ArrayCollection(); 
+				
+				gbTotales = new ArrayCollection(ArrayUtil.toArray(totales.dataProvider.source));
+				
+				//Inicializamos variables númericas del arreglo gbTotales
+				for(var numgbTotales:int=0; numgbTotales < gbTotales.length; numgbTotales++)
+				{
+					gbTotales[numgbTotales][1] = 0;
+					gbTotales[numgbTotales][3] = 0;
+					gbTotales[numgbTotales][5] = 0;
+				}
+				var usaIVAIEPS:Boolean;
+				//Recorremos el arreglo gb, que contiene el arreglo de impuestos de la tabla de impuestosDetalle
+				for(var numImpDet:int=0; numImpDet < gb.length; numImpDet++)
+				{
+					
+					//Validamos para este concepto el uso del IVA sobre IEPS
+					if(	gb[numImpDet][8].toString()=="IVA 16% SOBRE IEPS 53%"||
+						gb[numImpDet][8].toString()=="IVA 16% SOBRE IEPS 30%"||
+						gb[numImpDet][8].toString()=="IVA 16% SOBRE IEPS 25%")
+					{
+						usaIVAIEPS=true;
+					}
+					else
+					{
+						usaIVAIEPS=false;
+					}
+					impDet = gb[numImpDet][11].toString().split("#");
+					
+					for(var imp:int=0; imp < impDet.length; imp++)
+					{            	
+						valsImpDet = impDet[imp].toString().split("|");	
+						
+						porcentImp= Number(valsImpDet[1]);
+						conceptImp= valsImpDet[0].toString();
+						
+	
+						//Validamos que el impuesto no sea cero, para continuar con el calculo
+						if(porcentImp != 0)
+						{  	    
+							//Por cada impuesto de la tabla de impuestoDetalle, recorremos el arreglo del Subtotal, total y los impuestos agregados.
+							for(var impTotales:int=0; impTotales < gbTotales.length; impTotales++)
+							{		 
+								//Si los impuestos coinciden es decir se tenemos una partida de 16 % de IVA y se agrega una con el mismo impuesto, las cifras las suma
+								if(gbTotales[impTotales][0].toString() == valsImpDet[0].toString() + " " + Number(valsImpDet[1]).toString().replace(".00", "") && (gbTotales[impTotales].hasOwnProperty([6]) && gbTotales[impTotales][6]==usaIVAIEPS || valsImpDet[0].toString()!="IVA") )
+								{
+									gbTotales[impTotales][1] += ((porcentImp / 100) * (Number(gb[numImpDet][15])));
+									gbTotales[impTotales][3] = numFtr.format(Math.abs(gbTotales[impTotales][1]));
+									gbTotales[impTotales][5] = Math.abs(valsImpDet[1]).toString();
+									impNuevo = 1;
+								}           			
+							}
+							
+							//Si el impuesto no coincide en la validación anterior, significa que el impuesto es diferente, y hay que crearlo
+							if(impNuevo == 0)
+							{
+								
+								if(Number(valsImpDet[1]) < 0)
+								{
+									//Si el impuesto es menor que cero es una retención
+									palabraRet = "";
+								}
+								else
+								{
+									//Si el impuesto es menor que cero es un traslado
+									palabraRet = "";
+								}
+								//Agregamos al arreglo gbTotales el nuevo impuesto
+				
+								gbTotales.addItem({	0:valsImpDet[0].toString() + " " + Number(valsImpDet[1]),  
+													1:(porcentImp / 100) * (Number(gb[numImpDet][15])), 
+													2: palabraRet + valsImpDet[0].toString() + " " + Math.abs(Number(usaIVAIEPS==true && valsImpDet[0].toString()=="IVA" ? "16.00" : valsImpDet[1]))  + " %", 
+													3:numFtr.format(((Math.abs(porcentImp) / 100) * (Number(gb[numImpDet][15])))), //antes el último multiplicando era: st-desc
+													4:valsImpDet[0].toString(), 
+													5:Math.abs(valsImpDet[1]).toString(), 
+													6:usaIVAIEPS==true && valsImpDet[0].toString()=="IVA" ? true:false });
+					
+							}
+							else
+							{
+								impNuevo = 0;
+							} 
+						}
+					}
+				}
+				
+				//Sumamos la lista de importes para sacar el Total
+				var impPartida:Number;
+				for(var numDetImp:int=0; numDetImp < gb.length; numDetImp++)
+				{    			
+					impPartida= Number(gb[numDetImp][10])*1000000;
+					subTotal = subTotal+ impPartida;           			
+				}
+				subTotal/=1000000;
+				//Damos formato y lo agregamos al arreglo gbTotales
+				gbTotales[0][1] = subTotal;
+				gbTotales[0][3] = numFtr.format(subTotal);
+				
+				var numTotalImp:int = gbTotales.length;
+				
+				//	Recorremos todo el arreglo para realizar ordenamiento, ya que debe de estar como Subtotal, lista de impuestos, y total.	
+				for(var numImpuesto:int=0; numImpuesto < gbTotales.length; numImpuesto++)
+				{ 
+					//Si la descripción es igual a Total, lo eliminamos para despues agregarlo al final.
+					if(gbTotales[numImpuesto][0].toString() == "Total")
+					{
+						gbTotales.removeItemAt(numImpuesto);
+						numImpuesto--;
+					}
+					else
+					//if(gbTotales.length >= numImpuesto)
+					{
+						//Calculamos el total
+						total = ((total*100) + (gbTotales[numImpuesto][1]*100))/100;
+						totGranTotal = total;
+						calculaGranTotal();
+
+						if(gbTotales[numImpuesto][1].toString() == "0" && gbTotales[numImpuesto][0].toString() != "Subtotal" && gbTotales[numImpuesto][0].toString() != "Total")
+						{
+							gbTotales.removeItemAt(numImpuesto);
+							numImpuesto--;
+							numTotalImp = numTotalImp -1;		
+						}
+					}							    			     			
+				}  
+				
+				numTotalImp = gbTotales.length;
+				for(var numImpuesto:int=0; numImpuesto < gbTotales.length; numImpuesto++)
+				{     			
+					if(gbTotales.length > numImpuesto)
+					{					
+						if(gbTotales[numImpuesto][1].toString() == "0" && gbTotales[numImpuesto][0].toString() != "Subtotal" && gbTotales[numImpuesto][0].toString() != "Total")
+						{
+							gbTotales.removeItemAt(numImpuesto);
+							numTotalImp = numTotalImp -1;		
+						}
+					}							    			     			
+				}
+				
+				//Agregamos el Total, que era el que quitamos anteriormente, y lo ponemkos justo al final del Arreglo para finalizar con el ordenamiento.
+				if(gbTotales[gbTotales.length - 1][0].toString() != "Total")
+				{
+					gbTotales.addItem({0:"Total",  1:total, 2:"Total", 3:numFtr.format(total), 4:"", 5:0});
+				}
+				else
+				{
+					gbTotales.removeItemAt(gbTotales.length - 1);            
+					gbTotales.addItem({0:"Total",  1:total, 2:"Total", 3:numFtr.format(total), 4:"", 5:0});
+				}
+				for(numgbTotales =0;numgbTotales<gbTotales.length;numgbTotales++)
+				{
+					gbTotales[numgbTotales][1]=truncaRedondeaDecimales((decTruncados.selected==true?0:1),gbTotales[numgbTotales][1],int(precisionDecimales.value));
+				}
+				totales.dataProvider = gbTotales;
+				
+				
+			}	
+			
+			private function addTotales():void
+			{
+				gbTotales.addItem({0:"Subtotal",  1:0, 2:"Subtotal", 3:0, 4:"", 5:0});
+				gbTotales.addItem({0:"Total",  1:0, 2:"Total", 3:0,4:"", 5:0});
+				
+				totales.dataProvider =gbTotales;
+			}
+			
+			private function remove():void
+			{
+				var gb:ArrayCollection = new ArrayCollection();
+				
+				if(conceptos.selectedIndex < 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar el concepto a eliminar.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					conceptos.setFocus();
+					conceptos.errorString = "Debe seleccionar el concepto a eliminar";
+					return;
+				}
+				if(conceptos.dataProvider != null)
+				{
+					gb = new ArrayCollection(ArrayUtil.toArray(conceptos.dataProvider.source));
+				}
+				gb.removeItemAt(conceptos.selectedIndex);
+				conceptos.dataProvider = gb;
+				calcular(gb);	            
+			}
+			
+			private function generarDocumento():void
+			{
+				Send(167);	            
+			}
+			
+			
+			private function ayuda():void
+			{
+				navigateToURL(new URLRequest("http://fx.facturaxion.com/facturaxion/ayuda/factura/factura.htm"),"_blank");
+			}
+			
+			import mx.events.CloseEvent;
+			
+			private function validaGenerarFactura():void
+			{
+				if(conceptos.dataProvider == null || conceptos.rowCount == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe de crear al menos un concepto.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					concepto.setFocus();
+					return;
+				}
+				
+				if(receptor.selectedIndex < 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe de seleccionar un receptor.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					receptor.setFocus();
+					receptor.errorString = "Seleccione un receptor.";
+					return;
+				}
+				
+				if(folio.selectedIndex < 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe de seleccionare una serie.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					folio.setFocus();
+					folio.errorString = "Seleccione una serie.";
+					return;
+				}	
+				if (Number(cTipoCFDI.selectedItem[0].toString()) == 6){
+					if (ctCuentaPredial.text.length == 0){
+						Alert.okLabel = "Aceptar";
+						Alert.show("Debe introducir la Cuenta Predial", "Mensaje FacturaXion", Alert.OK, null, null, iconAlert);
+						ctCuentaPredial.setFocus();
+						ctCuentaPredial.errorString = "Escriba la cuenta de predial";
+						return;
+					}
+				}
+				
+				
+				Alert.yesLabel = "Sí";
+				Alert.noLabel = "No";
+				Alert.cancelLabel = "Cancelar";
+				Alert.okLabel = "Aceptar"
+				Alert.show("¿Está seguro de querer generar el CFDI?", "Mensaje FacturaXion", Alert.OK | Alert.CANCEL, this, alertListener, iconQuestion, Alert.OK);
+				return;
+				
+			}
+			
+			private function alertListener(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.OK) 
+				{
+					//En el siguiente segmento de código 
+					//se unifica el IVA 16 % sobre IEPS,
+					//si lo hay, con el IVA ordinario
+					ValidarImpuestosLocales();
+					
+					
+					var posicionesIVAIEPS:ArrayCollection=new ArrayCollection();
+					var found1600:Boolean=false;
+					var idxIVAIEPS:int=1;
+					var idx1600:int=1;
+					//Rastramos si se usó un IVA sobre IEPS
+					do
+					{
+						if(gbTotales[idxIVAIEPS][6]==true)
+						{
+							posicionesIVAIEPS.addItem(idxIVAIEPS);
+							//foundIVAIEPS=true;
+						}
+						idxIVAIEPS++;
+					}
+					while(idxIVAIEPS<gbTotales.length-1 );
+					
+					//Rastreamos si se usó un IVA 16 Trasladado%
+					do
+					{
+						if(gbTotales[idx1600][0]=="IVA 16" && gbTotales[idx1600][1]>=0)
+						{
+							found1600=true;
+						}
+						else
+						{
+							found1600=false;
+							idx1600++;
+						}
+					}
+					while(idx1600<gbTotales.length-1 && found1600==false);
+					if(posicionesIVAIEPS.length>0)
+					{
+						//Si se usó algún IVA sobre IEPS, se enmascara como normal
+						var idxPosiciones:int;
+						for(idxPosiciones=0;idxPosiciones<posicionesIVAIEPS.length;idxPosiciones++)
+						{
+							gbTotales[posicionesIVAIEPS[idxPosiciones]][0]="IVA 16.00";
+							gbTotales[posicionesIVAIEPS[idxPosiciones]][5]="16.00";
+						
+							if(found1600==true)
+							{
+							//Pero si se usó el IVA 16 Trasladado, este 
+							//absorve al IVA sobre IEPS
+								gbTotales[idx1600][1]=(Number(gbTotales[idx1600][1])+Number(gbTotales[posicionesIVAIEPS[idxPosiciones]][1]));
+								gbTotales[idx1600][3]=numFtr.format(Number(gbTotales[idx1600][3])+Number(gbTotales[posicionesIVAIEPS[idxPosiciones]][3]));
+							}
+							else
+							{
+								//En cambio si no se usó IVA 16 Trasladado
+								//se unificarán todos los IVA sobre IEPS en el primero
+								if(idxPosiciones>0)
+								{
+									gbTotales[posicionesIVAIEPS[0]][1]=(Number(gbTotales[posicionesIVAIEPS[0]][1])+Number(gbTotales[posicionesIVAIEPS[idxPosiciones]][1]));
+									gbTotales[posicionesIVAIEPS[0]][3]=numFtr.format(Number(gbTotales[posicionesIVAIEPS[0]][3])+Number(gbTotales[posicionesIVAIEPS[idxPosiciones]][3]));
+								}
+							}
+						}
+						//Eliminaremos los IVAs sobrantes
+						for(idxPosiciones=posicionesIVAIEPS.length-1;idxPosiciones>=(found1600==true?0:1);idxPosiciones--)
+						{
+							gbTotales.removeItemAt(posicionesIVAIEPS[idxPosiciones]);
+						}
+					}
+					//**************************************
+					
+					importeTotal.text=gbTotales[gbTotales.length-1][1].toString();
+					modal.visible = true;
+					receptor.errorString = "";
+					folio.errorString = "";
+					if (parseInt(cCountAddendas.text)>0 || usaDonatarias.selected==true || usaImpuestosLocales.selected==true || usaIedu.selected==true)
+					{
+						contenedorAddenda.visible=true;
+						disableAllcontrols();
+						
+						if (usaDonatarias.selected==true)
+						{
+							listadoAddendasReceptor.visible=false;
+							listadoAddendasReceptor.enabled=false;
+							lblComplementoNombre.text="Donatarias 1.0";
+							lblComplementoNombre.visible=true;
+							addendaComplemento=2; //Será un complemento
+							usaAddenda.text="2";
+						}
+						else if(usaImpuestosLocales.selected==true)
+						{
+							listadoAddendasReceptor.visible=false;
+							listadoAddendasReceptor.enabled=false;
+							lblComplementoNombre.text="Impuestos Locales 1.0";
+							lblComplementoNombre.visible=true;
+							addendaComplemento=2; //Será un complemento
+							usaAddenda.text="2";
+						}
+						else if(usaIedu.selected==true)
+						{
+							listadoAddendasReceptor.visible=false;
+							listadoAddendasReceptor.enabled=false;
+							lblComplementoNombre.text="Instituciones Educativas 1.0";
+							lblComplementoNombre.visible=true;
+							lblComplementoNombre.visible=true;
+							addendaComplemento=2; //Será un complemento
+							usaAddenda.text="2";
+						}
+						else
+						{
+							listadoAddendasReceptor.visible=true;
+							listadoAddendasReceptor.enabled=true;
+							lblComplementoNombre.visible=false;
+							addendaComplemento=1; //Será una addenda
+							usaAddenda.text="1";
+							
+						}
+						
+						Send(679);
+						
+					}
+					else
+					{
+						//Ni addenda ni complemento
+						if (usaImpuestosLocales.selected == false && listaImpuestosLocales.length != 0){
+							Send(679);
+						}
+						else{
+							usaAddenda.text="0";
+							sendGeneraCFDI();
+						}
+					}
+					//Se extrae el send a la función sendGeneraFactura(), para
+					//no duplicar la llamada por el lado de la addenda
+					//Send(227);
+				}
+			}
+			private function ValidarImpuestosLocales():void{
+				listaImpuestosLocales = new ArrayCollection();
+				var lista:ArrayCollection;				
+				lista = new ArrayCollection(ArrayUtil.toArray(conceptos.dataProvider.source));	
+				
+				var listaTotales:ArrayCollection = new ArrayCollection(ArrayUtil.toArray(totales.dataProvider.source));
+				
+				
+				var impuestos:Array;
+				var impuestosDetalle:Array;
+				var concepto:Array;
+				var expresion:RegExp = /^[A-Z]/
+				var importe:Number = new Number();
+				var valorIsh:Number = new Number(0.03);
+				var importeOperacion:Number = new Number();
+				
+				for (var i:int = 0; i < lista.length; i++){
+					impuestos = lista[i][11].toString().split("#");
+					impuestosDetalle = impuestos.toString().split("|");
+					concepto = impuestosDetalle.toString().split(",");
+					
+					for (var j:int = 0; j < concepto.length; j++){
+						if (concepto[j].toString().match(expresion)){
+							if (!(concepto[j].toString() == "IVA" || concepto[j].toString() == "RET" || concepto[j].toString() == "ISR")){
+								importeOperacion = Number(lista[i][15]) * valorIsh;
+								listaImpuestosLocales.addItem(new Array("T", lista[i][0].toString(), concepto[j+1], importeOperacion));
+								importe += importeOperacion;
+								//lista.removeItemAt(i);
+							}
+			
+						}
+					}	
+				}
+				
+				var indiceISH:Number = new Number();
+				var total:Number = new Number();
+				var indiceTotal:Number = new Number();
+				
+				for (var i:int = 0; i < listaTotales.length; i++){
+					impuestos = listaTotales[i][0].toString().split(" ");
+					
+					var pruebaimp:String = listaTotales[i][1].toString();
+					
+					if (impuestos[0].toString() == "ISH"){
+						indiceISH = i;
+						//listaTotales.removeItemAt(i);
+					}
+					if (impuestos[0].toString() == "Total"){
+						total = Number(listaTotales[i][1].toString());
+						indiceTotal = i;
+					}
+				}
+				
+				if (this.usaImpuestosLocales.selected == false && listaImpuestosLocales.length != 0){
+					listaTotales[indiceTotal][1] = total - importe;
+					listaTotales.removeItemAt(indiceISH);
+					conceptos.dataProvider = lista;
+					totales.dataProvider = listaTotales;
+					modificacionAddenda = CrearAddendaImpuestoLocal(listaImpuestosLocales);
+				}
+
+			}
+			
+			private function CrearAddendaImpuestoLocal(listaImpuestoLocal:ArrayCollection):String{
+				
+				var addendaValor:String = "";
+				
+				var addendaValorXML:XML= new XML("<impuestosLocales/>");
+				addendaValorXML.@['version']="1.0";
+				
+				var sumaImporte:Number = new Number();
+				addendaValorXML.@['totalRetencionesLocales']="0.00";
+				
+				for(var idxImpuesto:int=0;idxImpuesto<listaImpuestoLocal.length;idxImpuesto++)
+				{
+					var impuestoLocal:XML=new XML('<impuestoLocal/>');
+					impuestoLocal.@['tipo']=listaImpuestoLocal[idxImpuesto][0];
+					impuestoLocal.@['nombre']=listaImpuestoLocal[idxImpuesto][1];
+					impuestoLocal.@['tasa']=listaImpuestoLocal[idxImpuesto][2];
+					impuestoLocal.@['importe']=listaImpuestoLocal[idxImpuesto][3];
+					sumaImporte += Number(listaImpuestoLocal[idxImpuesto][3]);
+					addendaValorXML.appendChild(impuestoLocal);
+				}
+				addendaValorXML.@['totalTrasladosLocales'] = sumaImporte.toString();
+				addendaValor="ImpLocal|"+addendaValorXML.toString();
+				//root.dispatchEvent(new Event("complete",true,false));
+				return addendaValor;
+			}
+			
+			
+			
+			private function sendGeneraCFDI()
+			{
+				Send(227);
+			}
+			
+			private function setTasa():void
+			{
+				if(tipoMoneda.selectedIndex > -1)
+				{
+					if(tipoMoneda.selectedItem[1].toString()=="DOLARES")
+					{
+						tasaCambio.text = tipoMoneda.selectedItem[2].toString();
+						tasaCambio.editable = true;
+					}
+					else if(tipoMoneda.selectedItem[1].toString()=="PESOS")
+					{
+						tasaCambio.text = "1";
+						tasaCambio.editable = false;
+					}
+					else
+					{
+						tasaCambio.text = "";
+						tasaCambio.editable = true;
+					}
+				}
+				
+			}
+			
+			private function setTipoCFDI():void
+			{
+				if(cTipoCFDI.selectedIndex > -1)
+				{
+					countCamposAdicionales.text = "";
+					
+					if(cTipoCFDI.selectedItem[0].toString()=="1"){//FACTURA
+						tipoCFDI.text = "ingreso";
+						tipoComprobante.text = cTipoCFDI.selectedItem[0].toString();
+					}
+					else if(cTipoCFDI.selectedItem[0].toString()=="2"){//NOTA DE CREDITO
+						tipoCFDI.text = "egreso"
+						tipoComprobante.text = cTipoCFDI.selectedItem[0].toString();
+					}
+					else if(cTipoCFDI.selectedItem[0].toString()=="3"){//RECIBO DE ARRENDAMIENTO
+						tipoCFDI.text = "ingreso";
+						tipoComprobante.text = cTipoCFDI.selectedItem[0].toString();
+					}
+					else if(cTipoCFDI.selectedItem[0].toString()=="4"){//RECIBO DE HONORARIOS
+						tipoCFDI.text = "ingreso"
+						tipoComprobante.text = cTipoCFDI.selectedItem[0].toString();
+					}
+					else if(cTipoCFDI.selectedItem[0].toString()=="5"){//CARTA PORTE
+						tipoCFDI.text = "traspaso"
+						tipoComprobante.text = cTipoCFDI.selectedItem[0].toString();
+					}
+					else if(cTipoCFDI.selectedItem[0].toString()=="6"){//NOTA DE ARRENDAMIENTO
+						tipoCFDI.text = "ingreso"
+						tipoComprobante.text = cTipoCFDI.selectedItem[0].toString();
+					}
+					
+					Send(626); //Verifica si el tipo de comprobante tiene campos adicionales
+					countCamposAdicionales.text="";
+				}
+				Send(701);//INDICA SI EL USUARIO CONFIGURO EL CFDI A GENERAR
+			}
+			
+			public function seleccionaItemCboSucursales():void
+			{
+				if(receptor.selectedItem != null)
+				{
+					if(receptor.selectedItem[0] != null)
+					{
+						var nombre = receptor.selectedItem[1].toString();
+						var rfc = receptor.selectedItem[2].toString();
+						
+						seleccionarReceptor();
+						
+						//nombreSucursalE.text=receptor.selectedItem[4].toString();
+						calleE.text = receptor.selectedItem[4].toString();
+						cpE.text = receptor.selectedItem[5].toString();
+						txtColoniaE.text = receptor.selectedItem[6].toString(); 
+						txtEstadoE.text = receptor.selectedItem[7].toString(); 
+						txtMunicipioE.text = receptor.selectedItem[8].toString(); 
+						numextE.text = receptor.selectedItem[9].toString(); 
+						numintE.text = receptor.selectedItem[10].toString(); 
+						txtPaisE.text = receptor.selectedItem[11].toString();
+						txtCiudadE.text = receptor.selectedItem[14].toString(); 
+						
+						//twInfoDireccionReceptor.visible = true;
+						uuidCFDIOrig.text="";
+						serieCFDIOrig.text="";
+						
+						totalCFDIOrig.text="";
+					}
+					else
+					{
+						receptor.selectedIndex = -1;
+					}
+				}	
+				infoReceptorValida.text = "0";
+			}
+			private function seleccionarReceptor():void
+			{	
+				if(receptor.selectedIndex > -1)
+				{
+					idSucursalReceptor.text = receptor.selectedItem[13].toString();
+					rfcReceptor.text = receptor.selectedItem[2].toString();
+					idReceptor.text = receptor.selectedItem[0].toString();
+					nombreReceptor.text = receptor.selectedItem[1].toString();
+					
+					Send(678);
+				}
+			}
+			
+			private function verificaDatosReceptor():void
+			{   
+				/*if(nombreSucursalE.text.length==0)
+				{
+				Alert.okLabel = "Aceptar";
+				Alert.show("La Nombre de Sucursal es un campo obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+				nombreSucursalE.errorString = "La Sucursal es un campo obligatorio";
+				return;
+				}*/
+				
+				if(calleE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("La Calle es un campo obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+					calleE.errorString = "La Calle es un campo obligatorio";
+					return;
+				}
+				
+				if(numextE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Número Exterior es un campo obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+					numextE.errorString = "El Número Exterior es un campo obligatorio";
+					return;
+				}
+				
+				if(cpE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Código Postal es un campo obligatorio, favor de ingresarlo ","Aviso",Alert.OK,null,null, iconAlert);
+					cpE.errorString = "El Código Postal es un campo obligatorio";
+					return;
+				}
+				
+				if(cpE.text.length <= 4)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Código Postal debe tener 5 digitos, favor de verificar ","Aviso",Alert.OK,null,null, iconAlert);
+					cpE.errorString = "El Código Postal debe tener 5 digitos";
+					return;
+				}
+				
+				if(txtEstadoE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo Estado es obligatorio, favor de ingresarlo ","Aviso",Alert.OK,null,null, iconAlert);
+					txtEstadoE.errorString = "El campo Estado es obligatorio";
+					return;
+				}
+				
+				if(txtCiudadE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo Ciudad es obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+					txtCiudadE.errorString = "El campo Ciudad es obligatorio";
+					return;
+				}
+				
+				if(txtMunicipioE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo Delegación / Municipio es obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+					txtMunicipioE.errorString = "El campo Delegación / Municipio es obligatorio";
+					return;
+				}
+				
+				if(txtColoniaE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo Colonia es obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+					txtColoniaE.errorString = "El campo Colonia es obligatorio";
+					return;
+				}
+				
+				if(txtPaisE.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El campo País es obligatorio, favor de ingresarlo ", "Aviso",Alert.OK,null,null, iconAlert);
+					txtPaisE.errorString = "El campo País es obligatorio";
+					return;
+				}
+				
+				infoReceptorValida.text = "1";
+				twInfoDireccionReceptor.visible = false;
+				twInfoDireccionReceptor.enabled=false;
+			}
+			
+			private function salir():void
+			{
+				
+				mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="init.swf";
+				
+			}
+			
+			[Bindable]	private var _contacts:ArrayCollection;
+			
+			[Bindable]  private var myFileClass:Class; 
+			
+			public function dropDownLabelFunction( item:Object ):String
+			{
+				var string:String = item[0];
+				var searchStr:String = autocompleteProductosText.searchText;
+				
+				var returnStr:String = StringUtils.highlightMatch( string, searchStr);
+				//var returnStr:String = StringUtils.highlighMatch( string, searchStr, AutoComplete.MATCH_WORD );
+				
+				if (autocompleteProductosText.selectedItems.getItemIndex( item ) >= 0)
+				{
+					returnStr = "<font color='" + Consts.COLOR_TEXT_DISABLED + "'>" + returnStr + "</font>";
+				}
+				
+				return returnStr;
+			}
+			
+			private function consultaAC():void
+			{
+				
+				Send(627);
+				disableAllcontrols();
+				Send(560);
+			}
+			
+			private function enabledAllControls():void
+			{
+				receptor.enabled = true;
+				folio.enabled = true;
+				autocompleteProductosText.enabled = true;
+				um.enabled = true;
+				cant.enabled = true;
+				precio.enabled = true;
+				descuento.enabled = true;
+				impuesto.enabled = true;
+				btnAddProducto.enabled = true;
+				agregar.enabled = true;
+				eliminar.enabled = true;
+				observaciones.enabled = true;
+				generar.enabled = true;
+				conceptos.enabled = true;	
+				conHead.enabled = true;	
+				totales.enabled = true;	
+				usaDonatarias.enabled=true;
+				usaImpuestosLocales.enabled=true;
+				usaIedu.enabled=true;
+				editaDomicilio.enabled=true;
+			}
+			
+			private function disableAllcontrols():void
+			{
+				receptor.enabled = false;
+				folio.enabled = false;
+				autocompleteProductosText.enabled = false;
+				um.enabled = false;
+				cant.enabled = false;
+				precio.enabled = false;
+				descuento.enabled = false;
+				impuesto.enabled = false;
+				btnAddProducto.enabled = false;
+				agregar.enabled = false;
+				eliminar.enabled = false;
+				observaciones.enabled = false;
+				generar.enabled = false;
+				conceptos.enabled = false;	
+				conHead.enabled = false;	
+				totales.enabled = false;
+				usaDonatarias.enabled=false;
+				usaImpuestosLocales.enabled=false;
+				usaIedu.enabled=false;
+				editaDomicilio.enabled=false;
+			}
+			
+			private var acACProductos = new ArrayCollection();
+			private function loadACproductos():void
+			{	
+				
+				acACProductos = new ArrayCollection(ArrayUtil.toArray(acProductosGV.dataProvider.source));
+				
+				autocompleteProductosText.dataProvider = acACProductos;		
+			}
+			
+			private function verItemSelect():void
+			{			
+				concepto.text = autocompleteProductosText.text;
+				
+				if(autocompleteProductosText.selectedItems.source.length > 0)	
+				{			
+					acProductoPasoText.text = autocompleteProductosText.selectedItems[0].toString();	
+				}
+				else
+				{			
+					acProductoPasoText.text = "";							
+				}
+			}
+			
+			private function fillControls():void
+			{
+				if(acProductoPasoText.text.length > 0)
+				{		
+					Send(289);
+				}
+				else
+				{
+					concepto.text = "";
+					precio.text = "";
+					um.selectedIndex = 0;			
+				}
+			}
+			
+			private function addProductoAndValid():void
+			{
+				if(descripcionAdd.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para agregar el producto es necesario ingresar una descripción.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					descripcionAdd.setFocus();
+					descripcionAdd.errorString = "Debe especificar la descripción.";
+					return;
+				}
+				
+				if(descripcionCortaAdd.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para agregar el producto es necesario ingresar una descripción corta.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					descripcionCortaAdd.setFocus();
+					descripcionCortaAdd.errorString = "Debe especificar la descripción corta.";
+					return;
+				}
+				
+				if(precioUnitarioAdd.text.length == 0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para agregar el producto es necesario ingresar un precio unitario.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					precioUnitarioAdd.setFocus();
+					precioUnitarioAdd.errorString = "Debe especificar el precio.";
+					return;
+				}
+				
+				if(precioAddValid.text == "1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Precio es numérico con las posiciones decimales definidas para el comprobante.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					precioUnitarioAdd.setFocus();
+					return;				
+				}
+				
+				if(umAdd.selectedIndex < 0)
+				{		
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe seleccionar una Unidad de Medida.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+					umAdd.setFocus();
+					umAdd.errorString = "Debe especificar la unidad de medida.";
+					return;
+				}		
+				
+				modal.visible = false;
+				enabledAllControls();
+				Send(290);
+				Send(560);		
+				addProducto.visible = false;
+				descripcionAdd.text = "";
+				descripcionCortaAdd.text = "";
+				precioUnitarioAdd.text = "";
+				umAdd.selectedIndex = 0;
+			}
+			
+			private function navegarPDF():void
+			{
+				var rutaPDFExtern
+				if(rutaPDF.text.indexOf("fx.facturaxion.com") == -1)
+				{
+					rutaPDFExtern = rutaPDF.text.substr(11, rutaPDF.text.length);
+				}
+				else
+				{
+					rutaPDFExtern = rutaPDF.text.replace("http://fx.facturaxion.com/", "");
+				}
+				
+				var request:URLRequest = new URLRequest(rutaPDFExtern);
+				request.contentType = "application/pdf";
+				var fileRef:FileReference = new FileReference();
+				navigateToURL(request, '_blank');	
+			}
+			
+			private function navegarXML():void
+			{
+				var rutaArchivoXML:String;
+				rutaArchivoXML=rutaPDF.text;
+				rutaArchivoXML=rutaArchivoXML.replace(".pdf",".xml");
+				var rutaPDFExtern;
+				
+				if(rutaArchivoXML.indexOf("fx.facturaxion.com") == -1)
+				{
+					rutaPDFExtern = rutaArchivoXML.substr(11, rutaArchivoXML.length);
+				}
+				else
+				{
+					rutaPDFExtern = rutaArchivoXML.replace("http://fx.facturaxion.com/", "");
+				}
+				
+				var request:URLRequest = new URLRequest(rutaPDFExtern);
+				//request.contentType = "application/pdf";
+				var fileRef:FileReference = new FileReference();
+				navigateToURL(request, '_blank');	
+			}
+			
+			private function enviarFactEmail():void
+			{
+				if(Number(idRol.text)!=16)
+				{
+					//To - Do: Validar la Expresion regular del Email
+					if(correo.text.length == 0)
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("Para enviar el CFDI es necesario ingresar un correo electrónico, favor de ingresarlo.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);				
+						correo.setFocus();
+						correo.errorString = "Debe especificar un correo electrónico.";
+						return;
+					}
+					
+					if(!expMail.test(correo.text))
+					{
+						Alert.okLabel = "Aceptar";
+						Alert.show("El formato de correo electrónico no es correcto.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+						correo.setFocus();
+						correo.errorString = "El formato de correo electrónico no es correcto.";
+						return;
+					} 	
+					Send(489);//Envía CFD por Correo.
+				}
+				else
+				{
+					mensajeRol16();
+				}
+			}
+			
+			[Embed(source="assets/delete-icon_32.png")]	[Bindable] public var iconFail:Class;
+			[Embed(source="assets/accept-icon_32.png")] [Bindable] public var iconOK:Class;
+			[Embed(source="assets/2519-32.png")] 		[Bindable] public var iconQuestion:Class;
+			
+			private function validSendEmail():void
+			{
+				if(correoEnviado.text == "1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.yesLabel = "Sí";
+					Alert.noLabel = "No";
+					Alert.show("El Comprobante Fiscal Digital se ha enviado de manera correcta.", "Mensaje FacturaXion",Alert.OK, null, doReNew, iconOk);
+				}
+				else if(correoEnviado.text == "0")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El Comprobante Fiscal Digital no se pudo enviar de manera correcta, intente nuevamente.", "Mensaje FacturaXion",Alert.OK,null, null, iconDel);
+				}
+				correoEnviado.text="";
+			}
+			
+			private function doReNew(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.YES) 
+				{
+					closeTWCFD();
+				}
+			}
+			
+			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+			
+			private function checkMail(myCtrl:spark.components.TextInput):void
+			{
+				if(expMail.test(myCtrl.text))
+				{
+					myCtrl.errorString = "";
+				}
+				else
+				{				
+					myCtrl.errorString = "Correo electrónico Incorrecto\n\n" +
+						"Formato “cuenta1.cuenta2@dominio.com ” \n" +
+						"“El campo Para sólo permite un Destinatario, si necesita enviar a más destinatarios utilice el campo CC y CCo”";
+				}			
+			}
+			
+			private function closeTWCFD():void
+			{
+				mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="nada.swf";
+				mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="fe.swf?fecha=18042012";			
+			}
+			
+			private function viewTWCFD():void
+			{
+				if(rutaPDF.text.length > 0)
+				{
+					modal.visible = true;
+					factura.visible=true;
+					factura.isPopUp = true;
+					correoVPara.setFocus();
+				}
+			}
+			
+			private function cargaDatos():void
+			{
+				if(parseInt(validaExisteClientes.text) > 0)
+				{
+					Send(155);
+				}
+				else
+				{
+					Terminar.enabled = false;
+					Alert.okLabel = "Aceptar";
+					Alert.show("Para poder generar un CFDI es necesario tener al menos un cliente configurado.", "Mensaje FacturaXion",Alert.OK,null, null, iconDel);
+				}
+			}
+			
+			private function muestraValIdConFactDetDesc():void
+			{
+				if (GWV_FECamposValores.selectedIndex > -1)
+				{
+					idConFactDetDesc.text = GWV_FECamposValores.selectedItem["0"].toString();
+					LBLDescripcion.text = '*' + GWV_FECamposValores.selectedItem["1"].toString();
+				}
+			}
+			
+			private function muestraTTWcambiaValor():void
+			{
+				Send(522); //Trae valor
+				TTWvalores.enabled = false;
+				TTWcambiaValor.visible = true;	
+			}
+			
+			private function actualizaValor():void
+			{
+				Send(524); //Actualiza el Valor del Campo
+				Send(523); //Actualiza Data Grid
+				valor.text = "";
+				TTWvalores.enabled = true;
+				TTWcambiaValor.visible = false;	
+			}
+			
+			private function cargaPantallaAddenda():void
+			{
+				addendaLoader.addEventListener(Event.COMPLETE,controlPantallaAddenda);
+				if(addendaComplemento==2)
+				{
+					if(usaDonatarias.selected==true)
+					{
+						addendaLoader.source="complementoDonatarias10.swf";	
+					}
+					else if(usaImpuestosLocales.selected==true)
+					{
+						addendaLoader.source="complementoImpuestosLocales10.swf";
+					}
+					else if(usaIedu.selected==true)
+					{
+						addendaLoader.source="complementoIEDU10.swf";
+					}
+					cargaAddenda.enabled=false;
+				}
+				else if (listadoAddendasReceptor.selectedIndex>-1)
+				{
+					addendaLoader.source=listadoAddendasReceptor.selectedItem[2].toString();
+					cargaAddenda.enabled=false;
+					listadoAddendasReceptor.enabled=false;
+				}
+				else
+				{
+					Alert.okLabel="Aceptar";
+					Alert.show("Seleccione por favor la Addenda a utilizar.","Aviso",Alert.OK,null,null, iconAlert);
+				}
+			}
+			
+			private function controlPantallaAddenda(loaderEvent:Event):void
+			{
+				loadedASM= SystemManager(addendaLoader.content);
+				loadedASM.addEventListener(Event.COMPLETE,recogeAddenda);
+				loadedASM.addEventListener(mx.events.FlexEvent.APPLICATION_COMPLETE,datosDeEnvio,false,0,false);
+			}
+			
+		
+			
+			private function recogeAddenda(readyAddenda:Event):void
+			{
+				if (usaImpuestosLocales.selected == false && listaImpuestosLocales.length != 0){
+					addendaContenido.text = modificacionAddenda;
+					listadoAddendasReceptor.selectedIndex = -1;
+		
+				}
+				else{
+					addendaContenido.text=loadedASM.application["addendaValor"].toString();
+				}
+				
+				
+				if (listadoAddendasReceptor.selectedIndex!=-1)
+				{
+					idAddenda.text=listadoAddendasReceptor.selectedItem[0].toString();
+					definidoEn.text=(listadoAddendasReceptor.selectedItem[7].toString().length>0?listadoAddendasReceptor.selectedItem[7].toString():"X");
+					nameSpace.text=listadoAddendasReceptor.selectedItem[3].toString();
+					locNameSpace.text=listadoAddendasReceptor.selectedItem[4].toString();
+					nombreSchema.text=listadoAddendasReceptor.selectedItem[5].toString();
+					locSchema.text=listadoAddendasReceptor.selectedItem[6].toString();
+				}
+				else
+				{
+					idAddenda.text="-1";
+					definidoEn.text="";
+					nameSpace.text="";
+					locNameSpace.text="";
+					nombreSchema.text="";
+					locSchema.text="";
+					if(usaImpuestosLocales.selected==true || (usaImpuestosLocales.selected == false && listaImpuestosLocales.length != 0))
+					{	
+						addendaXML = new XML(addendaContenido.text.split("|")[1].toString());
+						gbTotales[gbTotales.length-1][1]=truncaRedondeaDecimales((decTruncados.selected==true?0:1),gbTotales[gbTotales.length-1][1]-Number(addendaXML.@['totalRetencionesLocales'])+Number(addendaXML.@['totalTrasladosLocales']),int(precisionDecimales.value));
+						totales.dataProvider = gbTotales;
+					}
+				}
+				cierraAddenda(null);
+			}
+			
+			private function datosDeEnvio(sendData:FlexEvent):void
+			{
+				inputAddendas =new XML("<Documento/>")
+				inputAddendas.@['serie']=folio.selectedItem[1];
+				inputAddendas.@['folio']=folio.selectedItem[2].toString();
+				inputAddendas.@['numeroOrdenCompra']=noOrdenCompra.text;
+				inputAddendas.@['tipoComprobante']=tipoCFDI.text;
+				inputAddendas.@['importeTotalLetra']=importeTotalLetra.text;
+				inputAddendas.@['tipoMoneda']=tipoMonedaR.text;
+				inputAddendas.@['nombreMoneda']=tipoMoneda.textInput.text;
+				inputAddendas.@['tipoCambio']=tasaCambioR.text;
+				
+				if (this.usaImpuestosLocales.selected == false && this.listaImpuestosLocales.length != 0){
+					listadoAddendasReceptor.selectedIndex = -1;
+				}
+				
+				if (listadoAddendasReceptor.selectedIndex!=-1)
+				{
+					inputAddendas.@['definidoEn']=listadoAddendasReceptor.selectedItem[7];
+					inputAddendas.@['nameSpace']=listadoAddendasReceptor.selectedItem[3];
+					inputAddendas.@['locNameSpace']=listadoAddendasReceptor.selectedItem[4];
+					inputAddendas.@['nombreSchema']=listadoAddendasReceptor.selectedItem[5];
+					inputAddendas.@['locSchema']=listadoAddendasReceptor.selectedItem[6];
+				}
+				else
+				{
+					inputAddendas.@['definidoEn']="";
+					inputAddendas.@['nameSpace']="";
+					inputAddendas.@['locNameSpace']="";
+					inputAddendas.@['nombreSchema']="";
+					inputAddendas.@['locSchema']="";
+				}
+				
+				var emisorInput:XML=new XML("<emisor/>");
+				emisorInput.@['idEmpresa']=idEmisor.text;
+				emisorInput.@['nombre']=nombreEmisor.text;
+				emisorInput.@['rfc']=rfcEmisor.text;
+				var emisorMatriz:XML= new XML("<emisorMatriz/>");
+				emisorMatriz.@['idSucursal']=idSucursalMatriz.text;
+				emisorMatriz.@['nombre']=nombreSucursalMatriz.text;
+				emisorMatriz.@['calle']=calleMatriz.text;
+				emisorMatriz.@['exterior']=noExtMatriz.text;
+				emisorMatriz.@['interior']=noIntMatriz.text;
+				emisorMatriz.@['colonia']=coloniaMatriz.text;
+				emisorMatriz.@['ciudad']=ciudadMatriz.text;
+				emisorMatriz.@['municipio']=municipioMatriz.text;
+				emisorMatriz.@['cp']=cpMatriz.text;
+				emisorMatriz.@['estado']=estadoMatriz.text;
+				emisorMatriz.@['pais']=paisMatriz.text;
+				emisorMatriz.@['email']=emailSucMatriz.text;
+				
+				var emisorEmitidoEn:XML= new XML("<emisorEmitidoEn/>");
+				emisorEmitidoEn.@['idSucursal']=idSucursalEmisor.text;
+				emisorEmitidoEn.@['nombre']=nombreSucursalEmitidoEn.text;
+				emisorEmitidoEn.@['calle']=calleEmitidoEn.text;
+				emisorEmitidoEn.@['exterior']=noExtEmitidoEn.text;
+				emisorEmitidoEn.@['interior']=noIntEmitidoEn.text;
+				emisorEmitidoEn.@['colonia']=coloniaEmitidoEn.text;
+				emisorEmitidoEn.@['ciudad']=ciudadEmitidoEn.text;
+				emisorEmitidoEn.@['municipio']=municipioEmitidoEn.text;
+				emisorEmitidoEn.@['cp']=cpEmitidoEn.text;
+				emisorEmitidoEn.@['estado']=estadoEmitidoEn.text;
+				emisorEmitidoEn.@['pais']=paisEmitidoEn.text;
+				emisorEmitidoEn.@['email']=emailSucEmitidoEn.text;
+				
+				emisorInput.appendChild(emisorMatriz);
+				emisorInput.appendChild(emisorEmitidoEn);
+											
+				inputAddendas.appendChild(emisorInput);
+				
+				var receptorInput:XML = new XML ("<receptor/>");
+				var receptorDomicilio:XML= new XML("<receptorDomicilio/>");
+				
+				receptorInput.@['idEmpresa']=receptor.selectedItem[0].toString();
+				receptorInput.@['razonSocial']=receptor.selectedItem[1];
+				receptorInput.@['rfc']=receptor.selectedItem[2];
+				
+				receptorDomicilio.@['idSucursal']=receptor.selectedItem[13];
+				receptorDomicilio.@['nombreSucursal']=receptor.selectedItem[3];
+				receptorDomicilio.@['calle']=calleE.text;
+				receptorDomicilio.@['noExt']=numextE.text;
+				receptorDomicilio.@['noInt']=numintE.text;
+				receptorDomicilio.@['colonia']=txtColoniaE.text;
+				receptorDomicilio.@['cp']=cpE.text;
+				receptorDomicilio.@['municipio']=txtMunicipioE.text;
+				receptorDomicilio.@['estado']=txtEstadoE.text;
+				receptorDomicilio.@['pais']=txtPaisE.text;
+				
+				receptorInput.appendChild(receptorDomicilio);
+				inputAddendas.appendChild(receptorInput);
+				
+				//Al xml donde enviamos información de entrada le agregamos toda la información de conceptos
+				var partidas:XML=new XML("<partidas/>");
+				var partidaXML:XML;
+				var idx1:int;
+				var idx2:int;
+				for (idx1=0;idx1<gb.length;idx1++)
+				{
+					partidaXML= new XML("<partida/>");
+					idx2=0;
+					partidaXML.@['numero']=idx1.toString();
+					do
+					{		
+						partidaXML.@['dato'+idx2.toString()]=gb[idx1][idx2].toString();
+						idx2++;
+					}
+					while(gb[idx1].hasOwnProperty([idx2]));
+					partidas.appendChild(partidaXML);
+				}
+				inputAddendas.appendChild(partidas);
+				//Ahora le agregaremos los datos de los totales
+				var totales:XML = new XML("<totales/>");
+				var itemTotales:XML;
+				for (idx1=0;idx1<gbTotales.length;idx1++)
+				{
+					itemTotales= new XML("<itemTotales/>");
+					idx2=0;
+					itemTotales.@['numero']=idx1.toString();
+					do
+					{		
+						itemTotales.@['dato'+idx2.toString()]=gbTotales[idx1][idx2].toString();
+						idx2++;
+					}
+					while(gbTotales[idx1].hasOwnProperty([idx2]));
+					totales.appendChild(itemTotales);
+				}
+				inputAddendas.appendChild(totales);
+				
+				if ((parseInt(cCountAddendas.text)>0) || (this.usaImpuestosLocales.selected == true) || (this.usaDonatarias.selected == true) || (this.usaIedu.selected == true) && (listaImpuestosLocales.length == 0)){
+					loadedASM.application["setParametros"](inputAddendas);
+				}
+				trace(inputAddendas.toXMLString());
+			}
+			
+			private function confirmaCancelaAddenda()
+			{
+				//No habrá addenda
+				Alert.okLabel="Si";
+				Alert.show("¿Confirma que no desea agregar Addenda/Complemento a este comprobante?","Aviso",Alert.OK | Alert.CANCEL, this, cierraAddenda, iconQuestion, Alert.OK);
+			}
+			private function cierraAddenda(eventObj)
+			{
+				if (eventObj==null||eventObj.detail==Alert.OK) 
+				{
+					if(!(eventObj==null)&& eventObj.detail==Alert.OK)
+					{
+						usaAddenda.text="0";
+						addendaContenido.text="";
+					}
+					loadedASM=null;
+					addendaLoader.unloadAndStop(true);
+					contenedorAddenda.visible=false;
+					
+					if (this.listaImpuestosLocales.length != 0){
+						usaAddenda.text = "2";
+					}
+					sendGeneraCFDI();
+				}
+				
+				
+			}
+			private function validaMensaje():void
+			{
+				var result:Array= new Array();
+				result=lowCreditos.text.split("|");
+				if(result[0].toString()=="True")
+				{
+					Alert.show("Le informamos que actualmente cuenta usted con "+result[1].toString()+" créditos para generar CFDIs, le recomendamos ponerse en contacto con nuestra área de ventas. \nNota: En caso de que se agoten sus créditos, será migrado a una versión austera del sistema y sus diseños para impresión de CFDIs serán cambiados por el diseño incluido por defecto en el sistema.", "Mensaje FacturaXion",Alert.OK,null, null, iconAlert);
+				}
+			}
+			private function truncaRedondeaDecimales(trnRdn:int/*0 trunca, 1 redondea*/,nmr:Number,cDec:int/*Cantidad de decimales*/):Number
+			{
+				
+					var tmpArr:Array= new Array();
+				
+					tmpArr=nmr.toString().split(".",2);
+					if(tmpArr.length==1)// Si es un entero
+					{
+						return nmr;
+					}
+					else if(trnRdn==0)// Si hay que truncar
+					{
+						tmpArr[1]=tmpArr[1].toString().substr(0,cDec);
+						return Number(tmpArr[0].toString()+"."+tmpArr[1].toString());
+					}
+					else if(trnRdn==1)// Si hay que redondear
+					{
+						var residuo:int =int(tmpArr[1].toString().substr(cDec,1));
+						if (residuo<5)
+						{
+							tmpArr[1]=tmpArr[1].toString().substr(0,cDec);
+							return Number(tmpArr[0].toString()+"."+tmpArr[1].toString());
+						}
+						else
+						{
+							var rdn:Number=Math.round(nmr*Math.pow(10,cDec))/Math.pow(10,cDec);
+							return rdn;
+						}
+					}
+					return nmr;
+			}
+			private function setRestringeGratuito():void
+			{
+				if (Number(idRol.text)==16 )
+				{
+					correoVMSG.enabled=false;
+					correoVPara.enabled=false;
+					correoVCC.enabled=false;
+					correoVCCo.enabled=false;
+				}
+				else
+				{
+					correoVMSG.enabled=true;
+					correoVPara.enabled=true;
+					correoVCC.enabled=true;
+					correoVCCo.enabled=true;
+				}
+			}
+			private function opcionAddProducto()
+			{
+				if (Number(idRol.text)!=16)
+				{
+					modal.visible = true; 
+					addProducto.isPopUp = true; 
+					addProducto.visible = true; 
+					descripcionAdd.setFocus(); 
+					disableAllcontrols();
+				}
+					else
+				{
+					mensajeRol16();
+				}
+			}
+			 private function mensajeRol16()
+			 {
+				 Alert.show("Esta funcionalidad sólo está disponible en la versión de prepago, para mayor información favor de contactar a nuestra área de ventas en el teléfono 01(55)1207-0708.","Mensaje FacturaXion",Alert.OK,null,null, iconAlert);
+			 }
+			private function activacionOtrosComplementos(afectado:String):void
+			{
+				if(afectado=="donat")
+				{
+					usaImpuestosLocales.enabled=(usaDonatarias.selected==true)?false:true;
+					usaIedu.enabled=(usaDonatarias.selected==true)?false:true;
+				}
+				else if(afectado=="implocal")
+				{
+					usaDonatarias.enabled=(usaImpuestosLocales.selected==true)?false:true;
+					usaIedu.enabled=(usaImpuestosLocales.selected==true)?false:true;
+				}
+				else if(afectado=="iedu")
+				{
+					usaDonatarias.enabled=(usaIedu.selected==true)?false:true;
+					usaImpuestosLocales.enabled=(usaIedu.selected==true)?false:true;
+				}
+			}
+			
+			private function formateaPrecio()
+			{
+				precio.text=numFtr.format(truncaRedondeaDecimales(decTruncados.selected==true?0:1,Number(precio.text),precisionDecimales.value));
+			}
+			
+			private function agregarElementoAduana()
+			{
+				if(noPedimento.text.length==0)
+				{
+					Alert.okLabel="Aceptar";
+					Alert.show("Debe capturar el número de pedimento.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				if(aduana.text.length==0)
+				{
+					Alert.okLabel="Aceptar";
+					Alert.show("Debe capturar el nombre de la aduana.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				if(fechaPedimento.text=="")
+				{
+					Alert.okLabel="Aceptar";
+					Alert.show("Debe capturar la fecha de pedimento.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				var arrayDetalleAduana:ArrayCollection=new ArrayCollection();
+				if(detalleAduana.dataProvider!=null)
+				{
+					arrayDetalleAduana= new ArrayCollection(ArrayUtil.toArray(detalleAduana.dataProvider.source));
+				}
+				arrayDetalleAduana.addItem({0:noPedimento.text,1:aduana.text,2:fechaPedimento.text});
+				detalleAduana.dataProvider=arrayDetalleAduana;
+				noPedimento.text="";
+				aduana.text="";
+			}
+			
+			private function quitarElementoAduana()
+			{
+				if(detalleAduana.selectedIndex<0)
+				{
+					Alert.okLabel="Aceptar";
+					Alert.show("Debe seleccionar el elemento a eliminar.","Aviso",Alert.OK,null,null,iconAlert);
+					return;
+				}
+				var arrayDetalleAduana:ArrayCollection=new ArrayCollection();
+				if(detalleAduana.dataProvider!=null)
+				{
+					arrayDetalleAduana= new ArrayCollection(ArrayUtil.toArray(detalleAduana.dataProvider.source));
+				}
+				arrayDetalleAduana.removeItemAt(detalleAduana.selectedIndex);
+				detalleAduana.dataProvider=arrayDetalleAduana;
+			}
+			
+			private function reintentar()
+			{
+				if(apartaFolio.text=="1")
+				{
+					Alert.okLabel="Si";
+					Alert.cancelLabel="No";
+					Alert.show("El folio que se intentó asignar al CFDI se encuentra ocupado. ¿Desea intentar nuevamente la generación?\n Nota: En caso de que este problema persista contacte por favor a nuestra Mesa de Servicio.","Mensaje FacturaXion",Alert.OK | Alert.CANCEL, this, confirmaReintento, iconQuestion, Alert.OK);
+				}
+			}
+			private function confirmaReintento(eventObj:CloseEvent):void
+			{
+				if (eventObj.detail==Alert.OK) 
+				{
+					apartaFolio.text="0";
+					sendGeneraCFDI();
+				}
+			}
+			
+			private function validaSeleccionCFDI():void
+			{
+				if(!(dgCFDIsEmitidos.selectedIndex<0))
+				{	serieCFDIOrig.text=dgCFDIsEmitidos.selectedItem[0].toString();
+					fechaCFDIOrig.selectedDate = parseXsDate(dgCFDIsEmitidos.selectedItem[3].toString());
+					uuidCFDIOrig.text=dgCFDIsEmitidos.selectedItem[2].toString();
+					totalCFDIOrig.text=dgCFDIsEmitidos.selectedItem[4].toString();
+					twComprobanteOriginalConsulta.visible=false;
+				}
+				else
+				{
+					Alert.okLabel="Aceptar";
+					Alert.show("No se ha seleccionado un comprobante para tomar sus datos.","Aviso",Alert.OK,null,null,iconAlert);
+				}
+			}
+			
+			private function parseXsDate(xsDateTime:String):Date
+			{
+				var dateTime:Array=xsDateTime.split("T");
+				
+				var xsDate:Array=dateTime[0].toString().split("-");
+				var xsTime:Array=dateTime[1].toString().split(":");
+				
+				var xsYear:int=int(xsDate[0]);
+				var xsMonth:int=int(xsDate[1])-1;
+				var xsDay:int=int(xsDate[2]);
+				
+				var xsHours:int=int(xsTime[0]);
+				var xsMinutes:int=int(xsTime[1]);
+				var xsSeconds:int=int(xsTime[2]);
+				
+				return new Date(xsYear,xsMonth,xsDay,xsHours,xsMinutes,xsSeconds);
+			}
+			
+			private function replaceAll(org:String, fnd:String, rpl:String):String
+			{
+				return org.split(fnd).join(rpl);
+			}
+			
+			private function calculaGranTotal():void
+			{
+				var granTotal:Number = 0;
+				
+				granTotal = truncaRedondeaDecimales(0,totGranTotal + Number(propina.text),2);
+				lblGranTotal.text = granTotal.toString();
+			}
+
+
+			protected function Prueba():void
+			{
+				if (usaImpuestosLocales.selected == false && this.listaImpuestosLocales.length != 0){
+					datosDeEnvio(new FlexEvent("complete, true, false"));
+					recogeAddenda(new Event("complete",true,false));
+				}
+			}
+
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<mx:Sequence id="glowIcon" repeatCount="100">
+			<mx:Glow duration="1000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="6.0" blurYFrom="0.0" blurYTo="6.0" color="#FFFF00" /> 	
+			<mx:Glow duration="1000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="6.0" blurXTo="0.0" blurYFrom="6.0" blurYTo="0.0" color="#FFFF00" /> 	
+		</mx:Sequence>
+		<mx:CurrencyValidator source="{cant}" property="text" decimalPointCountError="El punto decimal sólo se puede agregar una vez."  requiredFieldError="Este campo es requerido." precision="2" invalidCharError="La cantidad contiene caracteres inválidos" maxValue="999999999"  allowNegative="false" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.99" lowerThanMinError="El valor debe de ser mayor a 0" precisionError="La cantidad debe de ser numérica con dos posiciones decimales." valid="cantValid.text = '0';" invalid="cantValid.text = '1'" trigger="{cant}" triggerEvent="focusOut"/>
+		<mx:CurrencyValidator id="validadorPrecio" source="{precio}" property="text" decimalPointCountError="El punto decimal sólo se puede agregar una vez." requiredFieldError="Este campo es requerido." invalidCharError="El precio contiene caracteres inválidos" precision="2" maxValue="999999999" allowNegative="false" thousandsSeparator=","  exceedsMaxError="El valor debe de ser menor a 999,999,999.999999" lowerThanMinError="El valor debe de ser mayor a 0" precisionError="El precio debe de ser numérico con las posiciones decimales definidas para el combrobante." valid="precioValid.text = '0';" invalid="precioValid.text = '1'" trigger="{precio}" triggerEvent="focusOut"/>
+		<mx:CurrencyValidator id="validadorPrecioUnitario" source="{precioUnitarioAdd}" decimalPointCountError="El punto decimal sólo se puede agregar una vez." requiredFieldError="Este campo es requerido." invalidCharError="El precio contiene caracteres inválidos" property="text" maxValue="999999999" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.999999" lowerThanMinError="El valor debe de ser mayor a 0" allowNegative="false"  precision="6" precisionError="El precio debe de ser numérico con las posiciones decimales definidas para el combrobante." valid="precioAddValid.text = '0';" invalid="precioAddValid.text = '1'" trigger="{precioUnitarioAdd}" triggerEvent="focusOut"/>
+		<mx:CurrencyValidator source="{tasaCambio}" property="text" decimalPointCountError="El punto decimal sólo se puede agregar una vez."  requiredFieldError="Este campo es requerido." precision="6" invalidCharError="La cantidad contiene caracteres inválidos" maxValue="999999999"  allowNegative="false" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.999999" lowerThanMinError="El valor debe de ser mayor a 0" precisionError="La cantidad debe de ser numérica con seis posiciones decimales." valid="tasaValid.text = '0';" invalid="tasaValid.text = '1'" trigger="{tasaCambio}" triggerEvent="focusOut"/>
+		
+		
+		
+	</fx:Declarations>
+	
+	
+	<!--Campos enviados para la generación del XML y PDF-->	
+	<s:TextInput id="cantValid" visible="false" x="10" y="10" width="20" height="15"/>
+	<s:TextInput id="precioValid" visible="false" x="10" y="10" width="20" height="15"/>
+	<s:TextInput id="precioAddValid" visible="false" x="10" y="10" width="20" height="15"/>
+	<s:TextInput id="tasaValid" visible="false" x="10" y="10" width="20" height="15"/>
+	<s:TextInput id="validaExisteClientes" visible="false" x="10" y="10" width="20" height="15" valueCommit="cargaDatos();"/>
+	
+	<!--Campos enviados para la generación del XML y PDF-->	
+	<s:TextInput id="idRol" visible="false" x="10" y="10" width="20" height="15" valueCommit="setRestringeGratuito()"/>
+	<s:TextInput id="rfcEmisor" visible="false" x="10" y="10" width="20" height="15"/>
+	<s:TextInput id="nombreEmisor" x="52" y="81.8" fontSize="9"  visible="false"/>
+	<s:TextInput id="idEmisor" visible="false" x="10" y="10" width="20" height="15"/>
+	<s:TextInput id="idSucursalEmisor" visible="false" x="10" y="10" width="20" height="15" />
+	
+	<!--Campos que tomarán valores necesarios para addendas (Domicilio de la matriz)-->
+	<s:TextInput id="idSucursalMatriz" x="10" y="20" width="20" height="15" visible="false"/>
+	<s:TextInput id="nombreSucursalMatriz" x="10" y="20" width="20" height="15" visible="false"/>
+	<s:TextInput id="paisMatriz" x="10" y="40" width="20" height="15" visible="false"/>
+	<s:TextInput id="cpMatriz" x="10" y="60" width="20" height="15" visible="false"/>
+	<s:TextInput id="estadoMatriz" x="10" y="80" width="20" height="15" visible="false"/>
+	<s:TextInput id="ciudadMatriz" x="10" y="100" width="20" height="15" visible="false"/>
+	<s:TextInput id="municipioMatriz" x="10" y="120" width="20" height="15" visible="false"/>
+	<s:TextInput id="coloniaMatriz" x="10" y="140" width="20" height="15" visible="false"/>
+	<s:TextInput id="calleMatriz" x="10" y="160" width="20" height="15" visible="false"/>
+	<s:TextInput id="noExtMatriz" x="10" y="180" width="20" height="15" visible="false"/>
+	<s:TextInput id="noIntMatriz" x="10" y="200" width="20" height="15" visible="false"/>
+	<s:TextInput id="emailSucMatriz" x="10" y="220" width="20" height="15" visible="false"/>	
+	
+	<!--Campos que tomarán valores necesarios para addendas (Domicilio de la sucursal de expedición)-->
+	<s:TextInput id="nombreSucursalEmitidoEn" x="10" y="40" width="20" height="15" visible="false"/>
+	<s:TextInput id="paisEmitidoEn" x="10" y="40" width="40" height="15" visible="false"/>
+	<s:TextInput id="cpEmitidoEn" x="10" y="60" width="40" height="15" visible="false"/>
+	<s:TextInput id="estadoEmitidoEn" x="10" y="80" width="40" height="15" visible="false"/>
+	<s:TextInput id="ciudadEmitidoEn" x="10" y="100" width="40" height="15" visible="false"/>
+	<s:TextInput id="municipioEmitidoEn" x="10" y="120" width="40" height="15" visible="false"/>
+	<s:TextInput id="coloniaEmitidoEn" x="10" y="140" width="40" height="15" visible="false"/>
+	<s:TextInput id="calleEmitidoEn" x="10" y="160" width="40" height="15" visible="false"/>
+	<s:TextInput id="noExtEmitidoEn" x="10" y="180" width="40" height="15" visible="false"/>
+	<s:TextInput id="noIntEmitidoEn" x="10" y="200" width="40" height="15" visible="false"/>
+	<s:TextInput id="emailSucEmitidoEn" x="10" y="220" width="40" height="15" visible="false"/>
+	<s:TextInput id="importeTotal" x="10" y="240" width="40" height="15" visible="false"/>
+	<s:TextInput id="importeTotalLetra" x="10" y="240" width="40" height="15" visible="false" valueCommit="Prueba()" />
+	
+	<s:TextInput id="isConfigured" visible="false" x="10" y="30" width="20" height="15"/>
+	
+	<s:TextInput id="rfcReceptor" visible="false" x="10" y="6" width="96" height="18"/>	
+	<s:TextInput id="nombreReceptor" visible="false" x="10" y="6" width="96" height="18"/>	
+	<s:TextInput id="idReceptor" visible="false" x="10" y="10" width="20" height="15"/>
+	<s:TextInput id="idSucursalReceptor" visible="false" x="387" y="10" width="20" height="15" />
+	
+	<s:TextInput id="idSerie" visible="false" x="387" y="10" width="20" height="15" />
+	<s:TextInput id="tipoMonedaR" visible="false" x="387" y="10" width="20" height="15" />
+	<s:TextInput id="tasaCambioR" visible="false" x="387" y="10" width="20" height="15" />
+	<s:TextInput id="metodoPagoR" visible="false" x="387" y="10" width="20" height="15" />
+	<s:TextInput id="noOrdenCompraR" visible="false" x="387" y="10" width="20" height="15" />
+	<!--<s:TextInput id="tipoCFDI" visible="false" x="387" y="10" width="20" height="15" text="ingreso"/>-->
+	<s:TextInput id="tipoCFDI" visible="true" x="387" y="10" width="20" height="15"/>
+	<s:TextInput id="procedencia" visible="false" x="387" y="10" width="20" height="15" text="1"/>
+	<s:TextInput id="tipoComprobante" visible="true" x="10" y="10" width="20" height="15" />
+	<!--<s:TextInput id="tipoComprobante" visible="false" x="10" y="10" width="20" height="15" text="1"/>-->
+	
+	<!--Respuesta sobre el aparta folio-->
+	<s:TextInput id="apartaFolio" visible="false" x="10" y="450" width="30" height="15" valueCommit="reintentar();" />
+	
+	<s:TextInput id="RAND" visible="false" x="387" y="10" width="20" height="15" valueCommit="seleccionarReceptor();" />
+	
+	<s:TextInput id="acProductoPasoText" visible="false" x="340" y="10" width="20" height="15" valueCommit="fillControls();"/>
+	
+	
+	<s:Panel width="100%" height="100%" title="CFDI Simple"  id="wGFE" color="#282323" x="1" y="1">
+		<s:TextInput x="127" y="155.5" width="100" restrict="0-9." id="cant" tabIndex="7" maxChars="16" height="24" text="1"/>
+		<s:TextInput x="239" y="155.5" width="100" restrict="0-9." id="precio" tabIndex="8" maxChars="16" height="22" valueCommit="formateaPrecio();" />
+		<s:NumericStepper x="349" y="155.5" id="descuento" minimum="0" maximum="100" stepSize=".01"  tabIndex="9" width="100" height="24" />
+		<s:ComboBox x="462" y="155.5" width="235" id="impuesto" labelField="1" tabIndex="10" height="24"></s:ComboBox>
+		<s:ComboBox x="18" y="156.5" width="97" id="um" labelField="1" tabIndex="6" height="24"></s:ComboBox>
+		<s:Label x="19" y="69" text="Concepto"/>
+		<s:Label x="21" y="453" text="Observaciones"/>
+		<s:Label x="128" y="142" text="Cantidad"/>
+		<s:Label x="18" y="143" text="Unidad de Medida"/>
+		<s:Label x="238" y="142.5" text="Precio Unitario"/>
+		<s:Label x="349" y="140.5" text="% Desc."/>
+		<s:Label x="461" y="139.5" text="Impuesto"/>
+		
+		<mx:Image source="newIcons/interrogacion.png" click="ayuda();" creationCompleteEffect="{glowIcon}" y="-30" right="30"/>
+		
+		<s:Label x="516" y="356" text="0.00" width="101" textAlign="right" fontWeight="normal" id="tST" visible="false"/>
+		<s:Label x="528" y="372.95" text="0.00" width="89" textAlign="right" fontWeight="normal" id="tDesc" visible="false"/>
+		<s:Label x="516" y="393" text="0.00" width="100" textAlign="right" fontWeight="normal" id="tIVA" visible="false"/>
+		<s:Label x="516" y="412" text="0.00" width="100" textAlign="right" fontWeight="normal" id="tRet" visible="false"/>
+		<s:Label x="505" y="432" text="0.00" width="111" textAlign="right" fontWeight="bold" id="tNeto" visible="false"/>
+		<s:TextArea x="20" y="95" width="678" height="31.5" id="concepto" maxChars="2500" tabIndex="100" visible="false"/>
+		
+		<components:AutoComplete id="autocompleteProductosText" tabIndex="4" dataProvider="{ acACProductos }" valueCommit="verItemSelect();"  width="678" allowMultipleSelection="false" allowNewValues="true" allowEditingNewValues="true" labelField="name" dropDownLabelFunction="dropDownLabelFunction" matchType="word" x="19" y="83" height="48" />
+		
+		<s:TextArea x="19" y="369" width="620" height="80" id="observaciones" maxChars="2500" tabIndex="13"/>
+		<mx:Button x="709" y="155.5" label="Agregar" id="agregar"  click="add()" tabIndex="11" height="24" width="100" icon="@Embed(source='newIcons/add_24.png')"/>
+		<mx:Button x="708" y="84.5" id="btnAddProducto" label="Concepto" height="24" click="opcionAddProducto();" tabIndex="5" width="100" icon="@Embed(source='newIcons/add_24.png')"/>
+		<mx:Button x="816" y="86" icon="@Embed(source='assets/edit-24.png')" click="twComprobanteOriginal.visible=true;" height="24" width="101" tabIndex="9" id="btnPagoParcialidades" toolTip="CFDI Original en caso de Pago en Parcialidades" label="Original"/>
+		<mx:Button x="708" y="114.5" id="btnAddProducto0" label="Aduana" height="24" click="twInformacionAduanera.visible=true;" tabIndex="5" width="100" icon="@Embed(source='assets/addtContainer-24.png')"/>
+		
+		<mx:DataGrid x="19" y="193" width="900" height="24" id="conHead" editable="false" resizableColumns="true" sortableColumns="false">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Cantidad" width="60"  dataField="0"/>
+				<mx:DataGridColumn headerText="Concepto"  dataField="1" width="400" />
+				<mx:DataGridColumn headerText="Precio Unitario" width="120"  dataField="2" textAlign="right"/>
+				<mx:DataGridColumn headerText="Con Descuento" width="120"  dataField="2" textAlign="right"/>
+				<mx:DataGridColumn headerText="Importe" width="120" dataField="3" textAlign="right"/>
+			</mx:columns>
+		</mx:DataGrid>
+		
+		<mx:DataGrid x="19" y="216" width="900"  variableRowHeight="true" height="150" id="conceptos" editable="false" showHeaders="false" wordWrap="true">
+			<mx:columns>					
+				<mx:DataGridColumn headerText="Concepto" dataField="0" itemRenderer="conceptosRenderer" />		
+			</mx:columns>
+		</mx:DataGrid>
+		
+		<mx:DataGrid x="641" y="369" width="278" showHeaders="false" height="80" id="totales" fontWeight="bold" textAlign="right" creationComplete="addTotales();" resizableColumns="false" >
+			<mx:columns>
+				<mx:DataGridColumn headerText="Column 1" dataField="2" paddingRight="5" textAlign="right"/>
+				<mx:DataGridColumn headerText="Column 2" width="120" dataField="3" paddingRight="5" textAlign="right"/>					
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button x="906" y="242" label="Generar Documento" icon="@Embed(source='assets/print.png')" click="generarDocumento();" visible="false" height="32"/>
+		
+		
+		<!---->
+		<s:TextInput x="79" y="4" id="searchCliente" 
+					 valueCommit="if(searchCliente.text.length > 2){Send(639);}" 
+					 width="140" maxChars="13" restrict="A-Za-z0-9ñÑ&amp;"
+					 typographicCase="uppercase" height="24" visible="false"/>
+		
+		<s:ComboBox x="21" y="33" id="receptor" width="418" height="24" itemRenderer="personaRender" 
+					change="seleccionaItemCboSucursales();" labelField="11" tabIndex="1" valueCommit="receptor.selectedIndex=0;seleccionaItemCboSucursales();"/>
+		
+		<!--<s:ComboBox x="21" y="33" id="receptor" width="424" height="24" itemRenderer="personaRender" 
+					change="seleccionarReceptor();" labelField="11" tabIndex="1" 
+					keyDown="searchCliente.text = receptor.textInput.text;" 
+					toolTip="Si su Cliente no se encuentra en esta lista, puede buscarlo tecleando parte del Nombre o RFC"/>-->
+		
+		<!--<s:ComboBox x="21" y="33" id="receptor" width="402" height="24" itemRenderer="personaRender" 
+					change="seleccionarReceptor();" labelField="11" tabIndex="5" />-->
+		<!---->		
+		
+		<s:Label x="21" y="18" text="Receptor"/>
+		<mx:Button x="817" y="156" label="Eliminar" click="remove();" height="24" width="100" icon="@Embed(source='newIcons/delete_24.png')" id="eliminar" tabIndex="12"/>
+		<mx:Button x="445" y="32" label="Domicilio" click="twInfoDireccionReceptor.visible=true;twInfoDireccionReceptor.enabled=true;" height="24" width="103" icon="@Embed(source='assets/ordering-icon_20.png')" id="editaDomicilio" tabIndex="12"/>
+		
+		<mx:DataGrid x="1020" y="247" id="acProductosGV" visible="false" valueCommit="loadACproductos();">
+			<mx:columns>
+				<mx:DataGridColumn headerText="" dataField="0"/>
+				<mx:DataGridColumn headerText="" dataField="1"/>
+			</mx:columns>
+		</mx:DataGrid>
+		
+		<!--Controles a los que llega la ruta de los XML y PDF generados en el sistema-->
+		<s:TextInput x="34" y="272" width="318" visible="false" id="rutaPDF" valueCommit="viewTWCFD();"/>
+		<s:TextInput x="34" y="313" width="318" visible="false" id="rutaXML" />
+		
+		<!--Controles de Envío de correo electrónico-->
+		<s:TextInput x="369" y="263" visible="false" id="correo"   valueCommit="correoVPara.text = correo.text;" />
+		<s:TextInput x="369" y="294" visible="false" id="correoCC" valueCommit="correoVCC.text   = correoCC.text;" />
+		<s:TextInput x="369" y="310" visible="false" id="lowCreditos" enabled="false" valueCommit="validaMensaje();"/>
+		<s:TextInput x="369" y="325" visible="false" id="correoCCo" />
+		<s:TextInput x="369" y="356"  visible="false" id="correoMSG" />		
+		<s:TextInput x="34" y="313" width="318" visible="false" id="correoEnviado" valueCommit="validSendEmail();" />
+		
+		
+		<s:Label x="559" y="18" text="Serie"/>
+		<s:Label x="692.5" y="18" text="Fecha"/>
+		<mx:DateField x="692.5" y="33" showToday="true" id="fecha" creationComplete="fecha.selectedDate = new Date();" editable="false" width="124" color="#000000" height="24" enabled="false" tabIndex="3"/>
+		<s:ComboBox x="558" y="33" id="folio" width="122" labelField="2" color="#000000" height="24" tabIndex="2"></s:ComboBox>		
+		
+		<mx:Button x="819" y="452" label="Generar" click="validaGenerarFactura();" width="100" height="24" icon="@Embed(source='newIcons/accept_24.png')" tabIndex="14" id="generar"/>
+		<mx:Button label="Cerrar" icon="@Embed(source='newIcons/delete_24.png')" click=" salir();" height="18" width="7" right="16" top="-25"/>
+		<mx:Button x="641" y="452" label="Campos Adicionales" icon="@Embed(source='assets/2718-32.png')" click="TTWvalores.visible = true;" height="24" width="170" tabIndex="4" id="btnAdendas" visible="false"/>
+		<s:CheckBox x="24" y="474" label="Comprobante de Donatarias" width="163" id="usaDonatarias" enabled="true" visible="true" tabIndex="15" click="activacionOtrosComplementos(&quot;donat&quot;);"/>
+		<s:CheckBox x="24" y="494" label="Incluir Impuestos Locales" width="163" id="usaImpuestosLocales" enabled="true" visible="true" tabIndex="16" click="activacionOtrosComplementos(&quot;implocal&quot;);"/>
+		<s:CheckBox x="24" y="514" label="Comprobante de Colegiaturas" width="163" id="usaIedu" enabled="true" visible="true" tabIndex="16" click="activacionOtrosComplementos(&quot;iedu&quot;);"/>
+		<s:Label x="744" y="494" text="Propina:" width="59"/>
+		<s:Label x="744" y="524" text="Gran Total:" width="69"/>
+		<s:Label x="889" y="521" text="$" textAlign="right"/>
+		<s:Label x="899" y="522" text="" textAlign="right" id="lblGranTotal"/>
+		<s:TextInput x="819" y="489" width="100" change="calculaGranTotal();" restrict="0-9." id="propina" focusOut="propina.text=numFtr.format(propina.text)" toolTip="Opcional, aplica sidesea mostrar un importe de propina, no juega para efectos fiscales." textAlign="right"/>
+		
+		<s:Panel width="100%" height="100%" visible="false" id="modal" x="1" y="-30" backgroundColor="#635E5E" alpha=".5">
+		</s:Panel>
+		
+		<s:TitleWindow id="twInformacionAduanera" visible="false" width="492" height="258" horizontalCenter="-5" y="201" close="twInformacionAduanera.visible=false;">
+			<s:Label x="21" y="14" text="No Pedimento"/>
+			<s:Label x="119" y="15" text="Aduana"/>
+			<s:Label x="253" y="15" text="Fecha de Pedimento"/>
+			<s:TextInput x="18" y="26" width="91" height="24" id="noPedimento" tabIndex="17" maxChars="16" restrict="A-Za-z0-9.ñÑ&amp;"/>
+			<s:TextInput x="118" y="26.5" width="125" height="23" id="aduana" tabIndex="18" maxChars="50" restrict="A-Za-z0-9.ñÑ&amp;"/>
+			<mx:DateField x="250.5" y="27" showToday="true" id="fechaPedimento" creationComplete="fecha.selectedDate = new Date();" editable="false" width="118" color="#000000" height="24" enabled="true" tabIndex="19" formatString="YYYY-MM-DD"/>
+			<mx:Button id="btnAgregarElementoAduana" width="31" height="24" icon="@Embed(source='newIcons/add_24.png')" x="381" y="27" click="agregarElementoAduana()" tabIndex="20"/>
+			<mx:Button id="btnQuitarElementoAduana" width="31" height="24" icon="@Embed(source='newIcons/delete_24.png')" x="417" y="27" click="quitarElementoAduana()" tabIndex="21"/>
+			<mx:DataGrid editable="true" width="430" id="detalleAduana" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="115" x="19" y="59" tabChildren="true" tabIndex="22">
+				<mx:columns>
+					<mx:DataGridColumn textAlign="left"		headerText="No Pedimento" 		dataField="0" editable="false" width="80"/>
+					<mx:DataGridColumn textAlign="left" 	headerText="Aduana" 			dataField="1" editable="false" width="80"/>
+					<mx:DataGridColumn textAlign="left" 	headerText="Fecha pedimento"	dataField="2" editable="false" width="80" />
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:Button x="351" y="181" label="Terminar" icon="@Embed(source='newIcons/accept_24.png')" click="twInformacionAduanera.visible=false;" height="24" width="99" tabIndex="23"/>
+		</s:TitleWindow>
+		
+		<s:TitleWindow id="initFact" visible="true" width="304" height="383" close="salir();" horizontalCenter="63" y="81">
+			<s:ComboBox x="19" y="26" id="tipoMoneda" width="125" height="24" change="setTasa();" labelField="11" tabIndex="1"></s:ComboBox>
+			<s:Label x="19" y="13" text="Tipo de Moneda"/>
+			<s:Label x="19" y="62" text="Método de Pago"/>
+			<s:Label x="156" y="13" text="Tasa de Cambio"/>
+			<s:Label x="20" y="156" text="Número de órden de compra"/>
+			<s:Label x="20" y="205" text="Tipo de CFDI"/>
+			
+			<s:TextInput x="156" y="25.5" width="125" height="23" id="tasaCambio" maxChars="2500" tabIndex="2" editable="false" text="1" />
+			<s:TextInput x="20" y="169" width="260" height="23" id="noOrdenCompra" maxChars="20" tabIndex="3"/>
+			
+			<s:TextInput x="9" y="165" width="52" height="23" id="countCamposAdicionales" maxChars="20" visible="false" valueCommit="activaTerminar();"/>
+			<s:TextInput x="18" y="75" width="263" height="24" id="metodoPago" text="Efectivo" tabIndex="4"/>
+			<s:ComboBox x="20" y="219" id="cTipoCFDI" creationComplete="Send(680);" width="260" height="24" change="setTipoCFDI();" labelField="11" tabIndex="5"/>
+			<s:Label x="20" y="254" text="Decimales:"/>
+			<s:Label x="163" y="255" text="Precisión:" width="59"/>
+			<s:RadioButton x="24" y="268" label="Truncados" width="79" selected="true"  id="decTruncados" tabIndex="6" toolTip="Default, con esta opción los cálculos de decimales se truncarán a 2 dígitos"/>
+			<s:RadioButton x="24" y="288" label="Redondeados" width="89" id="decRedondeados" tabIndex="7" toolTip="Con esta opción los cálculos de los totales se dedondearán al centésimo más próximo"/>
+			<s:NumericStepper x="170" y="269" minimum="2" maximum="6" stepSize="1" id="precisionDecimales" tabIndex="8" width="51" textAlign="right"/>
+			<!--<s:Label x="50" y="267" text="Por favor espere:" width="200" id="anuncioTimer" visible="false"  color="#1B3EC2" fontWeight="bold"/>-->
+			<mx:Button x="157" y="312" label="Entrar" icon="@Embed(source='newIcons/accept_24.png')" click="entrar();" height="24" width="99" tabIndex="9" id="Terminar"/>
+			<mx:Button x="48" y="313" label="Cerrar" icon="@Embed(source='newIcons/delete_24.png')" click=" salir(); initFact.visible = false; " height="24" width="100" tabIndex="100"/>
+			<s:Label x="19" y="109" text="Cuenta(s) con que se efectuó el pago" width="167"/>
+			<s:TextInput x="18" y="122" width="263" height="24" id="cuentaPago" tabIndex="4"/>
+		</s:TitleWindow>
+		
+		<s:TitleWindow height="85%" id="contenedorAddenda" enabled="true" title="Inserción de Addendas/Complementos" verticalCenter="-165" visible="false" close="confirmaCancelaAddenda();" width="85%" horizontalCenter="0">
+			<s:ComboBox x="20" y="26" id="listadoAddendasReceptor"/>
+			<mx:Button x="180" y="26" id="cargaAddenda" label="Capturar" icon="@Embed(source='newIcons/accept_24.png')" height="24" width="100" click="cargaPantallaAddenda();"/>
+			<mx:Button x="292" y="26" id="cancelaAddenda" label="Cancelar" icon="@Embed(source='newIcons/delete_24.png')" height="24" width="100" click="confirmaCancelaAddenda();"/>
+			<s:Label x="23" y="12" text="Addenda/Complemento" width="121"/>
+			<mx:SWFLoader height="473" left="20" right="23" y="61" id="addendaLoader"/>
+			<s:TextInput x="440" y="32" id="usaAddenda" enabled="false" visible="false" width="30" text="0"/>
+			<s:TextInput x="470" y="32" id="addendaContenido" enabled="false" visible="false" width="30"/>
+			<s:TextInput x="500" y="32" id="idAddenda" width="30" enabled="false" visible="false" text="-1"/>
+			<s:TextInput x="530" y="32" id="locNameSpace" width="30" enabled="false" visible="false"/>
+			<s:TextInput x="560" y="32" id="locSchema" width="30" enabled="false" visible="false"/>
+			<s:TextInput x="590" y="32" id="nombreSchema" width="30" enabled="false" visible="false"/>
+			<s:TextInput x="620" y="32" id="definidoEn" width="30" enabled="false" visible="false"/>
+			<s:TextInput x="650" y="32" id="nameSpace" width="30" enabled="false" visible="false"/>
+			<s:Label x="20" y="32" text="Complemento" width="146" height="14" id="lblComplementoNombre"/>
+		</s:TitleWindow>
+		<s:TextInput x="726" y="33" id="cCountAddendas" visible="false" enabled="false"/>
+		<s:Label x="276" y="466" text="Cuenta Predial:" id="lbCuentaPredial" visible="false"/>
+		<s:TextInput x="368" y="462" width="217" id="ctCuentaPredial" visible="false" restrict="0-9"/>
+
+		
+		
+	</s:Panel>	
+	
+	<!--Title Window de altas de productos-->
+	<s:TitleWindow id="addProducto" visible="false" width="275" height="280" close="addProducto.visible = false; modal.visible = false; enabledAllControls();" title="Agregar Producto" x="644" y="43">
+		<s:TextArea x="10" y="28" width="250" id="descripcionAdd" tabIndex="4"  height="56"/>
+		<s:Label x="10" y="10" text="Descripción del Concepto" width="145"/>
+		<s:TextInput x="10" y="105" width="250" id="descripcionCortaAdd" tabIndex="4" height="24"/>
+		<s:Label x="10" y="92" text="Descripción corta del Concepto" width="207"/>
+		<s:TextInput x="10" y="197" width="125" id="precioUnitarioAdd" restrict="0-9." tabIndex="4" height="24"/>
+		<s:Label x="10" y="182" text="Precio Unitario" width="164"/>
+		<s:Label x="10" y="137" text="Unidad de Medida" width="207"/>
+		<s:ComboBox x="10" y="150" id="umAdd" width="125" height="24" labelField="11"></s:ComboBox>
+		<mx:Button x="161" y="195.95" label="Agregar" id="addProductoInDB" icon="@Embed(source='newIcons/add_24.png')" height="24" width="100" tabIndex="7" click="addProductoAndValid();"/>
+	</s:TitleWindow>
+	
+	<!--Title Window para escupir o enviar el XML o PDF generado-->
+	<s:TitleWindow id="factura" width="592" height="363" backgroundColor="#ffffff" visible="false" title="Ver o enviar CFDI." close="closeTWCFD();" horizontalCenter="-5" y="150" >
+		<mx:Image x="-0.5" y="-2" id="imageMSGFact" source="newIcons/enterprises copia.png" visible="true"/>
+		<s:Label x="64.5" y="24" visible="true" text="¿Desea imprimir o enviar este CFDI?"  fontSize="17" fontWeight="bold"/>		
+		
+		<s:TextInput x="30.5" y="80" width="250"   id="correoVPara" valueCommit="correo.text = correoVPara.text;"   change="if(correoVPara.text!=&quot;&quot;){checkMail(correoVPara);}"  height="24" toolTip="Agregue sólo una dirección de correo"/>
+		<s:TextInput x="31.5" y="124" width="250"   id="correoVCC"   valueCommit="correoCC.text = correoVCC.text;"    height="24" toolTip="Agregue una o varias cuentas de correo separadas con punto y coma (;)"/>
+		<s:TextInput x="31.5" y="168" width="250"   id="correoVCCo"  valueCommit="correoCCo.text = correoVCCo.text;"  height="24"  toolTip="Agregue una o varias cuentas de correo separadas con punto y coma (;)"/>
+		<s:TextArea  x="297"  y="79" width="250" id="correoVMSG"  valueCommit="correoMSG.text = correoVMSG.text;" height="113"/>
+		
+		<s:Label x="29.5" y="67" visible="true" text="Para : "/>
+		<s:Label x="299" y="66" visible="true" text="Mensaje : "/>
+		<s:Label x="33.5" y="111" visible="true" text="Cc : "/>
+		<s:Label x="31.5" y="155" visible="true" text="CCo : "/>
+		
+		<s:TextInput x="0" y="0" width="0" visible="false" enabled="false" height="0" id="idCfdi" valueCommit="Send(594);"/>
+		
+		<mx:Button x="32" y="225" click="navegarPDF();" label="      Visualizar CFDI en PDF" height="24" fontWeight="bold"  width="250" icon="@Embed(source='assets/pdf-64X64.png')"/>
+		<mx:Button x="297" y="224" click="navegarXML();" label="      Visualizar CFDI en XML" height="24" fontWeight="bold"  width="250" icon="@Embed(source='newIcons/R_64.png')"/>
+		<mx:Button x="297" y="279" click="enviarFactEmail();" label="  Enviar CFDI por Correo" height="24" fontWeight="bold"  width="250" icon="@Embed(source='assets/mail-64X64.png')" id="enviaCfdiXMail"/>		
+	</s:TitleWindow>
+	
+	
+	<mx:TitleWindow id="TTWvalores" title="CAMPOS ADICIONALES" visible="false" showCloseButton="false" width="684"
+					height="322" layout="absolute" borderAlpha=".95" horizontalCenter="-50" y="215" verticalCenter="-200">
+		<s:VGroup width="100%" height="100%" horizontalAlign="left"  paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+			<!--<mx:Label text="El diseño de su CFDI cuenta con campos adicionales."  fontWeight="bold"/>-->
+			<mx:Label text="  El diseño de su CFDI contiene Campos Adicionales.  Asigne un valor dando doble click en la Descripción de cada Campo."  fontWeight="normal" paddingTop="10"/>
+			<s:HGroup width="100%" height="100%" horizontalAlign="left"  paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+				<mx:DataGrid width="100%" height="100%" verticalAlign="top" id="GWV_FECamposValores" horizontalScrollPolicy="on" verticalScrollPolicy="auto" wordWrap="true" headerStyleName="headerStyle" click="muestraValIdConFactDetDesc();" doubleClickEnabled="true" doubleClick="muestraTTWcambiaValor();">
+					<mx:columns>
+						<mx:DataGridColumn headerText="idConFactDetDesc"							dataField="0" paddingLeft="10" paddingRight="10" width="80" visible="false"/>
+						<mx:DataGridColumn headerText="Descripción"									dataField="1" paddingLeft="10" paddingRight="10" width="200"/>
+						<mx:DataGridColumn headerText="Valor"										dataField="2" paddingLeft="10" paddingRight="10" width="100"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</s:HGroup>	
+			<s:HGroup width="100%" horizontalAlign="right"  paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+				<s:TextInput id="idConFactDetDesc" visible="false" width="45" x="516"/>
+				<mx:Button label="Aceptar" icon="@Embed(source='newIcons/accept_24.png')" click=" TTWvalores.visible = false; modal.visible = false;" height="24" width="100" tabIndex="3" x="567"/>
+			</s:HGroup>
+		</s:VGroup>
+	</mx:TitleWindow>
+	
+	<mx:TitleWindow id="TTWcambiaValor" title="Asignar Valor" visible="false" showCloseButton="true" close="TTWvalores.enabled = true;TTWcambiaValor.visible = false;"  
+					layout="absolute" borderAlpha=".95" horizontalCenter="0" y="177" height="89" width="481">
+		<mx:HBox width="479" height="100%" horizontalAlign="left"  paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
+			<mx:Label id="LBLDescripcion" text="" fontWeight="bold"/>
+			<s:TextInput id="valor" width="145"/>
+			<mx:Spacer width="5"/>
+			<mx:Button label="Aceptar" icon="@Embed(source='newIcons/accept_24.png')" click="actualizaValor();" height="24" width="100" tabIndex="3"/>
+		</mx:HBox>
+	</mx:TitleWindow> 
+	<s:TitleWindow id="twInfoDireccionReceptor" visible="false" width="714" height="180" close="verificaDatosReceptor();" title="Confirme por favor los datos del Receptor" verticalCenter="-273" horizontalCenter="-70">
+		<s:Group width="100%" height="100%">
+			<mx:Button label="Aceptar" icon="@Embed(source='newIcons/accept_24.png')" click="verificaDatosReceptor();" height="24" width="100" tabIndex="3" x="570" y="111"/>
+			<!--<s:Label x="16.6" y="12" text="Nombre de Sucursal del Receptor" textAlign="right" fontWeight="bold" color="#000000" width="163"/>-->
+			<s:Label x="20.6" y="17" text="* Calle" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="231.2" y="15" text="* Número Ext" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="331.2" y="15" text="Número Int" textAlign="right" color="#000000"/>
+			<s:Label x="431.2" y="15" text="* Código Postal" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="559.6" y="15" text="* Estado" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="21.15" y="63" text="* Ciudad" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="157.2" y="63" text="* Delegación/Municipio" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="302" y="63" text="* Colonia" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="436" y="63" text="* País" textAlign="right" fontWeight="bold" color="#000000"/>
+			<s:Label x="29" y="123" text="* Todos los campos marcados con (*) son obligatorios." textAlign="right" fontWeight="bold" color="#000000"/>
+			
+			<!--<s:TextInput x="20.6" y="24"  id="nombreSucursalE"  width="200.4" color="#000000" tabIndex="6" maxChars="100" focusOut="if(nombreSucursalE.text.length > 0) nombreSucursalE.errorString = ''"/>-->
+			<s:TextInput x="428.2" y="29" id="cpE" width="123" restrict="0-9" maxChars="5" color="#000000" tabIndex="24" focusOut="if(cpE.text.length > 0) cpE.errorString = ''"/>
+			<s:TextInput x="20.6" y="29"  id="calleE"  width="200.4" color="#000000" tabIndex="25" maxChars="100" focusOut="if(calleE.text.length > 0) calleE.errorString = ''"/>
+			<s:TextInput x="230.2" y="29" id="numextE" width="90" color="#000000" tabIndex="26" maxChars="20" focusOut="if(numextE.text.length > 0) numextE.errorString = ''"/>
+			<s:TextInput x="329.2" y="29" id="numintE" width="90" color="#000000" tabIndex="27" maxChars="20" focusOut="if(numintE.text.length > 0) numintE.errorString = ''"/>
+			<s:TextInput x="559.6" y="28.5" width="125" id="txtEstadoE" visible="true" tabIndex="28" color="#000000" maxChars="50" focusOut="if(txtEstadoE.text.length > 0) txtEstadoE.errorString = ''"/>
+			<s:TextInput x="21.15" y="76.5" width="125" id="txtCiudadE" visible="true" tabIndex="29" color="#000000" maxChars="100" focusOut="if(txtCiudadE.text.length > 0) txtCiudadE.errorString = ''"/>
+			<s:TextInput x="157.2" y="76.5" width="132" id="txtMunicipioE" visible="true" tabIndex="30" color="#000000" maxChars="100" focusOut="if(txtMunicipioE.text.length > 0) txtMunicipioE.errorString = ''"/>
+			<s:TextInput x="302" y="77" width="125" id="txtColoniaE" visible="true"  tabIndex="31"  color="#000000" maxChars="100" focusOut="if(txtColoniaE.text.length > 0) txtColoniaE.errorString = ''"/>
+			<s:TextInput x="436" y="77" width="106" id="txtPaisE" visible="true"  tabIndex="32"  color="#000000" maxChars="100" focusOut="if(txtPaisE.text.length > 0) txtPaisE.errorString = ''"/>
+			<s:TextInput x="436" y="126" width="19" id="infoReceptorValida" text="0" visible="false" enabled="false" editable="false" tabIndex="33"  color="#000000" maxChars="100" focusOut="if(txtPaisE.text.length > 0) txtPaisE.errorString = ''"/>			
+		</s:Group>
+	</s:TitleWindow>
+	<mx:TitleWindow id="twComprobanteOriginal" title="Comprobante Original" visible="false" showCloseButton="true" close="twComprobanteOriginal.visible=false;"  
+					layout="absolute" borderAlpha=".95" horizontalCenter="0" y="142" height="252" width="466">
+		<s:Label x="9" y="32" text="Num. Folio Comprobante Original:" width="113"/>
+		<s:Label x="231" y="64" text="Importe Comprobante Original:" width="113"/>
+		<s:Label x="10" y="66" text="Serie Comprobante Original:" width="94"/>
+		<s:Label x="10" y="129" text="Fecha Comprobante Original:" width="112"/>		
+		<s:TextInput id="totalCFDIOrig" x="352" y="68" width="87" restrict="0-9." />
+		<s:TextInput id="uuidCFDIOrig" x="130" y="36" width="274" valueCommit="if(uuidCFDIOrig.text.length>0)formaPago.text=&quot;Pago en parcialidades&quot;"/>
+		<s:TextInput id="serieCFDIOrig" x="130" y="69" width="87"/>
+		<timePicker:DateTimePicker selectedDate="{new Date()}" id="fechaCFDIOrig" minuteIncrement="1" backgroundColor="#FFFFFF" x="130" y="98"/>
+		<mx:Button x="356" y="174.5" id="btnAddProducto1" label="Cerrar" height="24" click="twComprobanteOriginal.visible=false;" tabIndex="5" width="82" icon="@Embed(source='assets/accept-icon_24.png')"/>
+		<mx:Button x="412" y="34.5" id="btnTwComprobanteOriginalConsulta" label="..." height="24" click="twComprobanteOriginalConsulta.visible=true;Send(1359);" tabIndex="5" width="26"/>
+		<s:TextInput id="formaPago" x="130" y="8" width="308" text="Pago en una sola exhibición"/>
+		<s:Label x="10" y="12" text="Forma de Pago:" width="112"/>
+		
+		
+	</mx:TitleWindow>
+	<mx:TitleWindow id="twComprobanteOriginalConsulta" title="Comprobante Original" visible="false" showCloseButton="true" close="twComprobanteOriginalConsulta.visible=false;"  
+					layout="absolute" borderAlpha=".95" horizontalCenter="0" y="177" height="234" width="542">
+		<mx:DataGrid id="dgCFDIsEmitidos" x="11" y="8" width="519" height="148">
+			<mx:columns>
+				<mx:DataGridColumn headerText="Serie" dataField="0" width="40"/>
+				<mx:DataGridColumn headerText="Folio" dataField="1" width="40" textAlign="center"/>
+				<mx:DataGridColumn headerText="UUID" dataField="2" width="200"/>
+				<mx:DataGridColumn headerText="Fecha" dataField="3" width="140"/>
+				<mx:DataGridColumn headerText="Monto" dataField="4" width="70" textAlign="right"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:Button x="440" y="164.5" id="btnValidaSeleccionaComprobante" label="Aceptar" height="24" click="validaSeleccionCFDI();" tabIndex="5" width="90" icon="@Embed(source='assets/accept-icon_24.png')"/>
+
+	</mx:TitleWindow>
+	
+	<s:TextInput id="ctUsaCuentaPredial" visible="false" text="0"/>
+	
+</s:Application>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   backgroundColor="#FFFFFF" height="266" width="800">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.*;
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.containers.TitleWindow;
+			import mx.controls.*;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.core.Application;
+			import mx.core.DragSource;
+			import mx.core.IFlexDisplayObject;
+			import mx.events.*;
+			import mx.events.CloseEvent;
+			import mx.events.DragEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.DragManager;
+			import mx.managers.PopUpManager;
+			
+			import spark.components.TitleWindow;
+			import spark.events.TextOperationEvent;
+
+			protected function twMasDirecciones_closeHandler(event:CloseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script source="r3Take.as"/>
+	<s:TitleWindow x="0" y="0" width="100%" height="100%" id="twMasDirecciones" title="Mas Direcciones" close="twMasDirecciones_closeHandler(event)">
+		<s:Label x="281" y="62" text="* Calle" fontWeight="bold"/>
+		<s:Label x="36" y="15" text="Nombre Sucursal"/>
+		<s:Label x="519.2" y="62" text="*Número Ext" fontWeight="bold"/>
+		<s:Label x="637.7" y="62" text="Número Int"/>
+		<s:Label x="36" y="62" text="*Correo Electrónico Sucursal" fontWeight="bold"/>
+		<s:Label x="184" y="109" text="*Código Postal" fontWeight="bold"/>
+		<s:Label x="36" y="109" text="País"/>
+		<s:Label x="522.2" y="110" text="Ciudad"/>
+		<s:Label x="36" y="155.5" text="Delegación/Municipio"/>
+		<s:Label x="254" y="155.5" text="Colonia"/>
+		<s:Label text="Todos los campos marcados con *, son obligatorios." x="41" y="207" fontWeight="bold"/>
+		<s:TextInput x="36" y="28"  id="nomSucursal" name="Nombre de Sucursal" width="392" height="24" maxChars="350" tabIndex="20"/>
+		<!--<s:TextInput x="36" y="75" id="correoSuc" name="Correo Electrónico de la Sucursal" 
+					 width="227" height="24" typographicCase="lowercase" change="if(correoSuc.text.length != 0) checkMail(correoSuc);"  tabIndex="21"/>-->
+		<s:TextInput x="281" y="75"  id="calle" name="Calle" width="220" height="24" maxChars="350"  tabIndex="22" focusOut="if(calle.text.length > 0) calle.errorString='';"/>
+		<s:TextInput x="519.2" y="75" id="numExt" name="Número Exterior" width="100" height="24" maxChars="50"  tabIndex="23" focusOut="if(numExt.text.length > 0) numExt.errorString='';"/>
+		<s:TextInput x="637.7" y="75" id="numInt" name="Número Interior" width="75" height="24" maxChars="50"  tabIndex="24"/>
+		<!--<s:TextInput id="cp" name="Código Postal" change="cpDir();" x="184" y="122"  width="117" restrict="0-9" maxChars="5" height="24"  tabIndex="26" valueCommit="if(cp.text.length > 4) cargaCombs();" focusOut="if(cp.text.length == 5) cp.errorString='';"/>
+		<mx:ComboBox x="36" y="122" id="pais" name="Pais" width="130" height="24" change="handlerPais();" creationComplete="Send(598);"  tabIndex="25"/>
+		<mx:ComboBox x="319" y="122" id="estado" name="Estado" width="180" height="24"
+					 valueCommit="checkEnableCB(estado, txtEstado, colonia, txtColonia);" tabIndex="27"/>
+		<mx:ComboBox x="517.2" y="122" id="ciudad" name="Ciudad" width="196" height="24"
+					 valueCommit="checkEnableCB(ciudad, txtCiudad, colonia, txtColonia);" tabIndex="28"/>
+		<mx:ComboBox x="36" y="169" id="municipio" name="Municipio" width="200" height="24"
+					 valueCommit="checkEnableCB(municipio, txtMunicipio, colonia, txtColonia);" tabIndex="29"/>
+		<mx:ComboBox x="254" y="169" id="colonia" name="Colonia" width="200" height="24" change="dataCombos();" tabIndex="30" focusOut="validaTXTColonia();"/>-->
+	</s:TitleWindow>
+</s:Application>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:mx="http://www.adobe.com/2006/mxml" paddingBottom="2" paddingLeft="2" paddingRight="2" paddingTop="2" horizontalGap="0" verticalAlign="middle" height="89" width="195" xmlns:s="library://ns.adobe.com/flex/spark">
+    
+    <mx:Metadata>
+        [Event(name="change", type="flash.events.Event")]
+    </mx:Metadata>
+
+	<mx:Script>
+		<![CDATA[
+			
+			[Bindable] private var _selectedDate:Date = new Date();
+			
+			[Bindable] 
+			[Inspectable(defaultValue='5', category="Other", enumeration="1,5,10,15,30")] 
+			public var minuteIncrement:int = 1;
+			
+			
+			public function get selectedDate():Date
+			{
+				this.validateNow();
+				return this._selectedDate;
+			}
+			
+			[Bindable]
+			public function set selectedDate(value:Date):void
+			{
+				this._selectedDate = value
+				this.date.selectedDate = this._selectedDate
+				if(value.getHours() >= 12)
+				{
+					this.ampm.selectedValue = 2;
+				}
+				else
+				{
+					this.ampm.selectedValue = 1;
+				}
+				
+				if(value.getHours() < 13 )
+					this.hours.value = value.getHours()
+				else
+					this.hours.value = value.getHours() - 12
+				
+				if(value.getHours() == 0)
+					this.hours.value = 12;
+				
+				this.minutes.value = value.getMinutes();
+				this.seconds.value = value.getSeconds();	
+				xsDateTime.text=value.fullYear.toString()+"-"+
+								stringRight("00"+(value.month+1).toString(),2)+"-"+
+								stringRight("00"+value.date.toString(),2)+"T"+
+								stringRight("00"+value.hours.toString(),2)+":"+
+								stringRight("00"+value.minutes.toString(),2)+":"+
+								stringRight("00"+value.seconds.toString(),2);
+				
+				this.validateNow();
+			}
+			
+			private function stringRight(input:String,count:int):String
+			{
+				return input.substr(input.length-count,count);
+			}
+			
+			override public function validateProperties():void
+			{
+				super.validateProperties();
+
+			}
+			
+			public function handleChange():void
+			{
+				
+				var militaryHours:int = hours.value;
+				if(ampm.selectedValue == 2 && hours.value != 12)
+					militaryHours = hours.value+12; 
+				else if(ampm.selectedValue == 1 && hours.value == 12)
+					militaryHours = 0;
+				var selDate:Date = this.date.selectedDate;
+				var date:Date = new Date(
+										selDate.getFullYear(),
+										selDate.getMonth(),
+										selDate.getDate(),
+										militaryHours,
+										minutes.value,
+										seconds.value)
+				this.selectedDate = date;
+				
+				this.invalidateProperties();
+				this.validateNow();
+				this.dispatchEvent(new Event("change"));
+
+			}
+		]]>
+	</mx:Script>
+	<mx:RadioButtonGroup id="ampm" selectedValue="1" change="this.handleChange()"/>
+	<s:Group width="190" height="79" y="60">
+		<mx:DateField id="date" selectedDate="{new Date()}" change="handleChange()" formatString="YYYY-MM-DD" dayNames="['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']"
+					  monthNames="['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']" x="2" y="2" width="188"/>
+		<mx:Spacer width="20"/>
+		<mx:NumericStepper id="hours" minimum="1" maximum="12" stepSize="1" change="handleChange()" valueCommit="handleChange()" textAlign="center" x="2" y="28"/>
+		<mx:Label text=":" textAlign="center" x="56" y="29" width="10"/>
+		<mx:NumericStepper id="minutes" minimum="0"  maximum="59" stepSize="1" change="handleChange()" valueCommit="handleChange()" textAlign="center" x="67" y="28"/>
+		<mx:Label text=":" textAlign="center" x="116" y="28"/>
+		<mx:NumericStepper id="seconds" minimum="0"  maximum="59" stepSize="1" change="handleChange()" valueCommit="handleChange()" textAlign="center" x="132" y="28"/>
+		<mx:Spacer width="10"/>
+		<s:TextInput id="xsDateTime" x="1" y="1" visible="false" enabled="false"/>
+		
+		<mx:RadioButton id="am" value="1" label="AM" group="{ampm}" x="93" y="56" width="64"/>
+		<mx:RadioButton id="pm" value="2" label="PM" group="{ampm}" x="7" y="56" width="55"/>
+		
+	</s:Group>
+</mx:HBox>
