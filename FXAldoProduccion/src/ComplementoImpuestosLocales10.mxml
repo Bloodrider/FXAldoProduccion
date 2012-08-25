@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="0" minHeight="0" width="478" pageTitle="Complemento Donatarias 1.0" height="415" backgroundColor="#FFFFFF">
+	<fx:Script>
+		<![CDATA[
+			import com.Captcha;
+			
+			import flash.events.*;
+			import flash.utils.setTimeout;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			
+			public var addendaValor:String;
+			//public var stringData:String;
+			public var xmlData:XML;
+			//private var bandera:int;
+			//private var addField:String;
+			private var tiposLocales:ArrayCollection=new ArrayCollection([{0:"Traslado"},{0:"Retención"}]);
+			private var arrayDetalle:ArrayCollection= new ArrayCollection();
+			private var numFtr:NumberFormatter = new NumberFormatter;
+			private var totalRetenciones:Number=0;
+			private var totalTraslados:Number=0;
+			
+			/*protected function setParametros(data:String)
+			{
+				xmlData=new XML(data);
+			}*/
+			
+			protected function agregar_clickHandler(event:MouseEvent):void
+			{
+				var addendaValorXML:XML= new XML("<impuestosLocales/>");
+				addendaValorXML.@['version']="1.0";
+				addendaValorXML.@['totalTrasladosLocales']=cTotalTraslados.text;
+				addendaValorXML.@['totalRetencionesLocales']=cTotalRetenciones.text;
+				
+				if(arrayDetalle.length<1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se ha capturado ningún impuesto local.","Error",Alert.OK,null,null, null);
+					return;
+				}
+				for(var idxImpuesto:int=0;idxImpuesto<arrayDetalle.length;idxImpuesto++)
+				{
+					var impuestoLocal:XML=new XML('<impuestoLocal/>');
+					impuestoLocal.@['tipo']=arrayDetalle[idxImpuesto][0];
+					impuestoLocal.@['nombre']=arrayDetalle[idxImpuesto][1];
+					impuestoLocal.@['tasa']=arrayDetalle[idxImpuesto][2];
+					impuestoLocal.@['importe']=arrayDetalle[idxImpuesto][3];
+					addendaValorXML.appendChild(impuestoLocal);
+				}
+				addendaValor="ImpLocal|"+addendaValorXML.toString();
+				root.dispatchEvent(new Event("complete",true,false));
+				
+			}
+			public function setParametros(data:XML):void
+			{
+					xmlData=data;	
+					tipoImpuesto.labelField="0";
+					tipoImpuesto.dataProvider=tiposLocales;
+					//tipoImpuesto.selectedIndex=0;
+					limpiaControles();
+					numFtr.precision = 2;
+					numFtr.useThousandsSeparator = false;
+					numFtr.useNegativeSign = true;
+					numFtr.rounding = "none";
+					
+			}
+			
+			private function agregarImpuesto():void
+			{
+				if(nombreImpuesto.text.length<1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el nombre del Impuesto Local.","Error",Alert.OK,null,null, null);
+					nombreImpuesto.setFocus();
+					return;
+				}
+				if(tipoImpuesto.selectedIndex==-1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el tipo del Impuesto Local.","Error",Alert.OK,null,null, null);
+					tipoImpuesto.setFocus();
+					return;
+				}
+				if(tasaImpuesto.text.length<1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar la tasa del Impuesto Local.","Error",Alert.OK,null,null, null);
+					tasaImpuesto.setFocus();
+					return;
+				}
+				if(importeImpuesto.text.length<1)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("Debe especificar el importe del Impuesto Local.","Error",Alert.OK,null,null, null);
+					importeImpuesto.setFocus();
+					return;
+				}
+				arrayDetalle.addItem(
+										{
+											0:(tipoImpuesto.selectedIndex==0)?"T":"R",
+											1:nombreImpuesto.text,
+											2:numFtr.format(Number(tasaImpuesto.text)),
+											3:numFtr.format(Number(importeImpuesto.text))
+										}	
+									);
+				detalle.dataProvider=arrayDetalle;
+				calcular();
+				limpiaControles();
+			}
+			private function calcular():void
+			{
+				totalTraslados=0;
+				totalRetenciones=0;
+				for(var idxImpuesto:int=0;idxImpuesto<arrayDetalle.length;idxImpuesto++)
+				{
+					if(arrayDetalle[idxImpuesto][0]=="T")
+					{
+						totalTraslados+=Number(arrayDetalle[idxImpuesto][3]);
+					}
+					else if(arrayDetalle[idxImpuesto][0]=="R")
+					{
+						totalRetenciones+=Number(arrayDetalle[idxImpuesto][3]);
+					}
+				}
+				cTotalTraslados.text=numFtr.format(totalTraslados.toString());
+				cTotalRetenciones.text=numFtr.format(totalRetenciones.toString());
+			}
+			private function limpiaControles():void
+			{
+				tipoImpuesto.selectedIndex=0;
+				nombreImpuesto.text="";
+				tasaImpuesto.text="0.00";
+				importeImpuesto.text="0.00";
+			}
+			private function quitarImpuesto():void
+			{
+				if(detalle.selectedIndex<0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se ha seleccionado el impuesto a eliminar.","Error",Alert.OK,null,null, null);
+					return;
+				}
+				arrayDetalle.removeItemAt(detalle.selectedIndex);
+				calcular();
+			}
+
+		]]>
+	</fx:Script>
+
+
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+
+		<mx:Button id="agregar" width="100" height="24" label="Agregar"  click="agregar_clickHandler(event)" icon="@Embed(source='newIcons/edit-icon_24.png')" x="33" y="353" tabIndex="7"/>
+		<mx:Button id="agregarImpuestoBtn" width="31" height="24" icon="@Embed(source='newIcons/add_24.png')" x="399" y="57" click="agregarImpuesto()" tabIndex="5"/>
+		<mx:Button id="agregarImpuestoBtn0" width="31" height="24" icon="@Embed(source='newIcons/delete_24.png')" x="399" y="87" click="quitarImpuesto()" tabIndex="6"/>
+		<mx:HRule x="185" y="21" width="261"/>
+		<s:Label x="9" y="15" text="Complemento Donatarias 1.0" width="179"/>
+
+		<mx:DataGrid editable="true" width="431" id="detalle" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="158" x="23" y="129" tabChildren="true" tabIndex="15">
+			<mx:columns>
+				<mx:DataGridColumn textAlign="right" 	headerText="Tipo" 		dataField="0" editable="false" width="80"/>
+				<mx:DataGridColumn textAlign="right" 	headerText="Nombre" 	dataField="1" editable="false" width="80"/>
+				<mx:DataGridColumn textAlign="right" 	headerText="Tasa" 		dataField="2" editable="false" width="80"/>
+				<mx:DataGridColumn textAlign="right" 	headerText="Importe"	dataField="3" editable="false" width="80"/>
+			</mx:columns>
+		</mx:DataGrid>
+		<s:TextInput x="267" y="57" width="122" id="nombreImpuesto" tabIndex="2"/>
+		<s:TextInput x="299" y="87" width="91" id="importeImpuesto" restrict="0-9." textAlign="right" tabIndex="4"/>
+		<s:ComboBox x="93" y="57" width="91" id="tipoImpuesto" tabIndex="1"/>
+		<s:TextInput x="93" y="87" width="91" id="tasaImpuesto" restrict="0-9." textAlign="right" tabIndex="3"/>
+		<s:Label x="33" y="63" text="Tipo" width="52"/>
+		<s:Label x="33" y="92" text="Tasa %" width="52"/>
+		<s:TextInput x="135" y="297" width="91" id="cTotalTraslados" enabled="false" textAlign="right"/>
+		<s:Label x="33" y="302" text="Total Traslados" width="85"/>
+		<s:Label x="211" y="93" text="Importe" width="60"/>
+		<s:Label x="212" y="62" text="Nombre" width="47"/>
+		<s:TextInput x="353" y="297" width="91" id="cTotalRetenciones" enabled="false" textAlign="right"/>
+		<s:Label x="248" y="302" text="Total Retenciones" width="108"/>
+</s:Application>

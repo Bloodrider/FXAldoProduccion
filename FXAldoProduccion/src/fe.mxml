@@ -10,7 +10,7 @@
 	xmlns:ns="library:adobe/flex/gumbo" 
 	width="100%" height="1000"
 	backgroundColor="#FFFFFF" 
-	creationComplete="initFact.isPopUp = true; modal.visible = true; consultaAC(); tipoMoneda.setFocus();" 
+	creationComplete="initFact.isPopUp = true; modal.visible = true; consultaAC(); tipoMoneda.setFocus(); Send(1450);" 
 	xmlns:components="com.hillelcoren.components.*"
 	applicationComplete="validateUser('fe.swf');">
 	
@@ -895,7 +895,7 @@
 				Send(227);
 				if (Number(idRol.text) == 16){
 					Send(1452);
-					salir();
+
 				}
 			}
 			
@@ -1388,8 +1388,13 @@
 			
 			private function closeTWCFD():void
 			{
-				mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="nada.swf";
-				mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="fe.swf?fecha=18042012";			
+				if (Number(idRol.text) != 16){
+					mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="nada.swf";
+					mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="fe.swf?fecha=18042012";
+				}
+				else{
+					salir();
+				}
 			}
 			
 			private function viewTWCFD():void
@@ -1904,6 +1909,17 @@
 					recogeAddenda(new Event("complete",true,false));
 				}
 			}
+			
+			private function ObtenerMetodoPago():void{
+				cbMetodoPago.selectedIndex = 0;
+				metodoPago.text = cbMetodoPago.selectedItem[1].toString();
+				Alert.show(metodoPago.text);
+			}
+			
+			private function EstablecerMetodoPago():void{
+				metodoPago.text =  cbMetodoPago.selectedItem[1].toString();
+				Alert.show(metodoPago.text);
+			}
 
 		]]>
 	</fx:Script>
@@ -2141,7 +2157,8 @@
 			<s:TextInput x="20" y="169" width="260" height="23" id="noOrdenCompra" maxChars="20" tabIndex="3"/>
 			
 			<s:TextInput x="9" y="165" width="52" height="23" id="countCamposAdicionales" maxChars="20" visible="false" valueCommit="activaTerminar();"/>
-			<s:TextInput x="18" y="75" width="263" height="24" id="metodoPago" text="Efectivo" tabIndex="4"/>
+			<s:ComboBox x="18" y="75" width="263" height="24" id="cbMetodoPago" valueCommit="ObtenerMetodoPago()" change="EstablecerMetodoPago();"/>
+			<s:TextInput x="18" y="75" width="263" height="24" id="metodoPago" text="Efectivo" tabIndex="4" visible="false"/>
 			<s:ComboBox x="20" y="219" id="cTipoCFDI" creationComplete="Send(680);" width="260" height="24" change="setTipoCFDI();" labelField="11" tabIndex="5"/>
 			<s:Label x="20" y="254" text="Decimales:"/>
 			<s:Label x="163" y="255" text="Precisión:" width="59"/>

@@ -75,6 +75,8 @@
     <application path="catProductosFacturaxSucursal.mxml"/>
     <application path="fx.mxml"/>
     <application path="feSEDENA.mxml"/>
+    <application path="ComplementoImpuestosLocales10.mxml"/>
+    <application path="complementoIEDU10.mxml"/>
   </applications>
   <modules/>
   <buildCSSFiles/>

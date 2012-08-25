@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="0" minHeight="0" width="956" pageTitle="Addenda Super Neto" height="410" backgroundColor="#FFFFFF">
+	<fx:Script source="r3Take.as"/>
+	<fx:Style source="fx.css" />
+	<fx:Script>
+		<![CDATA[
+			import com.Captcha;
+			
+			import flash.events.*;
+			import flash.utils.setTimeout;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.*;
+			import mx.formatters.NumberFormatter;
+			import mx.managers.PopUpManager;
+			
+			import spark.events.IndexChangeEvent;
+			
+			public var addendaValor:String;
+			public var stringData:String;
+			private var xmlData:XML;
+			private var bandera:int;
+			private var addField:String;
+			private var conceptos:ArrayCollection= new ArrayCollection();
+			
+			private var validCurp:String = "^[A-Za-zñÑ&]{4}[ |\-]{0,1}[0-9]{6}[ |\-]{0,1}[A-Za-zñÑ&]{6}[ |\-]{0,1}[0-9A-Za-z]{2}$";
+			private var expCurp:RegExp = new RegExp(validCurp,"g");
+			
+			private var validFormatPM:String = "^[A-Za-zñÑ&]{3}[ |\-]{0,1}[0-9]{6}[ |\-]{0,1}[0-9A-Za-z]{3}$";	
+			private var expRfcPM:RegExp = new RegExp(validFormatPM,"g");
+			
+			private var validFormatPF:String = "^[A-Za-zñÑ&]{4}[ |\-]{0,1}[0-9]{6}[ |\-]{0,1}[0-9A-Za-z]{3}$";
+			private var expRfcPF:RegExp = new RegExp(validFormatPF,"g");
+			
+			/*protected function setParametros(data:String)
+			{
+				xmlData=new XML(data);
+			}*/
+			
+			private function rellenaDatos():void
+			{
+				//validNextCurp.text="";
+				nombreAlumno.text=detalle.selectedItem[5].toString();
+				curpAlumno.text=detalle.selectedItem[6].toString();
+				nivelEducativo.text=detalle.selectedItem[7].toString();
+				setNivelEducativoItem(0);
+				aRVOE.text=detalle.selectedItem[9].toString();
+				rfcPagador.text=detalle.selectedItem[10].toString();
+			}
+			
+			public function setParametros(data:XML):void
+			{
+				xmlData=data;
+				
+				for(var idxConceptos:int=0; idxConceptos<xmlData.child("partidas").elements("*").length();idxConceptos++)
+				{
+					var descripcion:String=xmlData.child("partidas").elements("*")[idxConceptos].@['dato0'];
+					
+					conceptos.addItem({
+						0:false,//Aplica complemento
+						1:idxConceptos,	//numero de partida
+						2:idxConceptos+1,//partida visual
+						3:descripcion, //descripcion
+						4:"",//versión
+						5:"",//nombre del alumno
+						6:"",//curp
+						7:-1,//idxNivelEducativo
+						8:"",//nivel educativo
+						9:"",//autorización/reconocimiento de validez oficial
+						10:""//RFC de Pagador
+					});
+				}
+				detalle.dataProvider=conceptos;
+				
+				
+			}
+			private function validaDatosComplemento():void
+			{
+				if(detalle.selectedIndex<0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se ha seleccionado el concepto sobre el cual se aplicará el complemento.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				
+				if(validNextCurp.text !="1")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El formato de la CURP es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					curpAlumno.setFocus();
+					return;
+				}	
+				
+				if(validNextRFC.text != "1" && rfcPagador.text.length!=0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("El RFC del pagador es incorrecto.","Aviso",Alert.OK,null,null, iconAlert);
+					rfcPagador.setFocus();
+					return;
+				}
+				if(cmbNivelEducativo.selectedIndex<0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se ha seleccionado correctamente el Nivel Educativo.","Aviso",Alert.OK,null,null, iconAlert);
+					cmbNivelEducativo.setFocus();
+					return;
+				}
+				if(aRVOE.text=="")
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se ha capturado el atributo de Autorización/Reconocimiento de validez oficial.","Aviso",Alert.OK,null,null, iconAlert);
+					aRVOE.setFocus();
+					return;
+				}
+				var idxConceptos:int=detalle.selectedIndex;
+				var tempArray:ArrayCollection=new ArrayCollection();
+				tempArray=new ArrayCollection(ArrayUtil.toArray(detalle.dataProvider));
+				
+				detalle.dataProvider=null;
+				
+				tempArray[0][idxConceptos][0]=true;
+				tempArray[0][idxConceptos][5]=nombreAlumno.text;
+				tempArray[0][idxConceptos][6]=curpAlumno.text.toUpperCase();
+				tempArray[0][idxConceptos][7]=int(nivelEducativo.text);
+				tempArray[0][idxConceptos][8]=cmbNivelEducativo.textInput.text;
+				tempArray[0][idxConceptos][9]=aRVOE.text;
+				tempArray[0][idxConceptos][10]=rfcPagador.text.toUpperCase();
+				
+				detalle.dataProvider=tempArray[0];
+			}
+
+			private function noAplicaComplemento()
+			{
+				if(detalle.selectedIndex<0)
+				{
+					Alert.okLabel = "Aceptar";
+					Alert.show("No se ha seleccionado el concepto sobre el cual se aplicará la acción.","Aviso",Alert.OK,null,null, iconAlert);
+					return;
+				}
+				var idxConceptos:int=detalle.selectedIndex;
+				var tempArray:ArrayCollection=new ArrayCollection();
+				tempArray=new ArrayCollection(ArrayUtil.toArray(detalle.dataProvider));
+				
+				detalle.dataProvider=null;
+				
+				tempArray[0][idxConceptos][0]=false;
+				tempArray[0][idxConceptos][5]="";
+				tempArray[0][idxConceptos][6]="";
+				tempArray[0][idxConceptos][7]=-1;
+				tempArray[0][idxConceptos][8]="";
+				tempArray[0][idxConceptos][9]="";
+				tempArray[0][idxConceptos][10]="";
+				
+				detalle.dataProvider=tempArray[0];
+			}
+			private function checkRFC(myCtrl:TextInput):void
+			{
+				if(myCtrl.text.length>0 && myCtrl.text.length<13)
+				{
+					if(expRfcPM.test(myCtrl.text) || (myCtrl.text.length == 0))
+					{
+						myCtrl.errorString = "";
+						validNextRFC.text = "1";
+					}
+					else
+					{				
+						myCtrl.errorString = "El RFC del pagador no es válido. Favor de verificar.";
+						validNextRFC.text = "0";
+					}
+				}
+				else if(myCtrl.text.length==13 )
+				{
+					if(expRfcPF.test(myCtrl.text) || (myCtrl.text.length == 0))
+					{
+						myCtrl.errorString = "";
+						validNextRFC.text = "1";
+					}
+					else
+					{				
+						myCtrl.errorString = "El RFC del pagador no es válido. Favor de verificar.";
+						validNextRFC.text = "0";
+					}
+				}
+				else if(myCtrl.text.length==0)
+				{
+					myCtrl.errorString = "";
+					validNextRFC.text = "1";
+				}
+			}
+			
+			private function checkCurp(myCtrl:TextInput):void
+			{
+				if(expCurp.test(myCtrl.text) || (myCtrl.text.length == 0))
+				{
+					myCtrl.errorString = "";
+					validNextCurp.text = "1";
+				}
+				else
+				{				
+					myCtrl.errorString = "El formato de la CURP es incorrecto";
+					validNextCurp.text = "0";
+				}			
+			}
+			private function setNivelEducativoDP():void
+			{
+				var nivelEducativoArr:ArrayCollection=new ArrayCollection([	{0:"Preescolar"},
+																			{0:"Primaria"},
+																			{0:"Secundaria"},
+																			{0:"Profesional técnico"},
+																			{0:"Bachillerato o su equivalente"}]);
+				cmbNivelEducativo.dataProvider=nivelEducativoArr;
+			}
+			private function setNivelEducativoItem(operacion:int):void//0 rellena, 1 alimenta
+			{
+				if(operacion==0)
+				{
+					cmbNivelEducativo.selectedIndex=int(nivelEducativo.text);
+				}
+				else if(operacion==1)
+				{
+					nivelEducativo.text=cmbNivelEducativo.selectedIndex.toString();
+				}
+			
+			
+			}
+			protected function agregar_clickHandler(event:MouseEvent):void
+			{
+				var arrayTemp:ArrayCollection=new ArrayCollection();
+				arrayTemp=new ArrayCollection(ArrayUtil.toArray(detalle.dataProvider));
+				var addendaXML:XML=new XML("<iedu/>");
+				for(var idxConcepto:int=0;idxConcepto<arrayTemp[0].length;idxConcepto++)
+				{
+					var concepto:XML=new XML("<concepto/>");
+					concepto.@['aplicaComplemento']=arrayTemp[0][idxConcepto][0].toString();
+					concepto.@['nombreAlumno']=arrayTemp[0][idxConcepto][5].toString();
+					concepto.@['curpAlumno']=arrayTemp[0][idxConcepto][6].toString();
+					concepto.@['nivelEducativo']=arrayTemp[0][idxConcepto][8].toString();
+					concepto.@['aRVOE']=arrayTemp[0][idxConcepto][9].toString();
+					concepto.@['rfcPagador']=arrayTemp[0][idxConcepto][10].toString();
+					addendaXML.appendChild(concepto);
+				}
+				
+				//trace(addendaXML.toString());
+				addendaValor="iedu|"+addendaXML.toString();
+				root.dispatchEvent(new Event("complete",true,false));
+			}
+			
+		]]>
+	</fx:Script>
+
+
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<!--<s:Panel height="185" title="Addenda Super Neto (Servicios)" horizontalCenter="0" verticalCenter="0" width="435">-->
+		<mx:Button id="agregar" width="100" height="24" label="Agregar"  click="agregar_clickHandler(event)" icon="@Embed(source='newIcons/edit-icon_24.png')" x="27" y="346" tabIndex="8"/>
+		<mx:Button id="grabar" width="100" height="24" label="Grabar"  click="validaDatosComplemento();" icon="@Embed(source='assets/accept-icon_24.png')" x="553" y="294" tabIndex="6"/>
+		<mx:Button id="noAplica" width="100" height="24" label="No Aplica"  click="noAplicaComplemento();" icon="@Embed(source='assets/delete-icon_24.png')" x="664" y="294" tabIndex="7"/>
+		<mx:HRule x="137" y="30" width="809"/>
+		<s:Label x="8" y="25" text="Complemento IEDU 1.0" width="159" height="16"/>
+
+	<mx:DataGrid editable="false" width="909" id="detalle" wordWrap="true" variableRowHeight="true" liveScrolling="true" height="164" x="24" y="53" tabChildren="true" tabIndex="15" change="rellenaDatos();">
+		<mx:columns>
+			<mx:DataGridColumn 	textAlign="right" 	headerText="No. Concepto"	 	dataField="2" editable="false" width="80" />
+			<mx:DataGridColumn  textAlign="left"	headerText="Descripción" 		dataField="3" editable="false" width="120"/>
+			<mx:DataGridColumn textAlign="left"	headerText="Versión"			dataField="4" editable="false" width="120" visible="false" />
+			<mx:DataGridColumn textAlign="left"	headerText="Nombre de Alumno" 	dataField="5" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="left" 	headerText="CURP" 				dataField="6" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="left" 	headerText="Nivel Educativo" 	dataField="7" editable="false" width="80" visible="false"/>
+			<mx:DataGridColumn textAlign="left" 	headerText="Nivel Educativo" 	dataField="8" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="left" 	headerText="Autorización/Reconocimiento de Validez Oficial" dataField="9" editable="false" width="80"/>
+			<mx:DataGridColumn textAlign="left" 	headerText="RFC Pagador" 	dataField="10" editable="false" width="80"/>
+
+		</mx:columns>
+	</mx:DataGrid>
+	<s:TextInput x="181" y="235" maxChars="35"  id="nombreAlumno" width="301" tabIndex="1"/>
+	<s:TextInput x="591" y="263" maxChars="20"  id="aRVOE" width="175" textAlign="left" tabIndex="4"/>
+	<s:Label x="352" y="270" text="Autorización/Reconicimiento de Validez Oficial:" width="231"/>
+	<s:Label x="507" y="241" text="CURP:" width="51"/>
+	<s:TextInput x="552" y="234" id="curpAlumno" width="214" textAlign="left" editable="true" maxChars="18" change="checkCurp(curpAlumno);" restrict="A-Za-z0-9Ñ&amp;" typographicCase="uppercase" tabIndex="2"/>
+	<s:Label x="74" y="271" text="Nivel Educativo:" width="100"/>
+	<s:Label x="74" y="241" text="Nombre del Alumno:" width="117"/>
+	<s:TextInput id="validNextCurp" visible="false" width="20" x="47" y="0" enabled="false"/>
+	<s:ComboBox id="cmbNivelEducativo" x="181" y="264" width="147" creationComplete="setNivelEducativoDP();" change="setNivelEducativoItem(1);" labelField="0" tabIndex="3"/>
+	<s:TextInput id="nivelEducativo" visible="false" width="20" x="47" y="0" enabled="false" />
+	<s:Label x="74" y="307" text="RFC de Pagador:" width="99"/>
+	<s:TextInput x="181" y="297" id="rfcPagador" width="147" textAlign="left" editable="true" maxChars="13" change="checkRFC(rfcPagador);" restrict="A-Za-z0-9Ñ&amp;" typographicCase="uppercase" tabIndex="5"/>
+	<s:TextInput id="validNextRFC" visible="false" width="20" x="47" y="0" enabled="false" />
+	<!--</s:Panel>-->
+	
+</s:Application>

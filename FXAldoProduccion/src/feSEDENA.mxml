@@ -185,7 +185,6 @@
 			{
 				cbMetodoPago.selectedIndex=0;
 				metodoPago.text=cbMetodoPago.selectedItem[1].toString();
-				Alert.show(metodoPago.text);
 			}
 			
 			private function add():void
