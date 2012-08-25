@@ -782,7 +782,7 @@
 					else
 					{
 						//Ni addenda ni complemento
-						if (usaImpuestosLocales.selected == false && listaImpuestosLocales.length != 0){
+						if (usaImpuestosLocales.selected == false && this.usaDonatarias.selected == false && this.usaIedu.selected == false && listaImpuestosLocales.length != 0){
 							Send(679);
 						}
 						else{
@@ -801,14 +801,14 @@
 				lista = new ArrayCollection(ArrayUtil.toArray(conceptos.dataProvider.source));	
 				
 				var listaTotales:ArrayCollection = new ArrayCollection(ArrayUtil.toArray(totales.dataProvider.source));
-				
+				var verificarImpuestos:Boolean = false;
 				
 				var impuestos:Array;
 				var impuestosDetalle:Array;
 				var concepto:Array;
 				var expresion:RegExp = /^[A-Z]/
 				var importe:Number = new Number();
-				var valorIsh:Number = new Number(0.03);
+				var valorIsh:Number = new Number();
 				var importeOperacion:Number = new Number();
 				
 				for (var i:int = 0; i < lista.length; i++){
@@ -818,15 +818,19 @@
 					
 					for (var j:int = 0; j < concepto.length; j++){
 						if (concepto[j].toString().match(expresion)){
-							if (!(concepto[j].toString() == "IVA" || concepto[j].toString() == "RET" || concepto[j].toString() == "ISR")){
+							if (concepto[j].toString() == "ISH"){
+								valorIsh = Number(concepto[j+1].toString()) / 100;
 								importeOperacion = Number(lista[i][15]) * valorIsh;
-								listaImpuestosLocales.addItem(new Array("T", lista[i][0].toString(), concepto[j+1], importeOperacion));
 								importe += importeOperacion;
-								//lista.removeItemAt(i);
+								verificarImpuestos = true;
 							}
 			
 						}
 					}	
+				}
+				
+				if (verificarImpuestos == true){
+					listaImpuestosLocales.addItem(new Array("T", "ISH", valorIsh, importe.toFixed(2)));	
 				}
 				
 				var indiceISH:Number = new Number();
@@ -848,7 +852,7 @@
 					}
 				}
 				
-				if (this.usaImpuestosLocales.selected == false && listaImpuestosLocales.length != 0){
+				if (this.usaImpuestosLocales.selected == false && this.usaIedu.selected == false && this.usaDonatarias.selected == false && listaImpuestosLocales.length != 0){
 					listaTotales[indiceTotal][1] = total - importe;
 					listaTotales.removeItemAt(indiceISH);
 					conceptos.dataProvider = lista;
@@ -889,6 +893,10 @@
 			private function sendGeneraCFDI()
 			{
 				Send(227);
+				if (Number(idRol.text) == 16){
+					Send(1452);
+					salir();
+				}
 			}
 			
 			private function setTasa():void
@@ -1883,8 +1891,8 @@
 			private function calculaGranTotal():void
 			{
 				var granTotal:Number = 0;
-				
-				granTotal = truncaRedondeaDecimales(0,totGranTotal + Number(propina.text),2);
+				//truncaRedondeaDecimales((decTruncados.selected==true?0:1),gbTotales[numgbTotales][1],int(precisionDecimales.value));
+				granTotal = truncaRedondeaDecimales((decTruncados.selected==true?0:1),totGranTotal + Number(propina.text),2);
 				lblGranTotal.text = granTotal.toString();
 			}
 
@@ -2095,8 +2103,8 @@
 		<s:CheckBox x="24" y="514" label="Comprobante de Colegiaturas" width="163" id="usaIedu" enabled="true" visible="true" tabIndex="16" click="activacionOtrosComplementos(&quot;iedu&quot;);"/>
 		<s:Label x="744" y="494" text="Propina:" width="59"/>
 		<s:Label x="744" y="524" text="Gran Total:" width="69"/>
-		<s:Label x="889" y="521" text="$" textAlign="right"/>
-		<s:Label x="899" y="522" text="" textAlign="right" id="lblGranTotal"/>
+		<s:Label x="809" y="523" text="$" textAlign="right"/>
+		<s:TextInput x="819" y="518" text="" textAlign="right" id="lblGranTotal" width="100" enabled="false"/>
 		<s:TextInput x="819" y="489" width="100" change="calculaGranTotal();" restrict="0-9." id="propina" focusOut="propina.text=numFtr.format(propina.text)" toolTip="Opcional, aplica sidesea mostrar un importe de propina, no juega para efectos fiscales." textAlign="right"/>
 		
 		<s:Panel width="100%" height="100%" visible="false" id="modal" x="1" y="-30" backgroundColor="#635E5E" alpha=".5">
@@ -2121,7 +2129,7 @@
 			<mx:Button x="351" y="181" label="Terminar" icon="@Embed(source='newIcons/accept_24.png')" click="twInformacionAduanera.visible=false;" height="24" width="99" tabIndex="23"/>
 		</s:TitleWindow>
 		
-		<s:TitleWindow id="initFact" visible="true" width="304" height="383" close="salir();" horizontalCenter="63" y="81">
+		<s:TitleWindow id="initFact" visible="true" width="304" height="383" close="salir();" horizontalCenter="-51" y="80">
 			<s:ComboBox x="19" y="26" id="tipoMoneda" width="125" height="24" change="setTasa();" labelField="11" tabIndex="1"></s:ComboBox>
 			<s:Label x="19" y="13" text="Tipo de Moneda"/>
 			<s:Label x="19" y="62" text="Método de Pago"/>

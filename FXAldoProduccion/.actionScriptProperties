@@ -10,7 +10,7 @@
       </libraryPathEntry>
       <libraryPathEntry kind="1" linkType="1" path="libs"/>
       <libraryPathEntry kind="3" linkType="1" path="libs/flexiframe.swc" useDefaultLinkType="false"/>
-      <libraryPathEntry kind="3" linkType="1" path="C:/Documents and Settings/Administrator/My Documents/codeFX/libs/hamcrest-1.0.2.swc" useDefaultLinkType="false"/>
+      <libraryPathEntry kind="3" linkType="1" path="C:/Documents and Settings/Administrator/My Documents/swc/hamcrest-1.0.2.swc" useDefaultLinkType="false"/>
     </libraryPath>
     <sourceAttachmentPath/>
   </compiler>
@@ -74,6 +74,7 @@
     <application path="facturizateMIT27032012.mxml"/>
     <application path="catProductosFacturaxSucursal.mxml"/>
     <application path="fx.mxml"/>
+    <application path="feSEDENA.mxml"/>
   </applications>
   <modules/>
   <buildCSSFiles/>
