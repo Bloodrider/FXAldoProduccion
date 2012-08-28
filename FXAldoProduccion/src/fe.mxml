@@ -893,6 +893,7 @@
 			private function sendGeneraCFDI()
 			{
 				Send(227);
+				
 				if (Number(idRol.text) == 16){
 					Send(1452);
 
@@ -1388,6 +1389,7 @@
 			
 			private function closeTWCFD():void
 			{
+				Send(1461);
 				if (Number(idRol.text) != 16){
 					mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="nada.swf";
 					mx.controls.SWFLoader(findObject("globalLoader", "SWFLoader")).source ="fe.swf?fecha=18042012";
@@ -1433,7 +1435,8 @@
 			
 			private function muestraTTWcambiaValor():void
 			{
-				Send(522); //Trae valor
+				//Send(522); //Trae valor
+				Send(1462);
 				TTWvalores.enabled = false;
 				TTWcambiaValor.visible = true;	
 			}
@@ -1913,14 +1916,23 @@
 			private function ObtenerMetodoPago():void{
 				cbMetodoPago.selectedIndex = 0;
 				metodoPago.text = cbMetodoPago.selectedItem[1].toString();
-				Alert.show(metodoPago.text);
 			}
 			
 			private function EstablecerMetodoPago():void{
 				metodoPago.text =  cbMetodoPago.selectedItem[1].toString();
-				Alert.show(metodoPago.text);
 			}
 
+			private function InsertarCamposAdicionales():void{
+				var dgCamposOpcionales:ArrayCollection = new ArrayCollection(ArrayUtil.toArray(GWV_FECamposValores.dataProvider.source));
+				
+				for (var i:int = 0; i < dgCamposOpcionales.length; i++){
+					if (dgCamposOpcionales[i][2].toString().length != 0){
+						idConFactDetDesc.text = dgCamposOpcionales[i][0].toString();
+						ctValor.text = dgCamposOpcionales[i][2].toString();
+						Send(1460);
+					}
+				}
+			}
 		]]>
 	</fx:Script>
 	
@@ -2248,10 +2260,12 @@
 			</s:HGroup>	
 			<s:HGroup width="100%" horizontalAlign="right"  paddingRight="5" paddingLeft="5" paddingTop="5" paddingBottom="5">
 				<s:TextInput id="idConFactDetDesc" visible="false" width="45" x="516"/>
-				<mx:Button label="Aceptar" icon="@Embed(source='newIcons/accept_24.png')" click=" TTWvalores.visible = false; modal.visible = false;" height="24" width="100" tabIndex="3" x="567"/>
+				<mx:Button label="Aceptar" icon="@Embed(source='newIcons/accept_24.png')" click=" TTWvalores.visible = false; modal.visible = false; InsertarCamposAdicionales();" height="24" width="100" tabIndex="3" x="567"/>
 			</s:HGroup>
 		</s:VGroup>
 	</mx:TitleWindow>
+	<!--Campo que sirve para guardar el valor-->
+	<s:TextInput id="ctValor" visible="false" />
 	
 	<mx:TitleWindow id="TTWcambiaValor" title="Asignar Valor" visible="false" showCloseButton="true" close="TTWvalores.enabled = true;TTWcambiaValor.visible = false;"  
 					layout="absolute" borderAlpha=".95" horizontalCenter="0" y="177" height="89" width="481">

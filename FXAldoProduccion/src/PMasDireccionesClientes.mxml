@@ -2,14 +2,19 @@
 <s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
 			   xmlns:s="library://ns.adobe.com/flex/spark" 
 			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:mx2="library://ns.adobe.com/flex/halo"
+			   xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
 			   backgroundColor="#FFFFFF" height="266" width="800">
 	<fx:Script>
 		<![CDATA[
+			import com.Captcha;
+			
 			import mx.collections.*;
 			import mx.collections.ArrayCollection;
 			import mx.collections.ArrayList;
 			import mx.containers.TitleWindow;
 			import mx.controls.*;
+			import mx.controls.Alert;
 			import mx.controls.dataGridClasses.DataGridColumn;
 			import mx.core.Application;
 			import mx.core.DragSource;
@@ -23,44 +28,236 @@
 			
 			import spark.components.TitleWindow;
 			import spark.events.TextOperationEvent;
+			
+			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
 
 			protected function twMasDirecciones_closeHandler(event:CloseEvent):void
 			{
 				PopUpManager.removePopUp(this);
 			}
 
+			private function checkMail(myCtrl:spark.components.TextInput):void
+			{
+				if(expMail.test(myCtrl.text))			
+					myCtrl.errorString = "";
+					
+				else 
+				{				
+					myCtrl.errorString = "Correo Electrónico Incorrecto\n\n" +
+						"Formato “cuenta@dominio.com” \n";
+				}			
+			}
+			
+			private function cpDir():void
+			{
+				if(cp.text.length == 5)
+				{
+					Send(159);//Carga datos de dirección si existe el CP.
+				}
+				else
+				{
+					cleanCombos();
+				}
+			}
+
+			
+			private function cargaCombs():void
+			{
+				Send(159); //Trae combos de CP
+				
+				estado.selectedLabel == txtEstado.text;
+				ciudad.selectedLabel == txtCiudad.text;
+				municipio.selectedLabel == txtMunicipio.text;
+				colonia.selectedLabel == txtColonia.text;
+			}
+			
+			protected function handlerPais():void
+			{
+				if (pais.dataProvider != null)
+				{
+					var valsPais:Array = new Array();
+					valsPais = pais.selectedItem.valueOf().toString().split(",");
+					
+					if(valsPais[1] == "México")
+					{
+						//txtPais.text = valsPais.selectedItem.valueOf(1).toString();
+						txtPais.text = pais.selectedLabel.toString();
+						cp.enabled = true;
+						cp.text = "";
+						
+						estado.visible = true;
+						ciudad.visible = true;
+						municipio.visible = true;
+						colonia.visible = true;
+						
+						txtEstado.visible = false;
+						txtCiudad.visible = false;
+						txtMunicipio.visible = false;
+						txtColonia.visible = false;
+						txtColonia.x = 472;
+					}
+					else
+					{
+						txtPais.text = pais.selectedLabel.toString();
+						cp.text = "00000";
+						cp.enabled = false;
+						
+						estado.visible = false;
+						ciudad.visible = false;
+						municipio.visible = false;
+						colonia.visible = false;
+						lbOtraCol.visible = false;
+						
+						txtEstado.visible = true;
+						txtCiudad.visible = true;
+						txtMunicipio.visible = true;
+						txtColonia.visible = true;
+						
+						txtEstado.text = "";
+						txtCiudad.text = "";
+						txtMunicipio.text = "";
+						txtColonia.text = "";
+						
+						txtColonia.x = 254;
+					}
+				}
+			}
+			
+			private function checkEnableCB(CB:mx.controls.ComboBox, TX:spark.components.TextInput, CBM:mx.controls.ComboBox, TXM:spark.components.TextInput):void
+			{
+				if (CB.dataProvider.length > 0)
+				{
+					CB.visible = true;
+					TX.visible = false;
+					
+					CBM.visible = true;
+					TXM.visible = false;
+					TXM.x = 472;
+				} 
+				else
+				{   
+					CB.visible = false;
+					TX.visible = true;
+					
+					CBM.visible = false;
+					TXM.visible = true;
+					TXM.x = 254;
+				}
+			}
+			
+			private function dataCombos():void 
+			{	
+				var valsColonia:Array = new Array();
+				
+				if (colonia.dataProvider.length > 0 )
+				{
+					valsColonia   = colonia.selectedItem.valueOf().toString().split(",");
+					
+					if(valsColonia[1].toString() == "Otra Colonia")
+					{
+						txtColonia.visible = true;
+						lbOtraCol.visible = true;
+						txtColonia.text   = "";
+					}
+					else
+					{
+						txtColonia.visible = false;
+						lbOtraCol.visible = false;
+					}
+				}
+			}
+			
+			private function validaTXTColonia():void
+			{
+				if (txtColonia.visible == true)
+				{
+					if (txtColonia.text.length > 0)
+						txtColonia.errorString = "";
+						
+					else 
+						txtColonia.errorString = "Otra Colonia es un campo obligatorio, favor de ingresarlo.";
+				}
+			}
+			
+			
+			private function cleanCombos():void 
+			{
+				estado.dataProvider  = null;
+				ciudad.dataProvider  = null;
+				municipio.dataProvider  = null;
+				colonia.dataProvider  = null;
+				estado.errorString = "";
+				ciudad.errorString = "";
+				municipio.errorString = "";
+				colonia.errorString = "";
+				txtColonia.visible = false;
+				txtColonia.errorString = "";
+				lbOtraCol.visible = false;
+				txtColonia.text   = "";
+			}
+
 		]]>
 	</fx:Script>
+	<fx:Script source="r3Take.as"/>
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
-	<fx:Script source="r3Take.as"/>
 	<s:TitleWindow x="0" y="0" width="100%" height="100%" id="twMasDirecciones" title="Mas Direcciones" close="twMasDirecciones_closeHandler(event)">
-		<s:Label x="281" y="62" text="* Calle" fontWeight="bold"/>
-		<s:Label x="36" y="15" text="Nombre Sucursal"/>
-		<s:Label x="519.2" y="62" text="*Número Ext" fontWeight="bold"/>
-		<s:Label x="637.7" y="62" text="Número Int"/>
-		<s:Label x="36" y="62" text="*Correo Electrónico Sucursal" fontWeight="bold"/>
-		<s:Label x="184" y="109" text="*Código Postal" fontWeight="bold"/>
-		<s:Label x="36" y="109" text="País"/>
-		<s:Label x="522.2" y="110" text="Ciudad"/>
-		<s:Label x="36" y="155.5" text="Delegación/Municipio"/>
-		<s:Label x="254" y="155.5" text="Colonia"/>
-		<s:Label text="Todos los campos marcados con *, son obligatorios." x="41" y="207" fontWeight="bold"/>
-		<s:TextInput x="36" y="28"  id="nomSucursal" name="Nombre de Sucursal" width="392" height="24" maxChars="350" tabIndex="20"/>
-		<!--<s:TextInput x="36" y="75" id="correoSuc" name="Correo Electrónico de la Sucursal" 
-					 width="227" height="24" typographicCase="lowercase" change="if(correoSuc.text.length != 0) checkMail(correoSuc);"  tabIndex="21"/>-->
-		<s:TextInput x="281" y="75"  id="calle" name="Calle" width="220" height="24" maxChars="350"  tabIndex="22" focusOut="if(calle.text.length > 0) calle.errorString='';"/>
-		<s:TextInput x="519.2" y="75" id="numExt" name="Número Exterior" width="100" height="24" maxChars="50"  tabIndex="23" focusOut="if(numExt.text.length > 0) numExt.errorString='';"/>
-		<s:TextInput x="637.7" y="75" id="numInt" name="Número Interior" width="75" height="24" maxChars="50"  tabIndex="24"/>
-		<!--<s:TextInput id="cp" name="Código Postal" change="cpDir();" x="184" y="122"  width="117" restrict="0-9" maxChars="5" height="24"  tabIndex="26" valueCommit="if(cp.text.length > 4) cargaCombs();" focusOut="if(cp.text.length == 5) cp.errorString='';"/>
-		<mx:ComboBox x="36" y="122" id="pais" name="Pais" width="130" height="24" change="handlerPais();" creationComplete="Send(598);"  tabIndex="25"/>
-		<mx:ComboBox x="319" y="122" id="estado" name="Estado" width="180" height="24"
-					 valueCommit="checkEnableCB(estado, txtEstado, colonia, txtColonia);" tabIndex="27"/>
-		<mx:ComboBox x="517.2" y="122" id="ciudad" name="Ciudad" width="196" height="24"
-					 valueCommit="checkEnableCB(ciudad, txtCiudad, colonia, txtColonia);" tabIndex="28"/>
-		<mx:ComboBox x="36" y="169" id="municipio" name="Municipio" width="200" height="24"
-					 valueCommit="checkEnableCB(municipio, txtMunicipio, colonia, txtColonia);" tabIndex="29"/>
-		<mx:ComboBox x="254" y="169" id="colonia" name="Colonia" width="200" height="24" change="dataCombos();" tabIndex="30" focusOut="validaTXTColonia();"/>-->
+		<s:Group width="100%" height="100%" id="cnvsSUC" showEffect="showEffect" visible="true">
+			
+			<s:Label x="281" y="56" text="* Calle" fontWeight="bold"/>
+			<s:Label x="36" y="9" text="Nombre Sucursal"/>
+			<s:Label x="519.2" y="56" text="*Número Ext" fontWeight="bold"/>
+			<s:Label x="637.7" y="56" text="Número Int"/>
+			<s:Label x="36" y="56" text="*Correo Electrónico Sucursal" fontWeight="bold"/>		
+			<s:Label x="184" y="103" text="*Código Postal" fontWeight="bold"/>
+			<s:Label x="36" y="103" text="País"/>
+			<s:Label x="319" y="103" text="Estado"/>
+			<s:Label x="522.2" y="104" text="Ciudad"/>
+			<s:Label x="36" y="149.5" text="Delegación/Municipio"/>
+			<s:Label x="254" y="149.5" text="Colonia"/>
+			<s:Label x="36" y="10" text="*Taza de Impuesto" fontWeight="bold" visible="false"/>
+			<s:Label x="472" y="177.5" text="*Otra Colonia" id="lbOtraCol" visible="false" fontWeight="bold"/>
+			<s:Label text="Todos los campos marcados con *, son obligatorios." x="41" y="200" fontWeight="bold"/>
+			
+			<s:TextInput x="36" y="22"  id="nomSucursal" name="Nombre de Sucursal" width="392" height="24" maxChars="350" tabIndex="20"/>
+			
+			<s:TextInput x="36" y="69" id="correoSuc" name="Correo Electrónico de la Sucursal" 
+						 width="227" height="24" typographicCase="lowercase" change="if(correoSuc.text.length != 0) checkMail(correoSuc);"  tabIndex="21"/>
+			
+			<s:TextInput x="281" y="69"  id="calle" name="Calle" width="220" height="24" maxChars="350"  tabIndex="22" focusOut="if(calle.text.length > 0) calle.errorString='';"/>
+			<s:TextInput x="519.2" y="69" id="numExt" name="Número Exterior" width="100" height="24" maxChars="50"  tabIndex="23" focusOut="if(numExt.text.length > 0) numExt.errorString='';"/>
+			<s:TextInput x="637.7" y="69" id="numInt" name="Número Interior" width="75" height="24" maxChars="50"  tabIndex="24"/>	
+			
+			<s:TextInput id="cp" name="Código Postal" change="cpDir();" x="184" y="116"  width="117" restrict="0-9" maxChars="5" height="24"  tabIndex="26" valueCommit="if(cp.text.length > 4) cargaCombs();" focusOut="if(cp.text.length == 5) cp.errorString='';"/>
+			
+			<mx:ComboBox x="36" y="116" id="pais" name="Pais" width="130" height="24" change="handlerPais();" creationComplete="Send(598);"  tabIndex="25"/>
+			
+			<mx:ComboBox x="319" y="116" id="estado" name="Estado" width="180" height="24"
+						 valueCommit="checkEnableCB(estado, txtEstado, colonia, txtColonia);" tabIndex="27"/>
+			
+			<mx:ComboBox x="517.2" y="116" id="ciudad" name="Ciudad" width="196" height="24"
+						 valueCommit="checkEnableCB(ciudad, txtCiudad, colonia, txtColonia);" tabIndex="28"/>
+			
+			<mx:ComboBox x="36" y="163" id="municipio" name="Municipio" width="200" height="24"
+						 valueCommit="checkEnableCB(municipio, txtMunicipio, colonia, txtColonia);" tabIndex="29"/>
+			
+			<mx:ComboBox x="254" y="163" id="colonia" name="Colonia" width="200" height="24" change="dataCombos();" tabIndex="30" focusOut="validaTXTColonia();"/>
+			
+			<s:TextInput x="36" y="144" width="130" id="txtPais" name="Pais" visible="false" height="24" maxChars="250"/>
+			<s:TextInput x="319" y="144" width="180" id="txtEstado" name="Estado" visible="false" height="24" maxChars="250" focusOut="if(txtEstado.text.length > 0) txtEstado.errorString='';"/>
+			<s:TextInput x="517.2" y="144" width="196" id="txtCiudad" name="Ciudad" visible="false" height="24" maxChars="250" focusOut="if(txtCiudad.text.length > 0) txtCiudad.errorString='';"/>
+			<s:TextInput x="36" y="191" width="200" id="txtMunicipio" name="Municipio" visible="false" height="24" maxChars="250" focusOut="if(txtMunicipio.text.length > 0) txtMunicipio.errorString='';"/>
+			<s:TextInput x="472" y="191" width="240" id="txtColonia" name="Colonia" visible="false" height="24" maxChars="250"  tabIndex="31" focusOut="if (txtColonia.text.length > 0) txtColonia.errorString='';"/>
+			<s:TextInput id="idColonia" x="472" y="225" editable="false" visible="false" width="20" enabled="false"/>
+			
+			<!--<mx:Button id="btnGuardaCli" x="546" y="258" icon="@Embed(source='newIcons/add_24.png')" label="Guardar" click="guardarCliente(1);" height="24" tabIndex="41" width="115" toolTip="Guardar Cliente" visible="true"/>
+			<mx:Button id="btnActualizaCli" x="546" y="258" icon="@Embed(source='newIcons/add_24.png')" label="Actualizar" click="guardarCliente(2);" height="24" tabIndex="42" width="115" toolTip="Actualizar Cliente" visible="false"/>
+			<mx:Button x="422" y="258" icon="@Embed(source='newIcons/back_24.png')" label="Atrás" click="atrasCli();" height="24" tabIndex="40" width="115" toolTip="Atrás"/>
+			<mx:Button x="670" y="257" icon="@Embed(source='newIcons/delete_24.png')" label="Cancelar" click="ttwClientes.visible=false;cleanCtrlsAgregar();" height="24" tabIndex="43" width="115" toolTip="Cancelar"/>-->
+		</s:Group>
+		
+		<s:TextInput id="txtIdCliente" width="38" maxChars="50" visible="false" enabled="false"/>
+		<s:TextInput id="txtIdClientesxEmpresa" width="38" maxChars="50" visible="false" enabled="false"/>
 	</s:TitleWindow>
 </s:Application>
