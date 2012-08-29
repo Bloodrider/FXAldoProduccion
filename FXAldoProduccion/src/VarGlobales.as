@@ -9,6 +9,8 @@ package {
 		
 		public var rutaImagen:String;
 		public var ClienteId:String;
+		public var tipoOperacion:int;
+		public var listaDirecciones:ArrayCollection;
 		
 		private static var instancia:VarGlobales;
 		

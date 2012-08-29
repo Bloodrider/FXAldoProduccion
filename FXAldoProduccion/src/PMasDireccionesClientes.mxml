@@ -30,6 +30,8 @@
 			import spark.events.TextOperationEvent;
 			
 			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
+			
+			public var implement:IClientes;
 
 			protected function twMasDirecciones_closeHandler(event:CloseEvent):void
 			{
@@ -196,6 +198,31 @@
 				txtColonia.text   = "";
 			}
 
+			private function GuardarSucursal():void{
+				if (VarGlobales.variables().tipoOperacion == 1){
+					VarGlobales.variables().listaDirecciones.addItem(
+						{
+							0:0,
+							1:VarGlobales.variables().ClienteId,
+							2:nomSucursal.text,
+							3:txtPais.text,
+							4:cp.text,
+							5:txtEstado.text,
+							6:txtCiudad.text,
+							7:txtMunicipio.text,
+							8:txtColonia,
+							9:calle,
+							10:numExt.text,
+							11:numInt.text,
+							12:correoSuc,
+							13:0
+						});
+					Alert.show(VarGlobales.variables().listaDirecciones[0][4].toString());
+					implement.EstablecerListado();
+					
+					PopUpManager.removePopUp(this);
+				}
+			}
 		]]>
 	</fx:Script>
 	<fx:Script source="r3Take.as"/>
@@ -250,11 +277,8 @@
 			<s:TextInput x="36" y="191" width="200" id="txtMunicipio" name="Municipio" visible="false" height="24" maxChars="250" focusOut="if(txtMunicipio.text.length > 0) txtMunicipio.errorString='';"/>
 			<s:TextInput x="472" y="191" width="240" id="txtColonia" name="Colonia" visible="false" height="24" maxChars="250"  tabIndex="31" focusOut="if (txtColonia.text.length > 0) txtColonia.errorString='';"/>
 			<s:TextInput id="idColonia" x="472" y="225" editable="false" visible="false" width="20" enabled="false"/>
+			<s:Button x="493" y="163" label="Guardar" click="GuardarSucursal()"/>
 			
-			<!--<mx:Button id="btnGuardaCli" x="546" y="258" icon="@Embed(source='newIcons/add_24.png')" label="Guardar" click="guardarCliente(1);" height="24" tabIndex="41" width="115" toolTip="Guardar Cliente" visible="true"/>
-			<mx:Button id="btnActualizaCli" x="546" y="258" icon="@Embed(source='newIcons/add_24.png')" label="Actualizar" click="guardarCliente(2);" height="24" tabIndex="42" width="115" toolTip="Actualizar Cliente" visible="false"/>
-			<mx:Button x="422" y="258" icon="@Embed(source='newIcons/back_24.png')" label="Atrás" click="atrasCli();" height="24" tabIndex="40" width="115" toolTip="Atrás"/>
-			<mx:Button x="670" y="257" icon="@Embed(source='newIcons/delete_24.png')" label="Cancelar" click="ttwClientes.visible=false;cleanCtrlsAgregar();" height="24" tabIndex="43" width="115" toolTip="Cancelar"/>-->
 		</s:Group>
 		
 		<s:TextInput id="txtIdCliente" width="38" maxChars="50" visible="false" enabled="false"/>
