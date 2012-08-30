@@ -4,7 +4,7 @@
 			   xmlns:mx="library://ns.adobe.com/flex/mx" 
 			   xmlns:mx2="library://ns.adobe.com/flex/halo"
 			   xmlns:ns1="com.r3Take.utils.*" xmlns:local="*" 
-			   backgroundColor="#FFFFFF" height="266" width="800">
+			   backgroundColor="#FFFFFF" height="266" width="800" creationComplete="Iniciar()">
 	<fx:Script>
 		<![CDATA[
 			import com.Captcha;
@@ -32,7 +32,17 @@
 			private var expMail:RegExp = /^[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[a-zA-Z]{2,7}$/;
 			
 			public var implement:IClientes;
+			
+			private var indiceLista:int;
 
+			private function Iniciar():void{
+				if (VarGlobales.variables().tipoOperacion == 2){
+					indiceLista = VarGlobales.variables().indiceListado;
+					txtIdClientesxEmpresa.text = VarGlobales.variables().listaDirecciones[indiceLista][0].toString();
+					Send(1465);
+				}	
+			}
+			
 			protected function twMasDirecciones_closeHandler(event:CloseEvent):void
 			{
 				PopUpManager.removePopUp(this);
@@ -216,13 +226,25 @@
 							11:numInt.text,
 							12:correoSuc.text,
 							13:0
-						});
-		
-	
-					implement.EstablecerListado();
-					
-					PopUpManager.removePopUp(this);
+						});			
 				}
+				
+				if (VarGlobales.variables().tipoOperacion == 2){
+					VarGlobales.variables().listaDirecciones[indiceLista][2] = nomSucursal.text;
+					VarGlobales.variables().listaDirecciones[indiceLista][3] = pais.selectedItem[1].toString();
+					VarGlobales.variables().listaDirecciones[indiceLista][4] = cp.text;
+					VarGlobales.variables().listaDirecciones[indiceLista][5] = estado.selectedItem[1].toString();
+					VarGlobales.variables().listaDirecciones[indiceLista][6] = ciudad.selectedItem[1].toString();
+					VarGlobales.variables().listaDirecciones[indiceLista][7] = municipio.selectedItem[1].toString();
+					VarGlobales.variables().listaDirecciones[indiceLista][8] = colonia.selectedItem[1].toString();
+					VarGlobales.variables().listaDirecciones[indiceLista][9] = calle.text;
+					VarGlobales.variables().listaDirecciones[indiceLista][10] = numExt.text;
+					VarGlobales.variables().listaDirecciones[indiceLista][11] = numInt.text;
+					VarGlobales.variables().listaDirecciones[indiceLista][12] = correoSuc.text;
+				}
+				
+				implement.EstablecerListado();
+				PopUpManager.removePopUp(this);
 			}
 		]]>
 	</fx:Script>

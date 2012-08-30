@@ -11,6 +11,7 @@ package {
 		[Bindable]public var ClienteId:String;
 		public var tipoOperacion:int;
 		public var listaDirecciones:ArrayCollection;
+		public var indiceListado:int;
 		
 		private static var instancia:VarGlobales;
 		
