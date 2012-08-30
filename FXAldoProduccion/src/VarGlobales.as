@@ -8,7 +8,7 @@ package {
 	public class VarGlobales{	
 		
 		public var rutaImagen:String;
-		public var ClienteId:String;
+		[Bindable]public var ClienteId:String;
 		public var tipoOperacion:int;
 		public var listaDirecciones:ArrayCollection;
 		

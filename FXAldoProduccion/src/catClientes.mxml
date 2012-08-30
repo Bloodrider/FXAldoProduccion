@@ -726,12 +726,34 @@
 				//Validar si el txt de existe cliente tiene como valor  = 1
 				if (op == 1)
 					Send(1346); //Guarda cliente
-				else 
+				else {
 					Send(1347); //Actualiza Cliente
+					MasDirecciones();
+				}
 					
 				Send(1348); //Actualiza GridView Clientes
 				ttwClientes.visible = false;
 				cleanCtrlsAud();
+			}
+			
+			private function MasDirecciones():void{
+				for (var i:int = 0; i < VarGlobales.variables().listaDirecciones.length; i++){
+					if (Number(VarGlobales.variables().listaDirecciones[i][13].toString()) == 0){
+						ctEmpresaId.text = VarGlobales.variables().listaDirecciones[i][1].toString();
+						ctSucursal.text = VarGlobales.variables().listaDirecciones[i][2].toString();
+						ctPais.text = VarGlobales.variables().listaDirecciones[i][3].toString();
+						ctCodigoPostal.text = VarGlobales.variables().listaDirecciones[i][4].toString();
+						ctEstado.text = VarGlobales.variables().listaDirecciones[i][5].toString();
+						ctCiudad.text = VarGlobales.variables().listaDirecciones[i][6].toString();
+						ctMunicipio.text = VarGlobales.variables().listaDirecciones[i][7].toString();
+						ctColonia.text = VarGlobales.variables().listaDirecciones[i][8].toString();
+						ctCalle.text = VarGlobales.variables().listaDirecciones[i][9].toString();
+						ctNumeroExt.text = VarGlobales.variables().listaDirecciones[i][10].toString();
+						ctNumeroInt.text = VarGlobales.variables().listaDirecciones[i][11].toString();
+						ctCorreo.text = VarGlobales.variables().listaDirecciones[i][12].toString();
+						Send(1464);
+					}
+				}
 			}
 			
 			private function cargaCombs():void
@@ -903,6 +925,20 @@
 			<mx:Button x="650" y="247" icon="@Embed(source='newIcons/fordward_24.png')" label="Siguiente" click="validaEmpresa();" height="24" tabIndex="16" width="115" toolTip="Siguiente"/>
 			<mx:Image x="51" y="15" source="assets/3830-64.png" width="89" height="69"/>
 		</s:Group>
+		
+		<!--Campos para agregar o modificar las demás direcciones-->
+		<s:TextInput id="ctEmpresaId" visible="false" />
+		<s:TextInput id="ctSucursal" visible="false" />
+		<s:TextInput id="ctPais" visible="false" />
+		<s:TextInput id="ctCodigoPostal" visible="false" />
+		<s:TextInput id="ctEstado" visible="false" />
+		<s:TextInput id="ctCiudad" visible="false" />
+		<s:TextInput id="ctMunicipio" visible="false" />
+		<s:TextInput id="ctColonia" visible="false" />
+		<s:TextInput id="ctCalle" visible="false" />
+		<s:TextInput id="ctNumeroExt" visible="false" />
+		<s:TextInput id="ctNumeroInt" visible="false" />
+		<s:TextInput id="ctCorreo" visible="false" />
 		
 	</s:TitleWindow>	
 </s:Application>

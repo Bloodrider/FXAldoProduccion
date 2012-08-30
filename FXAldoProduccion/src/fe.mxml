@@ -75,7 +75,6 @@
 			private function entrar():void
 			{		
 				
-				
 				setFormat();
 				if(tipoMoneda.selectedIndex < 0)
 				{
@@ -1919,7 +1918,14 @@
 			}
 			
 			private function EstablecerMetodoPago():void{
-				metodoPago.text =  cbMetodoPago.selectedItem[1].toString();
+				if (cbMetodoPago.selectedIndex > 0){
+					metodoPago.text =  cbMetodoPago.selectedItem[1].toString();
+				}
+				else{
+					metodoPago.text = cbMetodoPago.textInput.text;
+				}
+				
+				
 			}
 
 			private function InsertarCamposAdicionales():void{
@@ -1941,7 +1947,7 @@
 			<mx:Glow duration="1000" alphaFrom="0.1" alphaTo="0.9" blurXFrom="0.0" blurXTo="6.0" blurYFrom="0.0" blurYTo="6.0" color="#FFFF00" /> 	
 			<mx:Glow duration="1000" alphaFrom="0.9" alphaTo="0.1" blurXFrom="6.0" blurXTo="0.0" blurYFrom="6.0" blurYTo="0.0" color="#FFFF00" /> 	
 		</mx:Sequence>
-		<mx:CurrencyValidator source="{cant}" property="text" decimalPointCountError="El punto decimal sólo se puede agregar una vez."  requiredFieldError="Este campo es requerido." precision="2" invalidCharError="La cantidad contiene caracteres inválidos" maxValue="999999999"  allowNegative="false" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.99" lowerThanMinError="El valor debe de ser mayor a 0" precisionError="La cantidad debe de ser numérica con dos posiciones decimales." valid="cantValid.text = '0';" invalid="cantValid.text = '1'" trigger="{cant}" triggerEvent="focusOut"/>
+		<mx:CurrencyValidator source="{cant}" property="text" decimalPointCountError="El punto decimal sólo se puede agregar una vez."  requiredFieldError="Este campo es requerido." precision="3" invalidCharError="La cantidad contiene caracteres inválidos" maxValue="999999999"  allowNegative="false" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.99" lowerThanMinError="El valor debe de ser mayor a 0" precisionError="La cantidad debe de ser numérica con dos posiciones decimales." valid="cantValid.text = '0';" invalid="cantValid.text = '1'" trigger="{cant}" triggerEvent="focusOut"/>
 		<mx:CurrencyValidator id="validadorPrecio" source="{precio}" property="text" decimalPointCountError="El punto decimal sólo se puede agregar una vez." requiredFieldError="Este campo es requerido." invalidCharError="El precio contiene caracteres inválidos" precision="2" maxValue="999999999" allowNegative="false" thousandsSeparator=","  exceedsMaxError="El valor debe de ser menor a 999,999,999.999999" lowerThanMinError="El valor debe de ser mayor a 0" precisionError="El precio debe de ser numérico con las posiciones decimales definidas para el combrobante." valid="precioValid.text = '0';" invalid="precioValid.text = '1'" trigger="{precio}" triggerEvent="focusOut"/>
 		<mx:CurrencyValidator id="validadorPrecioUnitario" source="{precioUnitarioAdd}" decimalPointCountError="El punto decimal sólo se puede agregar una vez." requiredFieldError="Este campo es requerido." invalidCharError="El precio contiene caracteres inválidos" property="text" maxValue="999999999" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.999999" lowerThanMinError="El valor debe de ser mayor a 0" allowNegative="false"  precision="6" precisionError="El precio debe de ser numérico con las posiciones decimales definidas para el combrobante." valid="precioAddValid.text = '0';" invalid="precioAddValid.text = '1'" trigger="{precioUnitarioAdd}" triggerEvent="focusOut"/>
 		<mx:CurrencyValidator source="{tasaCambio}" property="text" decimalPointCountError="El punto decimal sólo se puede agregar una vez."  requiredFieldError="Este campo es requerido." precision="6" invalidCharError="La cantidad contiene caracteres inválidos" maxValue="999999999"  allowNegative="false" thousandsSeparator="," exceedsMaxError="El valor debe de ser menor a 999,999,999.999999" lowerThanMinError="El valor debe de ser mayor a 0" precisionError="La cantidad debe de ser numérica con seis posiciones decimales." valid="tasaValid.text = '0';" invalid="tasaValid.text = '1'" trigger="{tasaCambio}" triggerEvent="focusOut"/>

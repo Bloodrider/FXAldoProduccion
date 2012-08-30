@@ -205,19 +205,20 @@
 							0:0,
 							1:VarGlobales.variables().ClienteId,
 							2:nomSucursal.text,
-							3:txtPais.text,
+							3:pais.selectedItem[1].toString(),
 							4:cp.text,
-							5:txtEstado.text,
-							6:txtCiudad.text,
-							7:txtMunicipio.text,
-							8:txtColonia,
-							9:calle,
+							5:estado.selectedItem[1].toString(),
+							6:ciudad.selectedItem[1].toString(),
+							7:municipio.selectedItem[1].toString(),
+							8:colonia.selectedItem[1].toString(),
+							9:calle.text,
 							10:numExt.text,
 							11:numInt.text,
-							12:correoSuc,
+							12:correoSuc.text,
 							13:0
 						});
-					Alert.show(VarGlobales.variables().listaDirecciones[0][4].toString());
+		
+	
 					implement.EstablecerListado();
 					
 					PopUpManager.removePopUp(this);

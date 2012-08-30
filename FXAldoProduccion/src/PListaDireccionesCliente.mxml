@@ -22,6 +22,8 @@
 			import mx.events.FlexEvent;
 			import mx.managers.DragManager;
 			import mx.managers.PopUpManager;
+			
+			import org.generalrelativity.foam.dynamics.collision.geom.AABR;
 
 			protected function twListadoDirecciones_closeHandler(event:CloseEvent):void
 			{
@@ -29,13 +31,14 @@
 			}
 
 			private function Iniciar():void{
-				ctEmpresaId.text = VarGlobales.variables().ClienteId;
+				Alert.show(VarGlobales.variables().ClienteId);
 				Send(1463);
 			}
 			
 			private function AgregarSucursal():void{
 				VarGlobales.variables().tipoOperacion = 1;
 				VarGlobales.variables().listaDirecciones = new ArrayCollection(ArrayUtil.toArray(dgListaDirecciones.dataProvider.source)); 
+
 				var nuevaDireccion:PMasDireccionesClientes = new PMasDireccionesClientes();
 				nuevaDireccion.implement = this as IClientes;
 				PopUpManager.addPopUp(nuevaDireccion, this, true);
@@ -43,6 +46,7 @@
 			}
 			
 			public function EstablecerListado():void{
+
 				dgListaDirecciones.dataProvider = VarGlobales.variables().listaDirecciones;
 			}
 		]]>
@@ -57,24 +61,24 @@
 			<s:Button label="Editar"/>
 			<s:Button label="Eliminar"/>
 		</s:HGroup>
-		<mx:DataGrid x="10" y="55" width="620" height="235" id="dgListaDirecciones">
+		<mx:DataGrid x="10" y="55" width="620" height="235" id="dgListaDirecciones" >
 			<mx:columns>
-				<mx:DataGridColumn headerText="SucursalId" dataField="@0"/>
-				<mx:DataGridColumn headerText="EmpresaId" dataField="@1"/>
-				<mx:DataGridColumn headerText="Sucursal" dataField="@2"/>
-				<mx:DataGridColumn headerText="Pais" dataField="@3"/>
-				<mx:DataGridColumn headerText="Código Postal" dataField="@4"/>
-				<mx:DataGridColumn headerText="Estado" dataField="@5"/>
-				<mx:DataGridColumn headerText="Ciudad" dataField="@6"/>
-				<mx:DataGridColumn headerText="Municipio" dataField="@7"/>
-				<mx:DataGridColumn headerText="Colonia" dataField="@8"/>
-				<mx:DataGridColumn headerText="Calle" dataField="@9"/>
-				<mx:DataGridColumn headerText="Número Ext." dataField="@10"/>
-				<mx:DataGridColumn headerText="Número Int." dataField="@11"/>
-				<mx:DataGridColumn headerText="Correo" dataField="@12"/>
-				<mx:DataGridColumn headerText="Guardado" dataField="@13"/>
+				<mx:DataGridColumn headerText="SucursalId" dataField="0" visible="false"/>
+				<mx:DataGridColumn headerText="EmpresaId" dataField="1" visible="false"/>
+				<mx:DataGridColumn headerText="Sucursal" dataField="2"/>
+				<mx:DataGridColumn headerText="Pais" dataField="3"/>
+				<mx:DataGridColumn headerText="Código Postal" dataField="4"/>
+				<mx:DataGridColumn headerText="Estado" dataField="5" visible="false"/>
+				<mx:DataGridColumn headerText="Municipio" dataField="6" visible="false"/>
+				<mx:DataGridColumn headerText="Municipio" dataField="7" visible="false"/>
+				<mx:DataGridColumn headerText="Colonia" dataField="8" visible="false"/>
+				<mx:DataGridColumn headerText="Calle" dataField="9"/>
+				<mx:DataGridColumn headerText="Número Ext." dataField="10"/>
+				<mx:DataGridColumn headerText="Número Int." dataField="11" visible="false"/>
+				<mx:DataGridColumn headerText="Correo" dataField="12"/>
+				<mx:DataGridColumn headerText="Guardado" dataField="13" visible="false"/>
 			</mx:columns>
 		</mx:DataGrid>
 	</s:TitleWindow>
-	<s:TextInput id="ctEmpresaId" visible="false" />
+	<s:TextInput id="ctEmpresaId" visible="false" text="{VarGlobales.variables().ClienteId}"/>
 </s:Application>
