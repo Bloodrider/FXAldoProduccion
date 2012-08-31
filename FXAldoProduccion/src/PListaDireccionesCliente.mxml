@@ -70,9 +70,9 @@
 	</fx:Declarations>
 	<s:TitleWindow x="0" y="0" width="100%" height="100%" id="twListadoDirecciones" title="Listado de Direcciones" close="twListadoDirecciones_closeHandler(event)">
 		<s:HGroup x="10" y="10" width="247" height="37">
-			<s:Button label="Agregar" click="AgregarSucursal()"/>
-			<s:Button label="Editar" click="EditarSucursal()"/>
-			<s:Button label="Eliminar"/>
+			<mx:Button label="Agregar" click="AgregarSucursal()" icon="@Embed(source='newIcons/add_24.png')" height="31"/>
+			<mx:Button label="Editar" click="EditarSucursal()" icon="@Embed(source='newIcons/edit-icon_24.png')" height="31"/>
+			<mx:Button label="Eliminar" height="31" icon="@Embed(source='newIcons/delete_24.png')"/>
 		</s:HGroup>
 		<mx:DataGrid x="10" y="55" width="620" height="235" id="dgListaDirecciones" >
 			<mx:columns>

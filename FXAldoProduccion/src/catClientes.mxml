@@ -245,7 +245,7 @@
 						cnvsEmp.visible = true; 
 						cnvsSUC.visible = false;
 						lbOtraCol.visible = false;
-						
+						//btMasDirecciones.visible = true;
 						ttwClientes.visible = true;
 						
 						cargaCombs();
@@ -900,7 +900,7 @@
 			<mx:Button id="btnActualizaCli" x="546" y="258" icon="@Embed(source='newIcons/add_24.png')" label="Actualizar" click="guardarCliente(2);" height="24" tabIndex="42" width="115" toolTip="Actualizar Cliente" visible="false"/>
 			<mx:Button x="422" y="258" icon="@Embed(source='newIcons/back_24.png')" label="Atrás" click="atrasCli();" height="24" tabIndex="40" width="115" toolTip="Atrás"/>
 			<mx:Button x="670" y="257" icon="@Embed(source='newIcons/delete_24.png')" label="Cancelar" click="ttwClientes.visible=false;cleanCtrlsAgregar();" height="24" tabIndex="43" width="115" toolTip="Cancelar"/>
-			<s:Button x="478" y="191" label="Mas Direcciones" height="26" width="113" id="btMasDirecciones" click="AbrirListaDirecciones()"/>
+			<s:Button x="478" y="191" label="Direcciones Secundarias" height="26" width="113" id="btMasDirecciones" click="AbrirListaDirecciones()"/>
 		</s:Group>
 		
 		<s:Group width="100%" height="100%" id="cnvsEmp" showEffect="showEffect" visible="true">
