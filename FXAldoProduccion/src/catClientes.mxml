@@ -753,6 +753,21 @@
 						ctCorreo.text = VarGlobales.variables().listaDirecciones[i][12].toString();
 						Send(1464);
 					}
+					if (Number(VarGlobales.variables().listaDirecciones[i][13].toString()) == 1){
+						ctSucursalId.text = VarGlobales.variables().listaDirecciones[i][0].toString();
+						ctSucursal.text = VarGlobales.variables().listaDirecciones[i][2].toString();
+						ctPais.text = VarGlobales.variables().listaDirecciones[i][3].toString();
+						ctCodigoPostal.text = VarGlobales.variables().listaDirecciones[i][4].toString();
+						ctEstado.text = VarGlobales.variables().listaDirecciones[i][5].toString();
+						ctCiudad.text = VarGlobales.variables().listaDirecciones[i][6].toString();
+						ctMunicipio.text = VarGlobales.variables().listaDirecciones[i][7].toString();
+						ctColonia.text = VarGlobales.variables().listaDirecciones[i][8].toString();
+						ctCalle.text = VarGlobales.variables().listaDirecciones[i][9].toString();
+						ctNumeroExt.text = VarGlobales.variables().listaDirecciones[i][10].toString();
+						ctNumeroInt.text = VarGlobales.variables().listaDirecciones[i][11].toString();
+						ctCorreo.text = VarGlobales.variables().listaDirecciones[i][12].toString();
+						Send(1466);
+					}
 				}
 			}
 			
@@ -928,6 +943,7 @@
 		
 		<!--Campos para agregar o modificar las demás direcciones-->
 		<s:TextInput id="ctEmpresaId" visible="false" />
+		<s:TextInput id="ctSucursalId" visible="false" />
 		<s:TextInput id="ctSucursal" visible="false" />
 		<s:TextInput id="ctPais" visible="false" />
 		<s:TextInput id="ctCodigoPostal" visible="false" />

@@ -520,6 +520,7 @@
 					{
 						//Calculamos el total
 						total = ((total*100) + (gbTotales[numImpuesto][1]*100))/100;
+						total = truncaRedondeaDecimales((decTruncados.selected==true?0:1),total,int(precisionDecimales.value));
 						totGranTotal = total;
 						calculaGranTotal();
 
@@ -821,6 +822,7 @@
 								valorIsh = Number(concepto[j+1].toString()) / 100;
 								importeOperacion = Number(lista[i][15]) * valorIsh;
 								importe += importeOperacion;
+								importe = truncaRedondeaDecimales((decTruncados.selected==true?0:1),importe,int(precisionDecimales.value));
 								verificarImpuestos = true;
 							}
 			
