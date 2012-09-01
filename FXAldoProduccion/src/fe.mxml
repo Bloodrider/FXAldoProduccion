@@ -1415,7 +1415,8 @@
 			{
 				if(parseInt(validaExisteClientes.text) > 0)
 				{
-					Send(155);
+					//Send(155);
+					Send(1467);
 				}
 				else
 				{

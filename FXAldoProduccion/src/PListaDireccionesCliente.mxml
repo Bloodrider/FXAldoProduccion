@@ -62,6 +62,25 @@
 				}
 				
 			}
+			
+			private function EliminarSucursal():void{
+				if (dgListaDirecciones.selectedIndex >= 0){
+					VarGlobales.variables().indiceListado = dgListaDirecciones.selectedIndex;
+					VarGlobales.variables().listaDirecciones = new ArrayCollection(ArrayUtil.toArray(dgListaDirecciones.dataProvider.source)); 
+					
+					if (Number(dgListaDirecciones.selectedItem[13]) == 0){	
+						VarGlobales.variables().listaDirecciones.removeItemAt(VarGlobales.variables().indiceListado);
+						dgListaDirecciones.dataProvider = VarGlobales.variables().listaDirecciones
+					}
+					else{
+						ctSucursalId.text = dgListaDirecciones.selectedItem[0].toString();
+						VarGlobales.variables().listaDirecciones.removeItemAt(VarGlobales.variables().indiceListado);
+						dgListaDirecciones.dataProvider = VarGlobales.variables().listaDirecciones
+						Send(1468);
+					}
+					
+				}
+			}
 		]]>
 	</fx:Script>
 	<fx:Script source="r3Take.as"/>
@@ -72,7 +91,7 @@
 		<s:HGroup x="10" y="10" width="247" height="37">
 			<mx:Button label="Agregar" click="AgregarSucursal()" icon="@Embed(source='newIcons/add_24.png')" height="31"/>
 			<mx:Button label="Editar" click="EditarSucursal()" icon="@Embed(source='newIcons/edit-icon_24.png')" height="31"/>
-			<mx:Button label="Eliminar" height="31" icon="@Embed(source='newIcons/delete_24.png')"/>
+			<mx:Button label="Eliminar" height="31" click="EliminarSucursal()" icon="@Embed(source='newIcons/delete_24.png')"/>
 		</s:HGroup>
 		<mx:DataGrid x="10" y="55" width="620" height="235" id="dgListaDirecciones" >
 			<mx:columns>
@@ -94,4 +113,5 @@
 		</mx:DataGrid>
 	</s:TitleWindow>
 	<s:TextInput id="ctEmpresaId" visible="false" text="{VarGlobales.variables().ClienteId}"/>
+	<s:TextInput id="ctSucursalId" visible="false" />
 </s:Application>
